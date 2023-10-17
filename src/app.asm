@@ -110,3 +110,152 @@ app_init_audio:
 	swi QTM_Load
 
     mov pc, lr
+
+; ============================================================================
+; Interrupt handling.
+; ============================================================================
+
+.if AppConfig_InstallIrqHandler
+oldirqhandler:
+	.long 0
+
+oldirqjumper:
+	.long 0
+
+vsyncstartdelay:
+	.long 127*RasterSplitLine  ;2000000/50.08
+
+install_irq_handler:
+	mov r1, #0x18					; IRQ vector.
+	
+	; Remember previous IRQ branch call.
+	ldr r0, [r1]					; old IRQ handler.
+	str r0, oldirqjumper
+
+	; Calculate old IRQ handler address from branch opcode.
+	bic r0, r0, #0xff000000
+	mov r0, r0, lsl #2
+	add r0, r0, #32
+	str r0, oldirqhandler
+
+	; Set Timer 1.
+	SWI		OS_EnterOS
+	MOV     R12,#0x3200000           ;IOC address
+
+	TEQP    PC,#0b11<<26 | 0b11  ;jam all interrupts!
+
+	LDR     R0,vsyncstartdelay
+	STRB    R0,[R12,#0x50]
+	MOV     R0,R0,LSR#8
+	STRB    R0,[R12,#0x54]           ;prepare timer 1 for waiting until screen start
+									;don't start timer1, done on next Vs...
+	TEQP    PC,#0
+	MOV     R0,R0
+
+	; Install our IRQ handler.
+	swi OS_IntOff
+	adr r0, irq_handler
+	sub r0, r0, #32
+	mov r0, r0, lsr #2
+	add r0, r0, #0xea000000			; B irq_handler.
+	str r0, [r1]
+	swi OS_IntOn
+
+	mov pc, lr
+
+uninstall_irq_handler:
+	mov r1, #0x18					; IRQ vector.
+	
+	; Restore previous IRQ branch call.
+	ldr r0, oldirqjumper
+	str r0, [r1]
+
+	mov pc, lr
+
+irq_handler:
+	STMFD   R13!,{R0-R1,R11-R12}
+	MOV     R12,#0x3200000           ;IOC address
+	LDRB    R0,[R12,#0x14+0]
+	TST     R0,#1<<6 | (1<<3)
+	BEQ     nottimer1orVs           ;not T1 or Vs, back to RISCOS
+
+	TEQP    PC,#0b11<<26 | 0b11
+	MOV     R0,R0
+
+	MOV     R11,#VIDC_Write
+	TST     R0,#1<<3
+	BNE     handle_vsync                   ;...Vs higher priority than T1
+
+timer1:
+	mov r0, #0
+	str r0, vsync_bodge
+
+	; WRITE VIDC REGS HERE!
+
+	LDRB    R0,[R12,#0x18]
+	BIC     R0,R0,#1<<6
+	STRB    R0,[R12,#0x18]           ;stop T1 irq...
+
+exittimer1:
+	TEQP    PC,#0b10<<26 | 0b10
+	MOV     R0,R0
+	LDMFD   R13!,{R0-R1,R11-R12}
+	SUBS    PC,R14,#4
+
+handle_vsync:
+	ldr r0, vsync_bodge
+	cmp r0, #0
+	beq .3
+	b exitVs
+.3:
+	mov r0, #1
+	str r0, vsync_bodge
+
+	STRB    R0,[R12,#0x58]           ;T1 GO (latch already set up)
+	LDRB    R0,[R12,#0x18]
+	ORR     R0,R0,#1<<6
+	STRB    R0,[R12,#0x18]           ;enable T1 irq...
+	MOV     R0,#1<<6
+	STRB    R0,[R12,#0x14]           ;clear any pending T1 irq
+
+    b app_vsync_code
+
+exitVs:
+	TEQP    PC,#0b10<<26 | 0b10
+	MOV     R0,R0
+
+nottimer1orVs:
+	LDMFD   R13!,{R0-R1,R11-R12}
+	ldr pc, oldirqhandler
+
+vsync_bodge:
+	.long 0
+.endif
+
+; ============================================================================
+; Code run at vsync.
+; ============================================================================
+
+app_vsync_code:
+    ; TODO: Palette pending.
+	; WRITE VIDC REGS HERE!
+
+	; Update the vsync counter.
+	ldr r0, vsync_count
+	add r0, r0, #1
+	str r0, vsync_count
+
+	; Pending bank will now be displayed.
+	ldr r1, pending_bank
+	cmp r1, #0
+	.if _CHECK_FRAME_DROP
+	streq r0, last_dropped_frame
+	.endif
+	beq exitVs
+
+	str r1, displayed_bank
+
+	; Clear pending bank.
+	mov r0, #0
+	str r0, pending_bank
+    b exitVs

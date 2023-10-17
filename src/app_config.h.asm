@@ -6,6 +6,7 @@
 .equ AppConfig_StackSize,               1024
 .equ AppConfig_LoadModFromFile,         1
 .equ AppConfig_DynamicSampleSpeed,      1
+.equ AppConfig_InstallIrqHandler,       0
 
 ; ============================================================================
 ; Sequence config.
