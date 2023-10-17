@@ -101,12 +101,12 @@ credits_pal_no_adr:
 
 ; ============================================================================
 
-.include "src/3d-model-data.asm"
+.include "src/data/3d-model-data.asm"
 
 ; ============================================================================
 
 .p2align 6
 .rodata
 seq_main_program:
-.include "src/sequence-data.asm"
+.include "src/data/sequence-data.asm"
 .p2align 13     ; 8K
