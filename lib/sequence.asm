@@ -14,7 +14,7 @@ sequence_init:
 
     bl script_init
 
-    .if _DEBUG
+    .if _DEBUG && 0
 	; Load seq file.
 	mov r0, #0xff
     ldr r2, sequence_program_p

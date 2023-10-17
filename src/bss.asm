@@ -31,11 +31,13 @@ logo_mask_shifted_no_adr:
 
 ; ============================================================================
 
+.if 0
 starfield_x_no_adr:
     .skip Starfield_Total * 4
 
 starfield_y_no_adr:
     .skip Starfield_Total * 4
+.endif
 
 ; ============================================================================
 

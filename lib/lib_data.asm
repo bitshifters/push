@@ -8,17 +8,17 @@
 
 .if LibConfig_IncludeSine
 sinus_table_no_adr:
-	.incbin "data/sine_8192.bin"
+	.incbin "data/raw/sine_8192.bin"
 .endif
 
 ; ============================================================================
 
 .if LibConfig_IncludeSqrt
 sqrt_table_no_adr:
-	.incbin "data/sqrt_1024.bin"
+	.incbin "data/raw/sqrt_1024.bin"
 
 rsqrt_table_no_adr:
-	.incbin "data/rsqrt_1024.bin"
+	.incbin "data/raw/rsqrt_1024.bin"
 .endif
 
 ; ============================================================================

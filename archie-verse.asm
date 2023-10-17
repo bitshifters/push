@@ -10,7 +10,7 @@
 ;	8. Ending
 ; ============================================================================
 
-.equ _DEBUG, 0
+.equ _DEBUG, 1
 .equ _DEBUG_RASTERS, (_DEBUG && 1)
 .equ _DEBUG_SHOW, (_DEBUG && 1)
 .equ _CHECK_FRAME_DROP, (!_DEBUG && 1)
@@ -41,16 +41,13 @@
 .equ StereoPos_Ch3, +32                 ; off centre R
 .equ StereoPos_Ch4, -32                 ; off centre L
 
-.equ Anaglyph_Default_Skew_Setting, 1   ; on
-.equ EyeDistance_Default_Setting,   4   ; eye separation=4.8 pixels at z=0
-
 .equ _WIDESCREEN, 0
 
 .equ Screen_Banks, 2
 
-.equ Screen_Mode, 9
+.equ Screen_Mode, 13
 .equ Screen_Width, 320
-.equ Screen_PixelsPerByte, 2
+.equ Screen_PixelsPerByte, 1
 
 .if _WIDESCREEN
 .equ Vdu_Mode, 97					; MODE 9 widescreen (320x180)
@@ -172,25 +169,12 @@ main:
     ; Register debug vars.
     DEBUG_REGISTER_VAR frame_counter
     DEBUG_REGISTER_VAR music_pos
-    DEBUG_REGISTER_VAR Anaglyph_Enable_Skew
     DEBUG_REGISTER_KEY RMKey_Space,      debug_toggle_main_loop_pause,  0
     DEBUG_REGISTER_KEY RMKey_A,          debug_restart_sequence,        0
     DEBUG_REGISTER_KEY RMKey_S,          debug_set_byte_true,           debug_main_loop_step
     DEBUG_REGISTER_KEY RMKey_D,          debug_toggle_byte,             debug_show_info
     DEBUG_REGISTER_KEY RMKey_R,          debug_toggle_byte,             debug_show_rasters
-    DEBUG_REGISTER_KEY RMKey_K,          debug_toggle_byte,             Anaglyph_Enable_Skew
     DEBUG_REGISTER_KEY RMKey_ArrowRight, debug_skip_to_next_pattern,    0
-    DEBUG_REGISTER_KEY RMKey_C,          debug_toggle_palette,          0
-    DEBUG_REGISTER_KEY RMKey_0,          debug_set_eye_distance,        0
-    DEBUG_REGISTER_KEY RMKey_1,          debug_set_eye_distance,        1
-    DEBUG_REGISTER_KEY RMKey_2,          debug_set_eye_distance,        2
-    DEBUG_REGISTER_KEY RMKey_3,          debug_set_eye_distance,        3
-    DEBUG_REGISTER_KEY RMKey_4,          debug_set_eye_distance,        4
-    DEBUG_REGISTER_KEY RMKey_5,          debug_set_eye_distance,        5
-    DEBUG_REGISTER_KEY RMKey_6,          debug_set_eye_distance,        6
-    DEBUG_REGISTER_KEY RMKey_7,          debug_set_eye_distance,        7
-    DEBUG_REGISTER_KEY RMKey_8,          debug_set_eye_distance,        8
-    DEBUG_REGISTER_KEY RMKey_9,          debug_set_eye_distance,        9
 
 	; Install our own IRQ handler - thanks Steve! :)
 	bl install_irq_handler
@@ -466,23 +450,6 @@ debug_skip_to_next_pattern:
     mov r1, #0
     swi QTM_Pos         ; set position.
     mov pc, lr
-
-debug_toggle_palette:
-    stmfd sp!, {r3-r5, lr}
-    ; Toggle palette.
-    ldr r2, palette_p
-    adr r3, palette_red_cyan
-    cmp r2, r3
-    adreq r2, palette_red_blue
-    movne r2, r3
-    str r2, palette_p
-
-    bl set_palette_for_3d_scene
-    ldmfd sp!, {r3-r5, pc}
-
-debug_set_eye_distance:
-    mov r0, r1
-    b set_eye_distance
 .endif
 
 ; ============================================================================
@@ -771,7 +738,7 @@ vsync_bodge:
 	.long 0
 
 ; ============================================================================
-; Additional code modules
+; Core code modules
 ; ============================================================================
 
 palette_p:
@@ -796,34 +763,25 @@ debug_show_rasters:
 .p2align 2
 .endif
 
-.include "lib/debug.asm"
-
-.include "src/fx.asm"
-.include "src/script.asm"
-.include "src/sequence.asm"
-
-.include "src/3d-scene.asm"
-.include "src/scene-2d.asm"
-
-LeftEye_X_Pos:
-    FLOAT_TO_FP 0.0
-
-RightEye_X_Pos:
-    FLOAT_TO_FP 0.0
-
-Anaglyph_Enable_Skew:
-    .byte Anaglyph_Default_Skew_Setting
-
-Anaglyph_Eye_setting:
-    .byte EyeDistance_Default_Setting
-.p2align 2
-
 rnd_seed:
     .long 0x87654321
 
-.include "src/dot-tunnel.asm"
-.include "src/starfield.asm"
-.include "src/dots.asm"
+.include "lib/debug.asm"
+.include "lib/fx.asm"
+.include "lib/script.asm"
+.include "lib/sequence.asm"
+
+; ============================================================================
+; FX code modules.
+; ============================================================================
+
+.include "src/3d-scene.asm"
+.include "src/scene-2d.asm"
+.include "src/particles.asm"
+
+; ============================================================================
+; Support library code modules.
+; ============================================================================
 
 .include "lib/palette.asm"
 .include "lib/mode9-screen.asm"

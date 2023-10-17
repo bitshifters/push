@@ -1,0 +1,9 @@
+Particle demo
+~~~
+
+1) Strip back Mikroreise to simpler framework:
+
+TODO:
+- Remove unused FX, code, data etc.
+- Tidy up code and refactor
+- Widescreen?

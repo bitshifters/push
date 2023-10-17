@@ -209,6 +209,7 @@ model_circle_verts:
     .byte \a, \b
 .endm
 
+.if 0
 .include "src/obj/rab.asm"
 .include "src/obj/slp.asm"
 .include "src/obj/rft.asm"
@@ -227,5 +228,6 @@ model_circle_verts:
 .include "src/obj/mst.asm"
 .include "src/obj/iph.asm"
 .include "src/obj/mik.asm"
+.endif
 
 ; ============================================================================

@@ -223,6 +223,7 @@ scene2d_update:
 
     ldr pc, [sp], #4
 
+.if 0
 scene2d_draw_anaglyph:
     str lr, [sp, #-4]!
 
@@ -243,6 +244,7 @@ scene2d_draw_anaglyph:
     bl scene2d_draw
 
     ldr pc, [sp], #4
+.endif
 
 ; Plot all objects in the scene.
 ; R4=colour index
@@ -311,11 +313,13 @@ scene2d_draw:
     mov r0, #VIEWPORT_CENTRE_X  ; [16.16]
     add r3, r3, r0
 
+    .if 0
     ldrb r0, Anaglyph_Enable_Skew
     cmp r0, #0
     ldrne r0, camera_pos+0      ; camera_pos_x
     movne r0, r0, asl #1
     addne r3, r3, r0
+    .endif
 
     ; screen_y = vp_centre_y - vp_scale * (y-cy) / (z-cz)
     mov r0, #VIEWPORT_SCALE>>12 ; [16.4]

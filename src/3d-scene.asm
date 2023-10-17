@@ -121,38 +121,8 @@ scene3d_reciprocal_table_p:
 ; ============================================================================
 ; ============================================================================
 
-eye_distance_table:
-    FLOAT_TO_FP 0.0         ; 0
-    FLOAT_TO_FP 0.3         ; 1
-    FLOAT_TO_FP 0.6         ; 2
-    FLOAT_TO_FP 0.9         ; 3
-    FLOAT_TO_FP 1.2         ; 4
-    FLOAT_TO_FP 1.5         ; 5
-    FLOAT_TO_FP 1.8         ; 6
-    FLOAT_TO_FP 2.1         ; 7
-    FLOAT_TO_FP 2.4         ; 8
-    FLOAT_TO_FP 2.7         ; 9
-
-; R0=distance index.
-set_eye_distance:
-    strb r0, Anaglyph_Eye_setting
-
-    adr r1, eye_distance_table
-    ldr r0, [r1, r0, lsl #2]
-
-    ; For now assume camera is fixed at X=0.
-    str r0, RightEye_X_Pos
-    mvn r0, r0
-    str r0, LeftEye_X_Pos
-    mov pc, lr
-
 init_3d_scene:
     str lr, [sp, #-4]!
-
-    mov r0, #EyeDistance_Default_Setting
-    bl set_eye_distance
-
-    bl set_palette_for_3d_scene
 
     ; Make circle object.
     mov r3, #Model_Circle_Radius
@@ -164,10 +134,6 @@ init_3d_scene:
 
 circle_verts_p:
     .long model_circle_verts
-
-set_palette_for_3d_scene:
-    ldr r2, palette_p
-    b palette_set_block
 
 ; ============================================================================
 ; ============================================================================
@@ -379,6 +345,7 @@ update_3d_scene_from_vu_bars:
 ; ============================================================================
 ; ============================================================================
 
+.if 0
 ; R12=screen addr
 anaglyph_draw_3d_scene_as_circles:             ; TODO: Dedupe this code!
     str lr, [sp, #-4]!
@@ -482,6 +449,7 @@ anaglyph_draw_3d_scene_as_solid:             ; TODO: Dedupe this code!
     bl draw_3d_scene_solid
 
     ldr pc, [sp], #4
+.endif
 
 object_colour_index:
     .long 0
@@ -547,9 +515,11 @@ project_3d_scene:
     mov r0, #VIEWPORT_CENTRE_X  ; [16.16]
     add r3, r3, r0
 
+    .if 0
     ldrb r0, Anaglyph_Enable_Skew
     cmp r0, #0
     addne r3, r3, r6, asl #1     ; camera_pos_x * 2
+    .endif
 
     ; screen_y = vp_centre_y - vp_scale * (y-cy) / (z-cz)
     mov r0, #VIEWPORT_SCALE>>12 ; [16.4]

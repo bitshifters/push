@@ -177,7 +177,7 @@ particles_draw_all:
     mov r2, r2, lsr #16
     cmp r2, #0
     blt .3                              ; clip top - TODO: destroy particle?
-    cmp r2, #Screen_Height-1
+    cmp r2, #Screen_Height-1            ; WHY -1?
     bge .3                              ; clip bottom - TODO: destroy particle?
 
     ; TODO: If eroniously replace R2 with R1 above then Arculator exists without warning!

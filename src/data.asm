@@ -40,7 +40,7 @@ scroller_text_string_end_no_adr:
 
 ; ============================================================================
 
-.if 1
+.if 0
 .p2align 6
 dots_y_table_1_no_adr:
 .incbin "data/dots_y_table_1.bin"
@@ -66,6 +66,7 @@ dots_y_table_2_b_end_no_adr:
 
 ; ============================================================================
 
+.if 0
 .p2align 6
 dot_tunnel_offset_xy_no_adr:
     .incbin "data\dot_tunnel_xy_offset.bin"
@@ -74,9 +75,11 @@ dot_tunnel_offset_xy_no_adr:
 
 dot_tunnel_xy_no_adr:
     .incbin "data\dot_tunnel_xy.bin"
+.endif
 
 ; ============================================================================
 
+.if 0
 bs_logo_screen_no_adr:
     .incbin "build/bs-logo.bin"
 
@@ -94,6 +97,7 @@ credits_screen_no_adr:
 
 credits_pal_no_adr:
     .incbin "build/credits.bin.pal"
+.endif
 
 ; ============================================================================
 

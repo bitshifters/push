@@ -26,7 +26,7 @@ PNG2ARC=./bin/png2arc.py
 PNG2ARC_FONT=./bin/png2arc_font.py
 PNG2ARC_SPRITE=./bin/png2arc_sprite.py
 PNG2ARC_DEPS:=./bin/png2arc.py ./bin/arc.py ./bin/png2arc_font.py ./bin/png2arc_sprite.py
-FOLDER=!Reise
+FOLDER=!Verse
 HOSTFS=../arculator/hostfs
 # TODO: Need a copy command that copes with forward slash directory separator. (Maybe MSYS cp?)
 
@@ -39,15 +39,14 @@ deploy: $(FOLDER)
 	$(MKDIR_P) "$(HOSTFS)\$(FOLDER)"
 	$(COPY) "$(FOLDER)\*.*" "$(HOSTFS)\$(FOLDER)\*.*"
 
-$(FOLDER): build ./build/archie-verse.bin ./build/seq.bin ./build/!run.txt ./build/icon.bin ./build/three-dee.mod
+$(FOLDER): build ./build/archie-verse.bin ./build/!run.txt ./build/icon.bin ./build/music.mod
 	$(RM_RF) $(FOLDER)
 	$(MKDIR_P) $(FOLDER)
 	$(COPY) .\folder\*.* "$(FOLDER)\*.*"
 	$(COPY) .\build\!run.txt "$(FOLDER)\!Run,feb"
 	$(COPY) .\build\icon.bin "$(FOLDER)\!Sprites,ff9"
 	$(COPY) .\build\archie-verse.bin "$(FOLDER)\!RunImage,ff8"
-	$(COPY) .\build\three-dee.mod "$(FOLDER)\Music,001"
-	$(COPY) .\build\seq.bin  "$(FOLDER)\Seq,ffd"
+	$(COPY) .\build\music.mod "$(FOLDER)\Music,001"
 
 .PHONY:seq
 seq: ./build/seq.bin
@@ -61,16 +60,15 @@ compress: shrink
 	$(COPY) "$(FOLDER)\*.*" "$(HOSTFS)\$(FOLDER)\*.*"
 
 .PHONY:shrink
-shrink: build ./build/archie-verse.shri ./build/seq.bin ./build/!run.txt ./build/icon.bin ./build/loader.bin ./build/three-dee.mod
+shrink: build ./build/archie-verse.shri ./build/!run.txt ./build/icon.bin ./build/loader.bin ./build/music.mod
 	$(RM_RF) $(FOLDER)
 	$(MKDIR_P) $(FOLDER)
 	$(COPY) .\folder\*.* "$(FOLDER)\*.*"
 	$(COPY) .\build\!run.txt "$(FOLDER)\!Run,feb"
 	$(COPY) .\build\icon.bin "$(FOLDER)\!Sprites,ff9"
 	$(COPY) .\build\loader.bin "$(FOLDER)\!RunImage,ff8"
-	$(COPY) .\build\three-dee.mod "$(FOLDER)\Music,001"
+	$(COPY) .\build\music.mod "$(FOLDER)\Music,001"
 	$(COPY) .\build\archie-verse.shri "$(FOLDER)\Demo,ffd"
-	$(COPY) .\build\seq.bin  "$(FOLDER)\Seq,ffd"
 
 build:
 	$(MKDIR_P) "./build"
@@ -87,10 +85,10 @@ build:
 ./build/seq.bin: build ./build/seq.o link_script2.txt
 	$(VLINK) -T link_script2.txt -b rawbin1 -o $@ build/seq.o -Mbuild/linker2.txt
 
-./build/seq.o: build archie-verse.asm ./src/sequence-data.asm ./build/three-dee.mod ./build/assets.txt
+./build/seq.o: build archie-verse.asm ./src/sequence-data.asm ./build/music.mod ./build/assets.txt
 	$(VASM) -L build/compile.txt -m250 -Fvobj -opt-adr -o build/seq.o archie-verse.asm
 
-./build/archie-verse.bin: build ./build/archie-verse.o ./build/seq.o link_script.txt
+./build/archie-verse.bin: build ./build/archie-verse.o link_script.txt
 	$(VLINK) -T link_script.txt -b rawbin1 -o $@ build/archie-verse.o -Mbuild/linker.txt
 
 ./build/dot_gen_code_a.bin: ./src/dot_plot_generated.asm
@@ -100,7 +98,7 @@ build:
 	$(VASM) -L build/dot_b.txt -m250 -Fbin -opt-adr -o $@ $<
 
 .PHONY:./build/archie-verse.o
-./build/archie-verse.o: build archie-verse.asm ./build/three-dee.mod ./build/assets.txt ./build/dot_gen_code_a.bin ./build/dot_gen_code_b.bin
+./build/archie-verse.o: build archie-verse.asm ./build/music.mod ./build/assets.txt
 	$(VASM) -L build/compile.txt -m250 -Fvobj -opt-adr -o build/archie-verse.o archie-verse.asm
 
 ##########################################################################
@@ -136,7 +134,7 @@ clean:
 ##########################################################################
 ##########################################################################
 
-./build/three-dee.mod: ./data/music2/mikroreise.mod
+./build/music.mod: ./data/music/maze-funky-delicious.mod
 	$(COPY) $(subst /,\\,$+) $(subst /,\\,$@)
 
 ##########################################################################
