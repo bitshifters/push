@@ -7,3 +7,4 @@ TODO:
 - Remove unused FX, code, data etc.
 - Tidy up code and refactor
 - Widescreen?
+- Change layer system to priority system?

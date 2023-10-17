@@ -44,7 +44,7 @@ sequence_jump_to_pattern:
     ldr pc, [sp], #4
 
 .macro frame_for_pattern pat, 
-    .long \pat*PatternLength_Rows*ProTracker_TicksPerRow*125.0/ProTracker_Tempo
+    .long \pat*SeqConfig_PatternLength_Rows*SeqConfig_ProTracker_TicksPerRow*125.0/SeqConfig_ProTracker_Tempo
 .endm
 
 debug_pattern_to_frame:

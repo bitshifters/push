@@ -1,11 +1,12 @@
 ; ============================================================================
-; DATA.
+; DATA Segment.
 ; ============================================================================
 
-.data   ; TODO: Do we need an rodata segment?
-
+.data
 .p2align 6
 
+; ============================================================================
+; Library data.
 ; ============================================================================
 
 .include "lib/lib_data.asm"
@@ -20,9 +21,9 @@ scroller_font_data_no_adr:
 
 ; ============================================================================
 
-.if !_MUSIC_LOAD_LOOSE
+.if !AppConfig_LoadModFromFile
 .p2align 2
-three_dee_mod_no_adr:
+music_mod_no_adr:
 .incbin "build/three-dee.mod"
 .endif
 
@@ -103,6 +104,8 @@ credits_pal_no_adr:
 
 .include "src/data/3d-model-data.asm"
 
+; ============================================================================
+; Sequence data (RODATA Segment - ironically).
 ; ============================================================================
 
 .p2align 6
