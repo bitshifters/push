@@ -323,9 +323,6 @@ temp_vector_2:
 transform_3d_scene:
     str lr, [sp, #-4]!
 
-    ; TODO: Optimise creation of rotation matrix.
-    ;       Can compute this directly w/out multiplying matrices.
-
     ; Create rotation matrix as object transform.
     adr r2, temp_matrix_1
     ldr r0, object_rot + 0
@@ -381,7 +378,6 @@ transform_3d_scene:
     .1:
     ; R0=ptr to matrix, R1=vector A, R2=vector B
     bl matrix_multiply_vector
-    ; TODO: Array version of this function.
 
     ldmia r2, {r3-r5}
     ; Add camera relative object position to transform vertex.

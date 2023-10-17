@@ -27,13 +27,6 @@
 .include "src/app_config.h.asm"
 
 ; ============================================================================
-; App defines. TODO: Remove!
-; ============================================================================
-
-; TODO: Remove Timer1 split if not necessary.
-.equ RasterSplitLine, 56+90			; 56 lines from vsync to screen start
-
-; ============================================================================
 ; Code Start
 ; ============================================================================
 
@@ -292,10 +285,7 @@ debug_restart_sequence:
 	swi QTM_Pos
 
     ; Start script again.
-    bl sequence_init
-
-    ; TODO: Reset frame counter. [We don't have a frame counter.]
-    mov pc, lr
+    b sequence_init
 
 debug_skip_to_next_pattern:
     mov r0, #-1

@@ -2,6 +2,9 @@
 ; App standard code.
 ; ============================================================================
 
+.equ RasterSplitLine, 56+90			; 56 lines from vsync to screen start
+
+
 .if AppConfig_LoadModFromFile
 music_filename:
 	.byte "<Demo$Dir>.Music",0

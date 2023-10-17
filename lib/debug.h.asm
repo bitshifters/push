@@ -2,7 +2,7 @@
 ; Debug MACROS.
 ; ============================================================================
 
-.macro DEBUG_REGISTER_VAR addr                      ; TODO: Move this to debug.h.asm?
+.macro DEBUG_REGISTER_VAR addr
     .if _DEBUG
     adr r0, \addr
     bl debug_register_var

@@ -41,6 +41,34 @@ debug_plot_hex4:
     adr r0, debug_temp_string
     b debug_plot_string
 
+.if 0
+; R0=fp value.
+debug_write_fp:
+    stmfd sp!, {r1, r2}
+	adr r1, debug_temp_string
+	mov r2, #Debug_Temp_Len
+	swi OS_ConvertHex8
+	adr r0, debug_temp_string
+	swi OS_WriteO
+    mov r0, #32
+    swi OS_WriteC
+    ldmfd sp!, {r1, r2}
+    mov pc, lr
+
+; R0=vector ptr.
+debug_write_vector:
+    stmfd sp!, {r0, r3, lr}
+    mov r3, r0
+    ldr r0, [r3, #0]
+    bl debug_write_fp
+    ldr r0, [r3, #4]
+    bl debug_write_fp
+    ldr r0, [r3, #8]
+    bl debug_write_fp
+    ldmfd sp!, {r0, r3, pc}
+.endif
+
+
 ; R0=address of a variable to add to the debug display.
 ; Trashes: R1-R3
 debug_register_var:
@@ -218,5 +246,4 @@ error_out_of_keys:
     .byte "Out of debug keys!"
     .p2align 2
     .long 0
-
 .endif

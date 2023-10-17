@@ -182,20 +182,6 @@ vector_recip_length:
     ldr pc, [sp], #4
 .endif
 
-.if _DEBUG
-; R0=vector ptr.
-debug_write_vector:
-    stmfd sp!, {r0, r3, lr}
-    mov r3, r0
-    ldr r0, [r3, #0]
-    bl debug_write_fp
-    ldr r0, [r3, #4]
-    bl debug_write_fp
-    ldr r0, [r3, #8]
-    bl debug_write_fp
-    ldmfd sp!, {r0, r3, pc}
-.endif
-
 .if 0               ; Feels like too early optimisation.
 ; Dot product.
 ; Parameters:

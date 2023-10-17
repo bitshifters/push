@@ -71,31 +71,6 @@ lib_init:
 
 ; ============================================================================
 
-; TODO: Proper debug library with fast plot to screen.
-; TODO: Extend Arculator to do fast debug logging to host file.
-
-.if _DEBUG
-; R0=fp value.
-debug_write_fp:
-    stmfd sp!, {r1, r2}
-	adr r1, debug_string
-	mov r2, #16
-	swi OS_ConvertHex8
-	adr r0, debug_string
-	swi OS_WriteO
-    mov r0, #32
-    swi OS_WriteC
-    ldmfd sp!, {r1, r2}
-    mov pc, lr
-
-.ifndef debug_string
-debug_string:
-    .skip 16
-.endif
-.endif
-
-; ============================================================================
-
 .if LibConfig_IncludeSine
 .include "lib/sine.asm"
 .endif

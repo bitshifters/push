@@ -4,7 +4,8 @@ Particle demo
 1) Strip back Mikroreise to simpler framework:
 
 TODO:
-- Remove unused FX, code, data etc.
-- Tidy up code and refactor
+- Remove unused FX, code, data etc. - DONE
+- Tidy up code and refactor. - DONE
 - Widescreen?
 - Change layer system to priority system?
+- Direct VIDC write for palette changes.
