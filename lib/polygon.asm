@@ -1,6 +1,7 @@
 ; ============================================================================
 ; Polygon routines.
 ; Uses a span buffer.
+; Currently plots quads by default but could plot arbitrary polys.
 ; ============================================================================
 
 .equ LibPolygon_IncludeTriPlot, 0

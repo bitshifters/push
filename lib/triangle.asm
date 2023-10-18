@@ -1,6 +1,6 @@
 ; ============================================================================
 ; Triangle routines.
-; Not using a span buffer.
+; Not using a span buffer. Uses bottom flat, top flat algorithm.
 ; ============================================================================
 
 .equ LibTriangle_IncludeQuadPlot, 1
@@ -451,6 +451,7 @@ triangle_plot_quad_indexed:
 
     ldr pc, [sp], #4
 
+.if 0
 ; Plot a quad to the screen using two triangles.
 ;  R0=colour index
 ;  R1=screen addr
@@ -484,6 +485,7 @@ triangle_plot_quad:
     .long 0
 .1:
     .skip 3*4*2
+.endif
 .endif
 
 .if LibTriangle_IncludeNicksCode
@@ -796,7 +798,6 @@ triangle_recip_table:
     .long PRECISION_MULTIPLIER / num
     .set num, num+1
     .endr
-
 .endif
 
 ; ============================================================================

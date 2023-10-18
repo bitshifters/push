@@ -2,10 +2,14 @@ Particle demo
 ~~~
 
 1) Strip back Mikroreise to simpler framework:
+    - Remove unused FX, code, data etc. - DONE
+    - Tidy up code and refactor. - DONE
+2) Add Luapod back to control particle & emitter vars.
+    - Register var with Lua/Rocket track.
 
-TODO:
-- Remove unused FX, code, data etc. - DONE
-- Tidy up code and refactor. - DONE
-- Widescreen?
-- Change layer system to priority system?
-- Direct VIDC write for palette changes.
+
+MISSING framework features:
+- Add arbitrary tick functions (with self-remove?) e.g. screen fades.
+- Direct VIDC write fns for palette changes.
+- Palette pending to sync palette changes on vsync.
+- Fast debug print to screen.

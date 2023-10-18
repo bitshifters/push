@@ -2,7 +2,6 @@
 ; Fast MODE 9 span plot routines.
 ; Code generated at runtime.
 ; Kindly provided by Progen (Sarah Walker).
-; NB. This version hacked to always ORR pixels to screen.
 ; ============================================================================
 
 gen_code_pointers_p:
@@ -30,40 +29,40 @@ gen_code_pointers_p:
 
 gen_first_word_1:
 	LDR r3, [r10]
-;	AND r3, r3, #0xf
+	AND r3, r3, #0xf
 	ORR r3, r3, r9, LSL #4		; iiiiiiih
 	STR r3, [r10], #4
 gen_first_word_2:
 	LDR r3, [r10]
-;	AND r3, r3, #0xff
+	AND r3, r3, #0xff
 	ORR r3, r3, r9, LSL #8		; iiiiiigh
 	STR r3, [r10], #4
 gen_first_word_3:
 	LDR r3, [r10]
-;	MOV r3, r3, LSL #20
-;	MOV r3, r3, LSR #20
+	MOV r3, r3, LSL #20
+	MOV r3, r3, LSR #20
 	ORR r3, r3, r9, LSL #12		; iiiiifgh
 	STR r3, [r10], #4
 gen_first_word_4:
 	LDR r3, [r10]
-;	MOV r3, r3, LSL #16
-;	MOV r3, r3, LSR #16
+	MOV r3, r3, LSL #16
+	MOV r3, r3, LSR #16
 	ORR r3, r3, r9, LSL #16		; iiiiefgh
 	STR r3, [r10], #4
 gen_first_word_5:
 	LDR r3, [r10]
-;	MOV r3, r3, LSL #12
-;	MOV r3, r3, LSR #12
+	MOV r3, r3, LSL #12
+	MOV r3, r3, LSR #12
 	ORR r3, r3, r9, LSL #20		; iiidefgh
 	STR r3, [r10], #4
 gen_first_word_6:
 	LDR r3, [r10]
-;	BIC r3, r3, #0xff000000
+	BIC r3, r3, #0xff000000
 	ORR r3, r3, r9, LSL #24		; iicdefgh
 	STR r3, [r10], #4
 gen_first_word_7:
 	LDR r3, [r10]
-;	BIC r3, r3, #0xf0000000
+	BIC r3, r3, #0xf0000000
 	ORR r3, r3, r9, LSL #28		; ibcdefgh
 	STR r3, [r10], #4
 gen_first_word_over:
@@ -87,7 +86,7 @@ gen_same_word_0:
 	MOV r1, r3, LSR r1	; r1=0 => r1=0x0000000f => treats xend as inclusive.
 
 	LDR r3, [r10]
-;	BIC r3, r3, r1
+	BIC r3, r3, r1
 	AND r6, r9, r1
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -101,7 +100,7 @@ gen_same_word_1:
 
 	LDR r3, [r10]
 	BIC r1, r1, #0xf
-;	BIC r3, r3, r1
+	BIC r3, r3, r1
 	AND r6, r9, r1
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -115,7 +114,7 @@ gen_same_word_2:
 
 	LDR r3, [r10]
 	BIC r1, r1, #0xff
-;	BIC r3, r3, r1
+	BIC r3, r3, r1
 	AND r6, r9, r1
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -129,7 +128,7 @@ gen_same_word_3:
 
 	LDR r3, [r10]
 	MOV r1, r1, LSR #12
-;	BIC r3, r3, r1, LSL #12
+	BIC r3, r3, r1, LSL #12
 	AND r6, r9, r1, LSL #12
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -143,7 +142,7 @@ gen_same_word_4:
 
 	LDR r3, [r10]
 	MOV r1, r1, LSR #16
-;	BIC r3, r3, r1, LSL #16
+	BIC r3, r3, r1, LSL #16
 	AND r6, r9, r1, LSL #16
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -157,7 +156,7 @@ gen_same_word_5:
 
 	LDR r3, [r10]
 	MOV r1, r1, LSR #20
-;	BIC r3, r3, r1, LSL #20
+	BIC r3, r3, r1, LSL #20
 	AND r6, r9, r1, LSL #20
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -171,7 +170,7 @@ gen_same_word_6:
 
 	LDR r3, [r10]
 	MOV r1, r1, LSR #24
-;	BIC r3, r3, r1, LSL #24
+	BIC r3, r3, r1, LSL #24
 	AND r6, r9, r1, LSL #24
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -185,7 +184,7 @@ gen_same_word_7:
 
 	LDR r3, [r10]
 	MOV r1, r1, LSR #28
-;	BIC r3, r3, r1, LSL #28
+	BIC r3, r3, r1, LSL #28
 	AND r6, r9, r1, LSL #28
 	ORR r3, r3, r6
 	STR r3, [r10]
@@ -203,28 +202,18 @@ gen_same_word_table:
 	.long gen_same_word_over
 
 gen_one_word:
-	LDR r3, [r10]
-    ORR r3, r3, r9
-	STR r3, [r10], #4
+	STR r9, [r10], #4
 gen_one_word_end:
 
 .if LibSpanGen_MultiWord > 1
 gen_two_words:
-    ldmia r10, {r3, r5}
-    orr r3, r3, r9
-    orr r5, r5, r9
-	stmia r10!, {r3, r5}
+	stmia r10!, {r5,r9}
 gen_two_words_end:
 .endif
 
 .if LibSpanGen_MultiWord > 2
 gen_four_words:
-    ldmia r10, {r2-r5}
-    orr r2, r2, r9
-    orr r3, r3, r9
-    orr r4, r4, r9
-    orr r5, r5, r9
-	stmia r10!, {r2-r9}
+	stmia r10!, {r2,r4,r5,r9}
 gen_four_words_end:
 .endif
 
@@ -235,7 +224,7 @@ gen_last_word_0:
 	MOV r0, r0
 gen_last_word_1:
 	LDRB r3, [r10]
-;	BIC r3, r3, #0x0f
+	BIC r3, r3, #0x0f
 	ORR r3, r3, r9, LSR #28		; ih
 	STRB r3, [r10]
 gen_last_word_2:
@@ -244,30 +233,30 @@ gen_last_word_2:
 	STRB r3, [r10]
 gen_last_word_3:
 	LDR r3, [r10]
-;	MOV r3, r3, LSR #12
-;	MOV r3, r3, LSL #12
+	MOV r3, r3, LSR #12
+	MOV r3, r3, LSL #12
 	ORR r3, r3, r9, LSR #20		; abcdeiii
 	STR r3, [r10]
 gen_last_word_4:
 	LDR r3, [r10]
-;	MOV r3, r3, LSR #16
-;	MOV r3, r3, LSL #16
+	MOV r3, r3, LSR #16
+	MOV r3, r3, LSL #16
 	ORR r3, r3, r9, LSR #16		; abcdiiii
 	STR r3, [r10]
 gen_last_word_5:
 	LDR r3, [r10]
-;	MOV r3, r3, LSR #20
-;	MOV r3, r3, LSL #20
+	MOV r3, r3, LSR #20
+	MOV r3, r3, LSL #20
 	ORR r3, r3, r9, LSR #12		; abciiiii
 	STR r3, [r10]
 gen_last_word_6:
 	LDR r3, [r10]
-;	AND r3, r3, #0xff000000
+	AND r3, r3, #0xff000000
 	ORR r3, r3, r9, LSR #8		; abiiiiii
 	STR r3, [r10]
 gen_last_word_7:
 	LDR r3, [r10]
-;	AND r3, r3, #0xf0000000
+	AND r3, r3, #0xf0000000
 	ORR r3, r3, r9, LSR #4		; aiiiiiii
 	STR r3, [r10]
 gen_last_word_over:

@@ -212,7 +212,7 @@ circles_per_Y_loop:
 	ADD r11, r11, r8, LSL #4 ;r11 = screen addr
 	.else
 	.if Screen_Width != 320
-	.err Screen_Width calculation not accounted for!
+	.err "Screen_Width calculation not accounted for!"
 	.endif
 	.endif
 

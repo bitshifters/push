@@ -1,7 +1,7 @@
 ; ============================================================================
 ; Debug helpers.
 ; TODO: Replace OS VDU routines with faster version.
-; TODO: Could do fast direct-to-emulator logging if useful?
+; TODO: Could do log to open file (on HostFS) if useful.
 ; ============================================================================
 
 .if _DEBUG
@@ -21,14 +21,12 @@ debug_prev_mask:
 ; Plot a string to the screen at the current cursor position.
 ; R0=ptr to null terminated string.
 debug_plot_string:
-    ; TODO: Replace OS VDU handling with faster version.
-    swi OS_WriteO
+    swi OS_WriteO   ; slow.
     mov pc, lr
 
 ; R0=VDU character
 debug_vdu:
-    ; TODO: Replace OS VDU handling with faster version.
-    swi OS_WriteC
+    swi OS_WriteC   ; slow.
     mov pc, lr
 
 ; R0=value to plot as %04x
