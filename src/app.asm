@@ -1,23 +1,18 @@
 ; ============================================================================
 ; App standard code.
+; Hack as necessary per prod.
 ; ============================================================================
 
 .equ RasterSplitLine, 56+90			; 56 lines from vsync to screen start
 
 
-.if AppConfig_LoadModFromFile
-music_filename:
-	.byte "<Demo$Dir>.Music",0
-	.p2align 2
-.else
-music_mod_p:
-	.long music_mod_no_adr		; 14
-.endif
+; ============================================================================
+; App video code.
+; ============================================================================
 
 vdu_screen_disable_cursor:
 .byte 22, VideoConfig_VduMode, 23,1,0,0,0,0,0,0,0,0
 .p2align 2
-
 
 app_init_video:
 	; Set screen MODE & disable cursor
@@ -60,6 +55,19 @@ error_noscreenmem:
 	.p2align 2
 	.long 0
 
+
+; ============================================================================
+; App audio code.
+; ============================================================================
+
+.if AppConfig_LoadModFromFile
+music_filename:
+	.byte "<Demo$Dir>.Music",0
+	.p2align 2
+.else
+music_mod_p:
+	.long music_mod_no_adr		; 14
+.endif
 
 app_init_audio:
 .if AppConfig_DynamicSampleSpeed
@@ -113,6 +121,7 @@ app_init_audio:
 	swi QTM_Load
 
     mov pc, lr
+
 
 ; ============================================================================
 ; Interrupt handling.

@@ -18,3 +18,12 @@
 	blne palette_set_border
 	.endif
 .endm
+
+; TODO: Make this table based if code gets unwieldy.
+.macro SYNC_REGISTER_VAR track, addr
+    .if AppConfig_UseSyncTracks
+    mov r0, #\track
+    adr r1, \addr
+    bl sync_register_track_var
+    .endif
+.endm

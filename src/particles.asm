@@ -235,7 +235,7 @@ emitters_tick_all:
     ;  R0=next active particle.
     ;  R1=x position, R2=y position, R3=z position
     ;  R4=x velocity, R5=y velocity, R6=z velocity
-    ;  R7=liftime | colour index
+    ;  R7=lifetime | colour index
 
     ldr r8, [r10, #0]               ; curr_p->next_p
 

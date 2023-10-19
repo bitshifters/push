@@ -5,9 +5,9 @@
 ; ============================================================================
 
 .if _DEBUG
-.equ Debug_Temp_Len, 16
-.equ Debug_Max_Vars, 8
-.equ Debug_Max_Keys, 32
+.equ Debug_TempLen, 16
+.equ Debug_MaxVars, 8
+.equ Debug_MaxKeys, 32
 
 debug_num_keys:
     .long 0
@@ -33,7 +33,7 @@ debug_vdu:
 ; Trashes R1-R2.
 debug_plot_hex4:
     adr r1, debug_temp_string
-    mov r2, #Debug_Temp_Len
+    mov r2, #Debug_TempLen
     swi OS_ConvertHex4
 
     adr r0, debug_temp_string
@@ -44,7 +44,7 @@ debug_plot_hex4:
 debug_write_fp:
     stmfd sp!, {r1, r2}
 	adr r1, debug_temp_string
-	mov r2, #Debug_Temp_Len
+	mov r2, #Debug_TempLen
 	swi OS_ConvertHex8
 	adr r0, debug_temp_string
 	swi OS_WriteO
@@ -79,7 +79,7 @@ debug_register_var:
     moveq pc, lr
 
     add r2, r2, #1
-    cmp r2, #Debug_Max_Vars
+    cmp r2, #Debug_MaxVars
     blt .1
 
     adr r0, error_out_of_vars
@@ -116,7 +116,7 @@ debug_plot_vars:
 	swi OS_WriteI+32        ; TODO: SPACE
 
     add r11, r11, #1
-    cmp r11, #Debug_Max_Vars
+    cmp r11, #Debug_MaxVars
     blt .1
 
 .2:
@@ -130,7 +130,7 @@ debug_plot_vars:
 debug_register_key:
     adr r4, debug_key_stack
     ldr r3, debug_num_keys
-    cmp r3, #Debug_Max_Keys
+    cmp r3, #Debug_MaxKeys
     adrge r0, error_out_of_keys
     swige OS_GenerateError
 
@@ -225,10 +225,10 @@ debug_set_byte_true:
 
 
 debug_temp_string:
-	.skip Debug_Temp_Len
+	.skip Debug_TempLen
 
 debug_var_stack:
-    .skip 4*Debug_Max_Vars
+    .skip 4*Debug_MaxVars
 
 error_out_of_vars:
     .long 0
@@ -237,7 +237,7 @@ error_out_of_vars:
     .long 0
 
 debug_key_stack:
-    .skip 12*Debug_Max_Keys
+    .skip 12*Debug_MaxKeys
 
 error_out_of_keys:
     .long 0

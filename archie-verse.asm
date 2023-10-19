@@ -10,6 +10,7 @@
 .equ _DEBUG_RASTERS,            (_DEBUG && 1)
 .equ _DEBUG_SHOW,               (_DEBUG && 1)
 .equ _CHECK_FRAME_DROP,         (!_DEBUG && 1)
+.equ _SYNC_EDITOR,              (_DEBUG && 1)   ; sync driven by external editor.
 
 .equ DebugDefault_PlayPause,    1		; play
 .equ DebugDefault_ShowRasters,  0
@@ -51,17 +52,6 @@ main:
 	;swi OS_ReadMonotonicTime
 	;str r0, rnd_seed
 
-    ; Register debug vars.
-    DEBUG_REGISTER_VAR vsync_count
-    DEBUG_REGISTER_VAR frame_counter
-    DEBUG_REGISTER_VAR music_pos
-    DEBUG_REGISTER_KEY RMKey_Space,      debug_toggle_main_loop_pause,  0
-    DEBUG_REGISTER_KEY RMKey_A,          debug_restart_sequence,        0
-    DEBUG_REGISTER_KEY RMKey_S,          debug_set_byte_true,           debug_main_loop_step
-    DEBUG_REGISTER_KEY RMKey_D,          debug_toggle_byte,             debug_show_info
-    DEBUG_REGISTER_KEY RMKey_R,          debug_toggle_byte,             debug_show_rasters
-    DEBUG_REGISTER_KEY RMKey_ArrowRight, debug_skip_to_next_pattern,    0
-
 	; Claim the Event vector.
 	MOV r0, #EventV
 	ADR r1, event_handler
@@ -77,29 +67,45 @@ main:
 	SWI OS_Byte
     .endif
 
-	; EARLY INIT / LOAD STUFF HERE! 
-	bl lib_init
-
-	; R12=top of RAM used.
-    str r12, [sp, #-4]!
-
-	; Bootstrap the main sequence.
-    bl sequence_init
-
-    ; Tick script once for module init.
-    bl script_tick_all
-
-    ; Initialise the music player etc.
-    bl app_init_audio
-
-	; LATE INITALISATION HERE!
-	bl get_next_bank_for_writing    ; can now write to screen.
-
 	; Claim the Error vector.
 	MOV r0, #ErrorV
 	ADR r1, error_handler
 	MOV r2, #0
 	SWI OS_Claim
+
+	; EARLY INIT / LOAD STUFF HERE! 
+	bl lib_init
+
+	; R12=top of RAM used.
+    ; str r12, [sp, #-4]!
+
+    ; Initialise the music player etc.
+    bl app_init_audio
+
+	; Bootstrap the main sequence.
+    bl sequence_init
+
+    ; Install sync editor.
+    .if AppConfig_UseSyncTracks
+    bl sync_init
+    .endif
+
+    ; Tick script once for module init.
+    bl script_tick_all
+
+	; LATE INITALISATION HERE!
+	bl get_next_bank_for_writing    ; can now write to screen.
+
+    ; Register debug vars.
+    DEBUG_REGISTER_VAR vsync_count
+    DEBUG_REGISTER_VAR frame_counter
+    DEBUG_REGISTER_VAR music_pos
+    DEBUG_REGISTER_KEY RMKey_Space,      debug_toggle_main_loop_pause,  0
+    DEBUG_REGISTER_KEY RMKey_A,          debug_restart_sequence,        0
+    DEBUG_REGISTER_KEY RMKey_S,          debug_set_byte_true,           debug_main_loop_step
+    DEBUG_REGISTER_KEY RMKey_D,          debug_toggle_byte,             debug_show_info
+    DEBUG_REGISTER_KEY RMKey_R,          debug_toggle_byte,             debug_show_rasters
+    DEBUG_REGISTER_KEY RMKey_ArrowRight, debug_skip_to_next_pattern,    0
 
 	; Enable key pressed event.
 	mov r0, #OSByte_EventEnable
@@ -114,6 +120,10 @@ main_loop:
 	; ========================================================================
 	; PREPARE
 	; ========================================================================
+
+    .if AppConfig_UseSyncTracks
+    bl sync_update_vars
+    .endif
 
     .if _DEBUG
     bl debug_do_key_callbacks
@@ -147,6 +157,11 @@ main_loop:
     .else
     str r0, frame_counter
     bge exit
+    .endif
+
+    .if AppConfig_UseSyncTracks
+    ldr r0, frame_counter       ; TODO: frames vs syncs.
+    bl sync_set_time
     .endif
 
     .if _DEBUG
@@ -276,7 +291,11 @@ debug_toggle_main_loop_pause:
     swieq QTM_Pause			    ; pause
     swine QTM_Start             ; play
 
+    .if AppConfig_UseSyncTracks
+    b sync_set_is_playing
+    .else
     mov pc, lr
+    .endif
 
 debug_restart_sequence:
     ; Start music again.
@@ -427,6 +446,10 @@ error_handler:
 
     .if AppConfig_InstallIrqHandler
 	bl uninstall_irq_handler
+    .else
+	mov r0, #OSByte_EventDisable
+	mov r1, #Event_VSync
+	SWI OS_Byte
     .endif
 
 	; Release event handler.
@@ -490,6 +513,9 @@ rnd_seed:
 .include "lib/fx.asm"
 .include "lib/script.asm"
 .include "lib/sequence.asm"
+.if AppConfig_UseSyncTracks
+.include "src/sync.asm"
+.endif
 
 ; ============================================================================
 ; FX code modules.
@@ -530,24 +556,6 @@ palette_red_cyan:
     .long 0x00909090                    ; 13 = 1101 = white 3
     .long 0x00c0c0c0                    ; 14 = 1110 = white 4
     .long 0x00f0f0f0                    ; 15 = 1111 = white 5
-
-palette_red_blue:
-    .long 0x00000000                    ; 00 = 0000 = black
-    .long 0x00000030                    ; 01 = 0001 = red 1
-    .long 0x00300000                    ; 02 = 0010 = blue 1
-    .long 0x00300030                    ; 03 = 0011 = magenta 1
-    .long 0x00000060                    ; 04 = 0100 = red 2
-    .long 0x00000090                    ; 05 = 0101 = red 3
-    .long 0x000000c0                    ; 06 = 0110 = red 4
-    .long 0x000000f0                    ; 07 = 0111 = red 5
-    .long 0x00600000                    ; 08 = 1000 = blue 2
-    .long 0x00900000                    ; 09 = 1001 = blue 3
-    .long 0x00c00000                    ; 10 = 1010 = blue 4
-    .long 0x00f00000                    ; 11 = 1011 = blue 5
-    .long 0x00600060                    ; 12 = 1100 = magenta 2
-    .long 0x00900090                    ; 13 = 1101 = magenta 3
-    .long 0x00c000c0                    ; 14 = 1110 = magenta 4
-    .long 0x00f000f0                    ; 15 = 1111 = magenta 5
 
 ; ============================================================================
 ; DATA Segment

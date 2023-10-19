@@ -6,6 +6,27 @@ Particle demo
     - Tidy up code and refactor. - DONE
 2) Add Luapod back to control particle & emitter vars.
     - Register var with Lua/Rocket track.
+    - Rethink emitter context:
+        - Vec3 position
+        - Vec3 direction (or use Vec2 pitch/yaw?)
+        - Colour
+        - Size - use circle plot! <= MODE 9 not MODE 13 => ARGH!
+
+    - Register the emitter and drive from Lua.
+
+3) Improvements to particle & emitter system
+
+    - Emitter iteration function?
+        - Do we need to emit more than one particle per frame?
+        - Called after each particle is spawned?
+    
+    - Particle update function?
+        - Called for each particle tick to update size/colour etc.?
+        - Should be fixed per emitter, otherwise too expensive.
+        - Might infact have to be baked in.
+        - Additional forces (wind etc.?)
+
+    - 
 
 
 MISSING framework features:
