@@ -24,7 +24,7 @@
 .equ SeqConfig_PatternLength_Secs,      4.44444
 .equ SeqConfig_PatternLength_Frames,    222.222
 
-.equ SeqConfig_MaxFrames,               8667        ; 222.222 frames per pattern.
+.equ SeqConfig_MaxFrames,               65536        ; 222.222 frames per pattern.
 
 ; ============================================================================
 ; Audio config.
@@ -50,9 +50,9 @@
 .equ VideoConfig_Widescreen,    0
 .equ VideoConfig_ScreenBanks,   2
 
-.equ Screen_Mode,               13
+.equ Screen_Mode,               9
 .equ Screen_Width,              320
-.equ Screen_PixelsPerByte,      1
+.equ Screen_PixelsPerByte,      2
 
 .if VideoConfig_Widescreen
 .equ VideoConfig_VduMode,       97  ; MODE 9 widescreen (320x180)

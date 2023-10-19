@@ -11,7 +11,7 @@
 .equ Particle_ZVel,     24      ; R6
 .equ Particle_Life,     28      ; R7
 .equ Particle_Colour,   30      ; R7
-                                ; 1 byte free for something else.
+.equ Particle_Radius,   31      ; R7
 .equ Particle_SIZE,     32
 
 .equ Emitter_PerTick,   0       ; <=0 means not active.
@@ -22,6 +22,19 @@
 .equ Emitter_YDir,      20      ; R5
 .equ Emitter_ZDir,      24      ; R6
 .equ Emitter_SIZE,      28
+
+; KISS
+.equ NewEmitter_Timer,  0       ; R0
+.equ NewEmitter_XPos,   4       ; R1
+.equ NewEmitter_YPos,   8       ; R2
+.equ NewEmitter_ZPos,   12      ; R3
+.equ NewEmitter_XDir,   16      ; R4  Q: would this be better as angles? (in brads?)
+.equ NewEmitter_YDir,   20      ; R5
+.equ NewEmitter_ZDir,   24      ; R6
+.equ NewEmitter_Life,   28      ; R7
+.equ NewEmitter_Colour, 32      ; R8
+.equ NewEmitter_Radius, 36       ; R0 <=0 means not active.
+.equ NewEmitter_SIZE,   40
 
 .equ Emitters_Max,      5       ; start with 1.
 .equ Particles_Max,     680     ; ARM2 ~= 680. ARM250 ~= 1024.
@@ -52,6 +65,9 @@ particles_alive_count:
 
 ; Initialise all particles in the free list.
 particles_init:
+    str lr, [sp, #-4]!
+    DEBUG_REGISTER_VAR particles_alive_count    ; TODO: Make this not a bl call!
+
     adr r12, particles_array
 
     ; Start with first free particle as particles_array[0].
@@ -66,7 +82,7 @@ particles_init:
 
     mov r10, #0
     str r10, [r12, #0]                  ; last particle has zero pointer.
-    mov pc, lr
+    ldr pc, [sp], #4
 
 
 particles_tick_all:
@@ -84,12 +100,12 @@ particles_tick_all:
     ldmia r12, {r0-r7}                  ; load particle context
 
     ; Particle lifetime.
-    bic r8, r7, #0xff0000
-    subs r8, r8, #1
+    sub r7, r7, #1
+    movs r10, r7, asl #16
 
     ; If lifetime<0 then add this context to free list.
-    blmi particle_destroy
-    bmi .1
+    adrmi lr, .1
+    bmi particle_destroy
 
     ; Particle dynamics.
 
@@ -109,8 +125,8 @@ particles_tick_all:
 
     ; If y<0 then destroy.
     cmp r2, #0
-    blmi particle_destroy
-    bmi .1
+    adrmi lr, .1
+    bmi particle_destroy
 
     ; TODO: Update particle colour.
 
@@ -150,7 +166,7 @@ particle_destroy:
 
 ; Let's assume MODE 13 for now.
 ; R12=screen addr
-particles_draw_all:
+particles_draw_all_as_points:
     str lr, [sp, #-4]!
 
     adr r11, particles_first_active     ; curr_p
@@ -193,6 +209,59 @@ particles_draw_all:
     strb r7, [r10, #Screen_Stride]      ; (screen_y+1)[screen_x]=colour index.
     strb r7, [r10, #Screen_Stride+1]    ; (screen_y+1)[screen_x+1]=colour index.
     .endif
+
+.3:
+    b .1
+
+.2:
+    ldr pc, [sp], #4
+
+
+; R12=screen addr
+particles_draw_all_as_circles:
+    str lr, [sp, #-4]!
+
+    adr r11, particles_first_active     ; curr_p
+    ldr r11, [r11]                      ; next_p
+.1:
+    cmp r11, #0
+    beq .2
+
+    ; TODO: Don't need to load the full context.
+    ldmia r11, {r0-r7}                  ; load particle context
+    mov r11, r0                         ; curr_p=next_p
+
+    ; TODO: Plot 3D.
+
+    ; For now just plot 2D particles.
+    add r1, r1, #Centre_X               ; [s15.16]
+    rsb r2, r2, #Centre_Y               ; [s15.16]
+
+    mov r1, r1, lsr #16
+    mov r2, r2, lsr #16
+
+    .if 0
+    cmp r1, #0
+    blt .3                              ; clip left - TODO: destroy particle?
+    cmp r1, #Screen_Width
+    bge .3                              ; clip right - TODO: destroy particle?
+
+    cmp r2, #0
+    blt .3                              ; clip top - TODO: destroy particle?
+    cmp r2, #Screen_Height-1            ; WHY -1?
+    bge .3                              ; clip bottom - TODO: destroy particle?
+    .endif
+    
+    ;  r0 = X centre
+    ;  r1 = Y centre
+    ;  r2 = radius of circle
+    ;  r9 = tint
+    mov r0, r1
+    mov r1, r2
+    mov r2, r7, lsr #24                 ; radius.
+    mov r9, r7, lsr #16                 ; colour.
+    bic r9, r9, #0xff00
+    bl add_circle_to_2d_list
 
 .3:
     b .1
@@ -287,6 +356,90 @@ emiterror: ;The error block
 .long 0
 .endif
 
+new_emitter_timer:
+    FLOAT_TO_FP 0.0
+
+new_emitter_init:
+    str lr, [sp, #-4]!
+    SYNC_REGISTER_VAR 0, new_emitter+0
+    SYNC_REGISTER_VAR 1, new_emitter+4
+    SYNC_REGISTER_VAR 2, new_emitter+8
+    SYNC_REGISTER_VAR 3, new_emitter+12
+    SYNC_REGISTER_VAR 4, new_emitter+16
+    SYNC_REGISTER_VAR 5, new_emitter+20
+    SYNC_REGISTER_VAR 6, new_emitter+24
+    SYNC_REGISTER_VAR 7, new_emitter+28
+    SYNC_REGISTER_VAR 8, new_emitter+32
+    SYNC_REGISTER_VAR 9, new_emitter+36
+    ldr pc, [sp], #4
+
+new_emitter_tick:
+    str lr, [sp, #-4]!
+
+    ; Update time between particle emissions.
+    ldr r11, new_emitter_timer
+    subs r11, r11, #MATHS_CONST_1    ; timer-=1.0
+    bgt .2
+
+.1:
+    ; Load emitter context.
+    adr r12, new_emitter            ; emitter_p
+    ldmia r12, {r0-r9}              ; load emitter context.
+
+    movs r12, r0                    ; frames per emitter.
+    beq .2                          ; emitter not active.
+
+    orr r7, r7, r8, lsl #16         ; combine lifetime & colour into one word.
+    orr r7, r7, r9, lsl #24         ; & radius.
+
+.3:
+    ldr r10, particles_next_free    ; particle_p
+
+    ; Emit particles.
+    cmp r10, #0
+    .if _DEBUG && 0
+    bne .5
+    adr r0, emiterror
+    swi OS_GenerateError
+    .5:
+    .else
+    beq .4                          ; ran out of particle space!
+    .endif
+
+    ; Spawn a particle pointed to by R10.
+    ;  R0=next active particle.
+    ;  R1=x position, R2=y position, R3=z position
+    ;  R4=x velocity, R5=y velocity, R6=z velocity
+    ;  R7=lifetime | colour index
+
+    ldr r8, [r10, #0]               ; curr_p->next_p
+
+    ; Insert this particle at the front of the active list.
+    ldr r0, particles_first_active
+    stmia r10, {r0-r7}
+    str r10, particles_first_active
+
+    mov r10, r8                     ; curr_p = next_p
+    .if _DEBUG
+    ; Safe to use R8 here as just assigned to r10 above.
+    ldr r8, particles_alive_count
+    add r8, r8, #1
+    str r8, particles_alive_count
+    .endif
+
+.4:
+    str r10, particles_next_free
+
+    ; TODO: Emitter iterator fn called per particle?
+
+    ; Check the emissions timer - might have > 1 particle per frame!
+    adds r11, r11, r12                ; timer += frames between emissions.
+    ble .3
+
+.2:
+    str r11, new_emitter_timer
+    ldr pc, [sp], #4
+
 
 particle_gravity:
     FLOAT_TO_FP (Particle_Gravity / 50.0)     ; (pixels/frame not pixels/sec)
@@ -317,3 +470,11 @@ emitter_dir:
 
 particles_array:
     .skip Particle_SIZE * Particles_Max
+
+new_emitter:
+    FLOAT_TO_FP 50.0/2          ; emission rate (frames per particle = 50.0/particles per second)
+    VECTOR3 0.0, 0.0, 0.0
+    VECTOR3 0.0, 6.0, 0.0
+    .long   255 ; lifetime
+    .long   255 ; colour
+    .long   1   ; radius

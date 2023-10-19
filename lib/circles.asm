@@ -49,6 +49,7 @@ reset_circles:
 ;  r2 = radius of circle
 ;  r3-r7 = preserve
 ;  r9 = tint
+; Preserves r10,r11
 ; Trashes r8,r9,r12
 add_circle_to_2d_list:
     .if _DEBUG

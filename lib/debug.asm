@@ -97,12 +97,7 @@ debug_plot_vars:
 	SET_BORDER 0xffffff		; white = debug
 
     ; TODO: Replace OS VDU handling for cursor etc.
-	mov r0, #30	; home cursor
-	swi OS_WriteC
-	mov r0, #17	; set text colour
-	swi OS_WriteC
-	mov r0, #15
-	swi OS_WriteC
+	swi OS_WriteI + 30  ; home cursor
 
     adr r10, debug_var_stack
     mov r11, #0

@@ -9,8 +9,6 @@
 ; NB. At risk of reinventing an intepreted language here, but through macros.
 ;     Assess actual need and implement as necessary. Keep an eye on overhead
 ;     and complexity. Use proper language tools if we need a proper language..
-;
-; TODO: Make this a library if proven to be sufficiently useful / reuseable.
 ; ============================================================================
 
 .equ ScriptContext_PC, 0            ; Program Pointer.
@@ -176,6 +174,7 @@ script_call_4:
     mov pc, r11
 
 ; R12=context.
+; R10=script ptr.
 script_return:
     ldr r11, [r12, #ScriptContext_LR]
     str r11, [r12, #ScriptContext_PC]
@@ -185,18 +184,21 @@ script_return:
     mov pc, lr
 
 ; R12=context.
+; R10=script ptr.
 script_fork:
     ldr r0, [r10], #4           ; param=program ptr.
     str r10, [r12, #ScriptContext_PC]
     b script_add_program
 
 ; R12=context.
+; R10=script ptr.
 script_fork_and_wait:
     ldmia r10!, {r0-r1}         ; params=program ptr & wait.
     str r10, [r12, #ScriptContext_PC]
     b script_add_program_with_wait
 
 ; R12=context.
+; R10=script ptr.
 script_gosub:
     ldr r0, [r10], #4           ; param=program ptr.
     .if _DEBUG
@@ -206,6 +208,13 @@ script_gosub:
     swine OS_GenerateError
     .endif
     str r10, [r12, #ScriptContext_LR]       ; return here.
+    str r0, [r12, #ScriptContext_PC]        ; continue from here.
+    mov pc, lr
+
+; R12=context.
+; R10=script ptr.
+script_goto:
+    ldr r0, [r10], #4           ; param=program ptr.
     str r0, [r12, #ScriptContext_PC]        ; continue from here.
     mov pc, lr
 
@@ -282,8 +291,9 @@ script_write_addr:
     .long script_fork, \program
 .endm
 
-; TODO: Call subroutine (for model setup etc.) that is guaranteed to be
-;       executed there and then. Would need a stack to support this.
+; Call subroutine (for model setup etc.) that is guaranteed to be executed
+; immediately. Can only be nested one call deep as uses a Link Register;
+; would need a stack to support more than this.
 .macro gosub routine
     .long script_gosub, \routine
 .endm
@@ -294,4 +304,8 @@ script_write_addr:
 
 .macro fork_and_wait_secs secs, program
     .long script_fork_and_wait, \program, \secs*50
+.endm
+
+.macro yield
+    wait 1
 .endm

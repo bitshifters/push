@@ -21,7 +21,7 @@
 .equ LibDivide_UseReciprocalTable, (LibConfig_IncludeDivide && 1)
 .equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && 0)            ; TODO: Put back sine table generation!
 .equ LibSpanGen_MaxSpan,        Screen_Width
-.equ LibSpanGen_MultiWord,      2                                       ; Use 1, 2 or 4 words.
+.equ LibSpanGen_MultiWord,      1                                       ; Use 1, 2 or 4 words.
 
 .equ LibCircles_MaxRadius,      70
 .equ LibCircles_MaxCircles,     32                                      ; Max circles drawn in a frame (!)

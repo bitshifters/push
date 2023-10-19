@@ -11,13 +11,13 @@
 ; ============================================================================
 
 vdu_screen_disable_cursor:
-.byte 22, VideoConfig_VduMode, 23,1,0,0,0,0,0,0,0,0
+.byte 22, VideoConfig_VduMode, 23,1,0,0,0,0,0,0,0,0,17,7
 .p2align 2
 
 app_init_video:
 	; Set screen MODE & disable cursor
 	adr r0, vdu_screen_disable_cursor
-	mov r1, #12
+	mov r1, #14
 	swi OS_WriteN
 
 	; Set screen size for number of buffers
@@ -69,6 +69,7 @@ music_mod_p:
 	.long music_mod_no_adr		; 14
 .endif
 
+; R12=top of RAM used.
 app_init_audio:
 .if AppConfig_DynamicSampleSpeed
 	; Count how long the init takes as a very rough estimate of CPU speed.
@@ -112,8 +113,7 @@ app_init_audio:
 	; Load the music.
     .if AppConfig_LoadModFromFile
     adr r0, music_filename
-    ldr r1, [sp], #4        ; HIMEM
-    ;mov r1, #0
+    mov r1, r12             ; HIMEM.
     .else
 	mov r0, #0              ; load from address, don't copy to RMA.
     ldr r1, music_mod_p

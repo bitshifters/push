@@ -2,7 +2,7 @@
 ; FX handler.
 ; ============================================================================
 
-.equ Fx_MaxLayers, 3
+.equ Fx_MaxLayers, 4
 
 fx_tick_callbacks:
 .skip 4*Fx_MaxLayers
