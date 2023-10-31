@@ -4,6 +4,7 @@ Particle demo
 1) Strip back Mikroreise to simpler framework:
     - Remove unused FX, code, data etc. - DONE
     - Tidy up code and refactor. - DONE
+
 2) Add Luapod back to control particle & emitter vars.
     - Register var with Lua/Rocket track.
     - Rethink emitter context:
@@ -14,7 +15,13 @@ Particle demo
 
     - Register the emitter and drive from Lua.
 
-3) Improvements to particle & emitter system
+3) Rendering investigations.
+    - Plot as preshifted 8x8 sprites => 320 tinted.
+    - Don't need to tint at run-time, just pre-tint sprites.
+    - Have a sprite (sheet) index instead of tint value etc.
+    - Animation frames.
+
+4) Improvements to particle & emitter system
 
     - Emitter iteration function?
         - Do we need to emit more than one particle per frame?

@@ -251,7 +251,7 @@ particles_draw_all_as_circles:
     cmp r2, #Screen_Height-1            ; WHY -1?
     bge .3                              ; clip bottom - TODO: destroy particle?
     .endif
-    
+
     ;  r0 = X centre
     ;  r1 = Y centre
     ;  r2 = radius of circle
@@ -267,6 +267,269 @@ particles_draw_all_as_circles:
     b .1
 
 .2:
+    ldr pc, [sp], #4
+
+
+particles_draw_next_p:
+    .long 0
+
+; R12=screen addr
+particles_draw_all_as_8x8:
+    str lr, [sp, #-4]!
+
+    adr r11, particles_first_active     ; curr_p
+    ldr r11, [r11]                      ; next_p
+.1:
+    cmp r11, #0
+    beq .2
+
+    ; TODO: Don't need to load the full context. Reorder vars?
+    ldmia r11, {r0-r7}                  ; load particle context
+    str r0, particles_draw_next_p       ; next_p
+
+    ; TODO: Plot 3D.
+
+    ; For now just plot 2D particles.
+    add r1, r1, #Centre_X               ; [s15.16]
+    rsb r2, r2, #Centre_Y               ; [s15.16]
+
+    mov r1, r1, lsr #16
+    mov r2, r2, lsr #16
+
+    ; Centre sprite.
+    sub r1, r1, #4
+    sub r2, r2, #4
+
+    ; Clipping.
+    cmp r1, #0
+    blt .3                              ; cull left
+    cmp r1, #Screen_Width-8
+    bge .3                              ; cull right
+
+    cmp r2, #0
+    blt .3                              ; cull top
+    cmp r2, #Screen_Height-8
+    bge .3                              ; cull bottom
+    ; TODO: Clip to sides of screen..?
+
+    ; Plot as 16x8 sprite.
+    ;  r1 = X centre
+    ;  r2 = Y centre
+    ;  r14 = tint
+    mov r14, r7, lsr #16                ; colour.
+    bic r14, r14, #0xff00
+    orr r14, r14, r14, lsl #4
+    orr r14, r14, r14, lsl #8
+    orr r14, r14, r14, lsl #16          ; colour word.
+
+    and r0, r1, #7                      ; x shift
+
+    ; Calculate screen ptr.
+    add r10, r12, r2, lsl #7
+    add r10, r10, r2, lsl #5            ; y*160
+    mov r1, r1, lsr #3                  ; xw=x div 8
+    add r10, r10, r1, lsl #2            ; xw*4
+
+    ; Calculate src ptr.
+    adr r11, temp_mask_ptrs             ; TODO: Ptr to sprite.
+    ldr r11, [r11, r0, lsl #2]          ; ptr[x_shift]
+
+    ; Plot 2x8 words of tinted mask data to screen.
+    ldmia r11!, {r0-r7}                 ; read 8 src words.
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r0
+    and r0, r0, r14                     ; add tint
+    orr r8, r8, r0
+    bic r9, r9, r1
+    and r1, r1, r14                     ; add tint
+    orr r9, r9, r1
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r2
+    and r2, r2, r14                     ; add tint
+    orr r8, r8, r2
+    bic r9, r9, r3
+    and r3, r3, r14                     ; add tint
+    orr r9, r9, r3
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r4
+    and r4, r4, r14                     ; add tint
+    orr r8, r8, r4
+    bic r9, r9, r5
+    and r5, r5, r14                     ; add tint
+    orr r9, r9, r5
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r6
+    and r6, r6, r14                     ; add tint
+    orr r8, r8, r6
+    bic r9, r9, r7
+    and r7, r7, r14                     ; add tint
+    orr r9, r9, r7
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+
+    ldmia r11!, {r0-r7}                 ; read 8 src words.
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r0
+    and r0, r0, r14                     ; add tint
+    orr r8, r8, r0
+    bic r9, r9, r1
+    and r1, r1, r14                     ; add tint
+    orr r9, r9, r1
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r2
+    and r2, r2, r14                     ; add tint
+    orr r8, r8, r2
+    bic r9, r9, r3
+    and r3, r3, r14                     ; add tint
+    orr r9, r9, r3
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r4
+    and r4, r4, r14                     ; add tint
+    orr r8, r8, r4
+    bic r9, r9, r5
+    and r5, r5, r14                     ; add tint
+    orr r9, r9, r5
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    bic r8, r8, r6
+    and r6, r6, r14                     ; add tint
+    orr r8, r8, r6
+    bic r9, r9, r7
+    and r7, r7, r14                     ; add tint
+    orr r9, r9, r7
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+
+.3:
+    ldr r11, particles_draw_next_p
+    b .1
+
+.2:
+    ldr pc, [sp], #4
+
+; TODO: Fully masked sprites not tinted masks. Interleave data?
+temp_sprite_data:
+.long 0x00777700
+.long 0x07777770
+.long 0x07777770
+.long 0x07777770
+.long 0x07777770
+.long 0x07777770
+.long 0x07777770
+.long 0x00777700
+
+; TODO: Could have 9 pixel wide sprites for same cost.
+temp_mask_data:
+.long 0x0ffffff0
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0x0ffffff0
+
+temp_sprite_data_buffer:
+    .skip 8*8*8
+
+temp_sprite_mask_buffer:
+    .skip 8*8*8
+
+temp_sprite_ptrs:
+    .skip 4*8
+
+temp_mask_ptrs:
+    .skip 4*8
+
+; Shift MODE 9 image data by N pixels to the right.
+; Writes dst data one word wider than the src data.
+; Params:
+;  R7=src width in words. (preserved)
+;  R8=src height in rows. (preserved)
+;  R9=src address. (updated)
+;  R10=pixel shift right [0-7] (preseved)
+;  R12=dst address. (updated)
+; Trashes: R0-R2, R11
+sprite_shift_mode9_pixel_data:
+    str lr, [sp, #-4]!
+    
+    mov r10, r10, lsl #2        ; word shift
+    rsb r11, r10, #32           ; reverse word shift
+
+    mov r14, r8                 ; row count.
+.1:
+
+    mov r2, #0                  ; dst word.
+    mov r1, r7                  ; word count.
+.2:
+    ldr r0, [r9], #4            ; src word.
+    orr r2, r2, r0, lsl r10     ; move src pixels right N and combine with existing.
+
+    str r2, [r12], #4           ; write dst word.
+    mov r2, r0, lsr r11         ; recover src pixels falling into next word.
+
+    subs r1, r1, #1             ; next word.
+    bne .2
+
+    str r2, [r12], #4           ; write final dst word.
+    
+    subs r14, r14, #1           ; next row.
+    bne .1
+
+    mov r10, r10, lsr #2        ; restore r10
+    ldr pc, [sp], #4
+
+
+; Make all shifted sprites and put ptrs in a table.
+;  R5=src address.
+;  R6=ptr to sprite table [8 entries].
+;  R7=src width in words.
+;  R8=src height in rows.
+;  R12=dst address [buffer (width+1) x height x 8 words.]
+sprite_make_shifted_table_mode9:
+    str lr, [sp, #-4]!
+
+    mov r10, #0
+.1:
+    mov r9, r5                  ; reset src ptr.
+    str r12, [r6], #4           ; store ptr to next dst.
+
+    bl sprite_shift_mode9_pixel_data
+
+    add r10, r10, #1
+    cmp r10, #8
+    bne .1
+
+    ldr pc, [sp], #4
+
+
+sprite_init:
+    str lr, [sp, #-4]!
+
+    adr r5, temp_sprite_data
+    adr r6, temp_sprite_ptrs
+    mov r7, #1
+    mov r8, #8
+    adr r12, temp_sprite_data_buffer
+    bl sprite_make_shifted_table_mode9
+
+    adr r5, temp_mask_data
+    adr r6, temp_mask_ptrs
+    mov r7, #1
+    mov r8, #8
+    adr r12, temp_sprite_mask_buffer
+    bl sprite_make_shifted_table_mode9
+
     ldr pc, [sp], #4
 
 
@@ -389,6 +652,7 @@ new_emitter_tick:
     movs r12, r0                    ; frames per emitter.
     beq .2                          ; emitter not active.
 
+    mov r9, r9, asr #16             ; [16.0]
     orr r7, r7, r8, lsl #16         ; combine lifetime & colour into one word.
     orr r7, r7, r9, lsl #24         ; & radius.
 

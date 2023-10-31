@@ -7,12 +7,15 @@
     ; Init FX modules.
     call_0 new_emitter_init
     call_0 particles_init
+    call_0 sprite_init
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 0, new_emitter_tick,       screen_cls
     call_3 fx_set_layer_fns, 1, 0,                      reset_circles
-    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
-    call_3 fx_set_layer_fns, 3, 0,                      plot_all_circles
+;    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
+;    call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
+    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8
+    call_3 fx_set_layer_fns, 3, 0,                      0
 
     ; THE END.
     end_script

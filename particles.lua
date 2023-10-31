@@ -27,8 +27,6 @@ AQUA={r=0x0,g=0xe,b=0xf}
 YELLOW={r=0xf,g=0xf,b=0xa}
 RED={r=0xf,g=0x0,b=0x6}
 
-emitter={pps=4,pos={x=0.0,y=10.0,z=0.0},dir={x=5.0,y=7.0,z=0.0},life=255,colour=6,radius=30}
-
 function get_pattern(frameNo)
     return frameNo // (framesPerRow * rowsPerPattern)
 end
@@ -36,6 +34,8 @@ end
 function get_row(frameNo)
     return (frameNo % (framesPerRow * rowsPerPattern)) // framesPerRow
 end
+
+emitter={pps=150,pos={x=0.0,y=10.0,z=0.0},dir={x=0.0,y=0.0,z=0.0},life=255,colour=6,radius=5.0}
 
 f=-1
 lastFrame=-1
@@ -48,6 +48,12 @@ function TIC()
     f=frames()
 
     -- update emitter here.
+    emitter.pos.x = 100.0 * math.sin(f/20)
+    emitter.pos.y = 128.0 + 60.0 * math.cos(f/50)
+    emitter.colour = (emitter.colour + 1) & 7
+    emitter.radius = 8.0 + 6 * math.sin(f/10)
+    emitter.dir.x = 2.0 * math.sin(f/100)
+    emitter.dir.y = 1.0 + math.random(5.0) --0.0 * math.cos(f/100)
  end
 
  if (f~=lastFrame) then
