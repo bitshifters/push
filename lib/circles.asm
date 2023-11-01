@@ -36,7 +36,7 @@ ClearCircleBuf:
     bne .1
     mov pc, lr
 
-reset_circles:
+circles_reset_for_frame:
 	ldr r0, p_CircleBufEnd
 	str r0, r_FreeCircle
     mov pc, lr
@@ -51,7 +51,7 @@ reset_circles:
 ;  r9 = tint
 ; Preserves r10,r11
 ; Trashes r8,r9,r12
-add_circle_to_2d_list:
+circles_add_to_plot_by_Y:
     .if _DEBUG
 	cmp r2, #0
     adrmi r0, circleinvalid
@@ -170,7 +170,7 @@ circles_screen_addr:
     .long 0
 
 ; R12=screen addr
-plot_all_circles:
+circles_plot_all:
 	STR lr, [sp, #-4]!
 
     str r12, circles_screen_addr

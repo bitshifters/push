@@ -35,7 +35,7 @@ function get_row(frameNo)
     return (frameNo % (framesPerRow * rowsPerPattern)) // framesPerRow
 end
 
-emitter={pps=150,pos={x=0.0,y=10.0,z=0.0},dir={x=0.0,y=0.0,z=0.0},life=255,colour=6,radius=5.0}
+emitter={pps=80,pos={x=0.0,y=10.0,z=0.0},dir={x=0.0,y=0.0,z=0.0},life=255,colour=6,radius=5.0}
 
 f=-1
 lastFrame=-1
@@ -48,12 +48,12 @@ function TIC()
     f=frames()
 
     -- update emitter here.
-    emitter.pos.x = 100.0 * math.sin(f/20)
-    emitter.pos.y = 128.0 + 60.0 * math.cos(f/50)
+    emitter.pos.x = 100.0 * math.sin(f/60)
+    emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
     emitter.colour = (emitter.colour + 1) & 7
     emitter.radius = 8.0 + 6 * math.sin(f/10)
     emitter.dir.x = 2.0 * math.sin(f/100)
-    emitter.dir.y = 1.0 + math.random(5.0) --0.0 * math.cos(f/100)
+    emitter.dir.y = 1.0 + 5.0 * math.random() --0.0 * math.cos(f/100)
  end
 
  if (f~=lastFrame) then

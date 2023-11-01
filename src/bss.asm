@@ -65,6 +65,20 @@ scene2d_verts_buffer_no_adr:
     .skip Scene2D_MaxVerts * VECTOR2_SIZE
 
 ; ============================================================================
+
+temp_sprite_data_buffer_no_adr:
+    .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts
+
+temp_sprite_mask_buffer_no_adr:
+    .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts
+
+temp_sprite_ptrs_no_adr:
+    .skip 4*8   ; sizeof(ptr) * 8 pixel shifts
+
+temp_mask_ptrs_no_adr:
+    .skip 4*8   ; sizeof(ptr) * 8 pixel shifts
+
+; ============================================================================
 ; Library BSS.
 ; ============================================================================
 

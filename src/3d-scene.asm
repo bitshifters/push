@@ -354,7 +354,7 @@ anaglyph_draw_3d_scene_as_circles:             ; TODO: Dedupe this code!
     str r12, [sp, #-4]!
 
 	; Reset array of circles.
-    bl reset_circles
+    bl circles_reset_for_frame
 
     ; Left eye.
     ldr r0, LeftEye_X_Pos
@@ -877,7 +877,7 @@ draw_3d_object_as_circles:
     ldmia r6!, {r0,r1}          ; screen_X & screen_Y.
 
     ldr r9, object_colour_index
-    bl add_circle_to_2d_list    ; trashes r8,r12
+    bl circles_add_to_plot_by_Y    ; trashes r8,r12
 
     add r7, r7, #VECTOR3_SIZE
     add r5, r5, #1

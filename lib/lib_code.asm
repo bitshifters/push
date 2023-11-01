@@ -109,5 +109,8 @@ lib_init:
 .include "lib/span_gen.asm"
 .endif
 .endif
+.if LibConfig_IncludeSprites
+.include "lib/sprite_utils.asm"
+.endif
 
 ; ============================================================================

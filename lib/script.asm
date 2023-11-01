@@ -173,6 +173,12 @@ script_call_4:
     str r10, [r12, #ScriptContext_PC]
     mov pc, r11
 
+script_call_5:
+    ldr r11, [r10], #4          ; fn ptr.
+    ldmia r10!, {r0-r4}         ; params
+    str r10, [r12, #ScriptContext_PC]
+    mov pc, r11
+
 ; R12=context.
 ; R10=script ptr.
 script_return:
@@ -253,6 +259,10 @@ script_write_addr:
 
 .macro call_4 function, param1, param2, param3, param4
     .long script_call_4, \function, \param1, \param2, \param3, \param4
+.endm
+
+.macro call_5 function, param1, param2, param3, param4, param5
+    .long script_call_5, \function, \param1, \param2, \param3, \param4, \param5
 .endm
 
 .macro wait frames

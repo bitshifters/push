@@ -482,9 +482,6 @@ error_handler:
 ; Core code modules
 ; ============================================================================
 
-palette_p:
-    .long palette_red_cyan
-
 screen_addr:
 	.long 0					; ptr to the current VIDC screen bank being written to.
 
@@ -532,29 +529,6 @@ rnd_seed:
 .include "lib/mode9-screen.asm"
 .include "lib/line.asm"
 .include "lib/lib_code.asm"
-
-; ============================================================================
-; Data Segment
-; ============================================================================
-
-; For anaglpyh want CRcr
-palette_red_cyan:
-    .long 0x00000000                    ; 00 = 0000 = black
-    .long 0x00000030                    ; 01 = 0001 = red 1
-    .long 0x00303000                    ; 02 = 0010 = cyan 1
-    .long 0x00303030                    ; 03 = 0011 = white 1
-    .long 0x00000060                    ; 04 = 0100 = red 2
-    .long 0x00000090                    ; 05 = 0101 = red 3
-    .long 0x000000c0                    ; 06 = 0110 = red 4
-    .long 0x000000f0                    ; 07 = 0111 = red 5
-    .long 0x00606000                    ; 08 = 1000 = cyan 2
-    .long 0x00909000                    ; 09 = 1001 = cyan 3
-    .long 0x00c0c000                    ; 10 = 1010 = cyan 4
-    .long 0x00f0f000                    ; 11 = 1011 = cyan 5
-    .long 0x00606060                    ; 12 = 1100 = white 2
-    .long 0x00909090                    ; 13 = 1101 = white 3
-    .long 0x00c0c0c0                    ; 14 = 1110 = white 4
-    .long 0x00f0f0f0                    ; 15 = 1111 = white 5
 
 ; ============================================================================
 ; DATA Segment

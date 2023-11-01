@@ -17,9 +17,10 @@ Particle demo
 
 3) Rendering investigations.
     - Plot as preshifted 8x8 sprites => 320 tinted.
-    - Don't need to tint at run-time, just pre-tint sprites.
+    - Don't need to tint at run-time, just pre-tint sprites. => needs mask tho.
     - Have a sprite (sheet) index instead of tint value etc.
-    - Animation frames.
+    - Animation frames!
+    - Try additive plotting of single colour sprites...
 
 4) Improvements to particle & emitter system
 
@@ -41,3 +42,12 @@ MISSING framework features:
 - Direct VIDC write fns for palette changes.
 - Palette pending to sync palette changes on vsync.
 - Fast debug print to screen.
+
+
+
+Timing on ARM2.
+~~~
+- Tinted circles (radius 2-14 pixels) ~= 50
+- Tinted 8x8 sprites (radius 4) ~= 350
+- Tinted pixels (radius 1) ~= 600
+- Additive 8x8 sprites (radius 4) ~= 170

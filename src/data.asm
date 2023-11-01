@@ -105,6 +105,32 @@ credits_pal_no_adr:
 .include "src/data/3d-model-data.asm"
 
 ; ============================================================================
+; Sprite data.
+; ============================================================================
+
+; TODO: Fully masked sprites not tinted masks. Interleave data?
+temp_sprite_data:
+.long 0x01111110
+.long 0x11111111
+.long 0x11111111
+.long 0x11111111
+.long 0x11111111
+.long 0x11111111
+.long 0x11111111
+.long 0x01111110
+
+; TODO: Could have 9 pixel wide sprites for same cost.
+temp_mask_data:
+.long 0x0ffffff0
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0xffffffff
+.long 0x0ffffff0
+
+; ============================================================================
 ; Sequence data (RODATA Segment - ironically).
 ; ============================================================================
 
