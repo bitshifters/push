@@ -2,6 +2,7 @@
 ; Particle system.
 ; ============================================================================
 
+; Particle variables block (VECTOR3):
 .equ Particle_Next,     0       ; R0 = pointer to next active/free.
 .equ Particle_XPos,     4       ; R1
 .equ Particle_YPos,     8       ; R2
@@ -14,16 +15,7 @@
 .equ Particle_Radius,   31      ; R7
 .equ Particle_SIZE,     32
 
-.equ Emitter_PerTick,   0       ; <=0 means not active.
-.equ Emitter_XPos,      4       ; R1
-.equ Emitter_YPos,      8       ; R2
-.equ Emitter_ZPos,      12      ; R3
-.equ Emitter_XDir,      16      ; R4  Q: would this be better as angles? (in brads?)
-.equ Emitter_YDir,      20      ; R5
-.equ Emitter_ZDir,      24      ; R6
-.equ Emitter_SIZE,      28
-
-; KISS
+; (New) Emitter variable block:
 .equ NewEmitter_Timer,  0       ; R0
 .equ NewEmitter_XPos,   4       ; R1
 .equ NewEmitter_YPos,   8       ; R2
@@ -33,20 +25,22 @@
 .equ NewEmitter_ZDir,   24      ; R6
 .equ NewEmitter_Life,   28      ; R7
 .equ NewEmitter_Colour, 32      ; R8
-.equ NewEmitter_Radius, 36       ; R0 <=0 means not active.
+.equ NewEmitter_Radius, 36      ; R0 <=0 means not active.
 .equ NewEmitter_SIZE,   40
 
-.equ Emitters_Max,      5       ; start with 1.
 .equ Particles_Max,     680     ; ARM2 ~= 680. ARM250 ~= 1024.
-
-.equ Particle_Default_Lifetime, 255     ; ?
-
-.equ Particle_Gravity,  -5.0
+.equ Particle_Gravity, -5.0     ; Or some sort of particle force fn.
 
 .equ Centre_X,          (160.0 * PRECISION_MULTIPLIER)
 .equ Centre_Y,          (255.0 * PRECISION_MULTIPLIER)
 
 .equ _PARTICLES_PLOT_CHUNKY, 0  ; only works in MODE 12/13.
+
+; ============================================================================
+
+; Ptr to the particle array in bss.
+particles_array_p:
+    .long particles_array_no_adr
 
 ; Forward linked list of free particles.
 ; First word of particle context points to the next free particle.
@@ -63,12 +57,17 @@ particles_alive_count:
     .long 0
 .endif
 
+particle_gravity:
+    FLOAT_TO_FP (Particle_Gravity / 50.0)     ; (pixels/frame not pixels/sec)
+
+; ============================================================================
+
 ; Initialise all particles in the free list.
 particles_init:
     str lr, [sp, #-4]!
     DEBUG_REGISTER_VAR particles_alive_count    ; TODO: Make this not a bl call!
 
-    adr r12, particles_array
+    ldr r12, particles_array_p
 
     ; Start with first free particle as particles_array[0].
     str r12, particles_next_free
@@ -164,7 +163,8 @@ particle_destroy:
 
     mov pc, lr
 
-; Let's assume MODE 13 for now.
+; ============================================================================
+
 ; R12=screen addr
 particles_draw_all_as_points:
     str lr, [sp, #-4]!
@@ -552,85 +552,6 @@ particles_draw_all_as_8x8_additive:
     ldr pc, [sp], #4
 
 ; ============================================================================
-.if 0
-emitters_tick_all:
-    str lr, [sp, #-4]!
-
-    adr r12, emitters_array         ; emitter_p
-    mov r11, #Emitters_Max          ; emitter count.
-.1:
-    ldmia r12, {r0-r6}              ; load emitter context.
-
-    movs r9, r0
-    beq .2                          ; emitter not active.
-
-    ; TODO: Emitter update here (e.g. move emitter).
-
-    ldr r10, particles_next_free    ; particle_p
-
-    mov r7, #Particle_Default_Lifetime
-    orr r7, r7, #255<<16              ; particle colour index.
-
-    ; Emit particles.
-.3:
-    cmp r10, #0
-    .if 0 && _DEBUG
-    bne .5
-    adr r0, emiterror
-    swi OS_GenerateError
-    .5:
-    .else
-    beq .4                          ; ran out of particle space!
-    .endif
-
-    ; Spawn a particle pointed to by R10.
-    ;  R0=next active particle.
-    ;  R1=x position, R2=y position, R3=z position
-    ;  R4=x velocity, R5=y velocity, R6=z velocity
-    ;  R7=lifetime | colour index
-
-    ldr r8, [r10, #0]               ; curr_p->next_p
-
-    ; Insert this particle at the front of the active list.
-    ldr r0, particles_first_active
-    stmia r10, {r0-r7}
-    str r10, particles_first_active
-
-    mov r10, r8                     ; curr_p = next_p
-    .if _DEBUG
-    ; Safe to use R8 here as just assigned to r10 above.
-    ldr r8, particles_alive_count
-    add r8, r8, #1
-    str r8, particles_alive_count
-    .endif
-
-    ; TODO: Emitter update here (e.g. move direction)
-    ldr r8, emitter_dir
-    add r4, r4, r8
-    cmp r4, #5<<16
-    rsbge r8, r8, #0
-    cmp r4, #-5<<16
-    rsble r8, r8, #0
-    str r8, emitter_dir
-
-    ; TODO: Update colour index.
-    sub r7, r7, #1<<16
-
-    subs r9, r9, #1
-    bne .3
-
-.4:
-    str r10, particles_next_free
-
-    add r12, r12, #4
-    stmia r12!, {r1-r6}             ; store emitter context (but not r0).
-
-.2:
-    subs r11, r11, #1
-    bne .1
-
-    ldr pc, [sp], #4
-.endif
 
 .if _DEBUG
 emiterror: ;The error block
@@ -725,38 +646,7 @@ new_emitter_tick:
     str r11, new_emitter_timer
     ldr pc, [sp], #4
 
-
-particle_gravity:
-    FLOAT_TO_FP (Particle_Gravity / 50.0)     ; (pixels/frame not pixels/sec)
-
-.if 0
-emitters_array:
-    .long 2                        ; particles per tick (active)
-    VECTOR3 0.0, 0.0, 0.0           ; position (x,y,z)
-    VECTOR3 0.0, 6.0, 0.0     ; direction (x,y,z) (pixels/frame not pixels/sec)
-
-    .long 2                        ; particles per tick (active)
-    VECTOR3 64.0, 64.0, 0.0           ; position (x,y,z)
-    VECTOR3 0.0, 4.0, 0.0     ; direction (x,y,z) (pixels/frame not pixels/sec)
-
-    .long 2                        ; particles per tick (active)
-    VECTOR3 -64.0, 64.0, 0.0           ; position (x,y,z)
-    VECTOR3 0.0, 5.0, 0.0     ; direction (x,y,z) (pixels/frame not pixels/sec)
-
-    .long 2                        ; particles per tick (active)
-    VECTOR3 64.0, 255.0, 0.0           ; position (x,y,z)
-    VECTOR3 0.0, 0.0, 0.0     ; direction (x,y,z) (pixels/frame not pixels/sec)
-
-    .long 2                        ; particles per tick (active)
-    VECTOR3 -64.0, 255.0, 0.0           ; position (x,y,z)
-    VECTOR3 0.0, 0.0, 0.0     ; direction (x,y,z) (pixels/frame not pixels/sec)
-
-emitter_dir:
-    FLOAT_TO_FP 0.1
-.endif
-
-particles_array:
-    .skip Particle_SIZE * Particles_Max
+; ============================================================================
 
 new_emitter:
     FLOAT_TO_FP 50.0/2          ; emission rate (frames per particle = 50.0/particles per second)
@@ -765,3 +655,5 @@ new_emitter:
     .long   255 ; lifetime
     .long   255 ; colour
     .long   1   ; radius
+
+; ============================================================================

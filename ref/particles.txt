@@ -6,39 +6,47 @@ Particle demo
     - Tidy up code and refactor. - DONE
 
 2) Add Luapod back to control particle & emitter vars.
-    - Register var with Lua/Rocket track.
-    - Rethink emitter context:
+    - Register var with Lua/Rocket track. - DONE
+    - Rethink emitter context: - IN PROGRESS
         - Vec3 position
         - Vec3 direction (or use Vec2 pitch/yaw?)
-        - Colour
-        - Size - use circle plot! <= MODE 9 not MODE 13 => ARGH!
-
-    - Register the emitter and drive from Lua.
+        - Colour - MAKE THIS FOLLOW POS?
+        - Size - use circle plot! <= MODE 9 not MODE 13 => DONE
+    - 2D particles only?
+    - Register the emitter and drive from Lua. - DONE
 
 3) Rendering investigations.
     - Plot as preshifted 8x8 sprites => 320 tinted.
     - Don't need to tint at run-time, just pre-tint sprites. => needs mask tho.
     - Have a sprite (sheet) index instead of tint value etc.
     - Animation frames!
-    - Try additive plotting of single colour sprites...
+    - Try additive plotting of single colour sprites... - DONE
+    - Plotting with Z perspective.
 
 4) Improvements to particle & emitter system
-
     - Emitter iteration function?
-        - Do we need to emit more than one particle per frame?
+        - Do we need to emit more than one particle per frame? - SUPPORTED
         - Called after each particle is spawned?
     
-    - Particle update function?
+    - Particle update function? => WAIT FOR RHINO CONCEPTS IN BLENDER.
         - Called for each particle tick to update size/colour etc.?
         - Should be fixed per emitter, otherwise too expensive.
-        - Might infact have to be baked in.
+        - Most likely will have to be baked into code.
         - Additional forces (wind etc.?)
 
-    - 
+5) Particle collision :)
+    - Use circle plotting for smaller number of larger objects.
+    - Sort by Y value, determine min/max Y values.
+    - Resolve collisions in a double loop; for each particle:
+        - Find all collision candidates with min/max y.
+        - Calculate distance between particles and test radius.
+        - Calculate collision axis.
+        - Push particles apart with a damping factor.
+        - Calculate collision forces with a damping factor.
 
 
 MISSING framework features:
-- Add arbitrary tick functions (with self-remove?) e.g. screen fades.
+- Add arbitrary tick/task functions (with self-remove?) e.g. screen fades.
 - Direct VIDC write fns for palette changes.
 - Palette pending to sync palette changes on vsync.
 - Fast debug print to screen.
@@ -48,6 +56,6 @@ MISSING framework features:
 Timing on ARM2.
 ~~~
 - Tinted circles (radius 2-14 pixels) ~= 50
-- Tinted 8x8 sprites (radius 4) ~= 350
-- Tinted pixels (radius 1) ~= 600
-- Additive 8x8 sprites (radius 4) ~= 170
+- Tinted 8x8 sprites (radius ~3.5) ~= 350
+- Tinted pixels (radius 0) ~= 600
+- Additive 8x8 sprites (radius ~3.5) ~= 170

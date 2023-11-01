@@ -66,6 +66,11 @@ scene2d_verts_buffer_no_adr:
 
 ; ============================================================================
 
+particles_array_no_adr:
+    .skip Particle_SIZE * Particles_Max
+
+; ============================================================================
+
 temp_sprite_data_buffer_no_adr:
     .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts
 
