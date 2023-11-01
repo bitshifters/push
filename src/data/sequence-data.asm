@@ -32,8 +32,8 @@ seq_loop:
 
     wait_secs 5.0
 
-;    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_points
-;    wait_secs 5.0
+    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_points
+    wait_secs 5.0
 
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all

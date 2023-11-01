@@ -46,7 +46,7 @@
 .equ Centre_X,          (160.0 * PRECISION_MULTIPLIER)
 .equ Centre_Y,          (255.0 * PRECISION_MULTIPLIER)
 
-.equ _PARTICLES_PLOT_CHUNKY, 0
+.equ _PARTICLES_PLOT_CHUNKY, 0  ; only works in MODE 12/13.
 
 ; Forward linked list of free particles.
 ; First word of particle context points to the next free particle.
@@ -193,16 +193,26 @@ particles_draw_all_as_points:
     mov r2, r2, lsr #16
     cmp r2, #0
     blt .3                              ; clip top - TODO: destroy particle?
-    cmp r2, #Screen_Height-1            ; WHY -1?
+    cmp r2, #Screen_Height
     bge .3                              ; clip bottom - TODO: destroy particle?
 
     ; TODO: If eroniously replace R2 with R1 above then Arculator exists without warning!
     ;       Debug this for Sarah and test on Arculator v2.2.
 
-    add r10, r12, r2, lsl #8
-    add r10, r10, r2, lsl #6            ; screen_y=screen_addr+y*320
+    add r10, r12, r2, lsl #7
+    add r10, r10, r2, lsl #5            ; screen_y=screen_addr+y*160
     mov r7, r7, lsr #16                 ; colour is upper 16 bits.
-    strb r7, [r10, r1]!                  ; screen_y[screen_x]=colour index.
+
+    ldrb r8, [r10, r1, lsr #1]          ; screen_y[screen_x/2]
+
+    ; TODO: If we want individual pixels then MODE 12/13 is faster!
+    tst r1, #1
+	andeq r8, r8, #0xf0		    ; mask out left hand pixel
+	orreq r8, r8, r7			; mask in colour as left hand pixel
+	andne r8, r8, #0x0f		    ; mask out right hand pixel
+	orrne r8, r8, r7, lsl #4	; mask in colour as right hand pixel
+
+    strb r8, [r10, r1]!                  ; screen_y[screen_x]=colour index.
 
     .if _PARTICLES_PLOT_CHUNKY
     strb r7, [r10, #1]                  ; screen_y[screen_x+1]=colour index.
