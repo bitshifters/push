@@ -240,6 +240,19 @@ script_write_addr:
     str r10, [r12, #ScriptContext_PC]
     mov pc, lr
 
+; R12=context.
+; R10=script ptr.
+script_call_swi:
+    ldr r11, [r10], #4          ; fn ptr.
+    ldmia r10!, {r0-r1}         ; 2 params
+    str r10, [r12, #ScriptContext_PC]
+
+    orr r11, r11, #0xef000000   ; opcode SWI
+    str r11, .1                 ; SELF-MOD!
+.1:
+    swi 0                       ; SELF-MOD!
+    mov pc, lr
+
 
 .macro call_0 function
     .long \function
@@ -269,6 +282,7 @@ script_write_addr:
     .long script_wait, \frames
 .endm
 
+; TODO: wait_secs doesn't actually wait for seconds! (Resolve frames vs vsyncs.)
 .macro wait_secs secs
     .long script_wait, \secs*50
 .endm
@@ -318,4 +332,8 @@ script_write_addr:
 
 .macro yield
     wait 1
+.endm
+
+.macro call_swi swi_no, reg0, reg1
+    .long script_call_swi, \swi_no, \reg0, \reg1
 .endm

@@ -84,32 +84,6 @@ app_init_audio:
 	; Setup QTM for our needs.
 	swi QTM_SetSampleSpeed
 
-	mov r0, #AudioConfig_VuBars_Effect
-	mov r1, #AudioConfig_VuBars_Gravity
-	swi QTM_VUBarControl
-
-    mov r0, #1
-    mov r1, #AudioConfig_StereoPos_Ch1
-    swi QTM_Stereo
-
-    mov r0, #2
-    mov r1, #AudioConfig_StereoPos_Ch2
-    swi QTM_Stereo
-
-    mov r0, #3
-    mov r1, #AudioConfig_StereoPos_Ch3
-    swi QTM_Stereo
-
-    mov r0, #4
-    mov r1, #AudioConfig_StereoPos_Ch4
-    swi QTM_Stereo
-
-    .if !SeqConfig_EnableLoop
-    mov r0, #0b0010
-    mov r1, #0b0010         ; stop song on end.
-    swi QTM_MusicOptions
-    .endif
-
 	; Load the music.
     .if AppConfig_LoadModFromFile
     adr r0, music_filename
