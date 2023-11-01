@@ -228,9 +228,7 @@ gen_last_word_1:
 	ORR r3, r3, r9, LSR #28		; ih
 	STRB r3, [r10]
 gen_last_word_2:
-	LDRB r3, [r10]
-    orr r3, r3, r9, LSR #24
-	STRB r3, [r10]
+	STRB r9, [r10]
 gen_last_word_3:
 	LDR r3, [r10]
 	MOV r3, r3, LSR #12

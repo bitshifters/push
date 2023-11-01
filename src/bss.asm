@@ -71,6 +71,11 @@ particles_array_no_adr:
 
 ; ============================================================================
 
+balls_array_no_adr:
+    .skip Ball_SIZE * Balls_Max
+
+; ============================================================================
+
 temp_sprite_data_buffer_no_adr:
     .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts
 

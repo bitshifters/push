@@ -31,8 +31,8 @@
 .equ Particles_Max,     680     ; ARM2 ~= 680. ARM250 ~= 1024.
 .equ Particle_Gravity, -5.0     ; Or some sort of particle force fn.
 
-.equ Centre_X,          (160.0 * PRECISION_MULTIPLIER)
-.equ Centre_Y,          (255.0 * PRECISION_MULTIPLIER)
+.equ Particles_CentreX,          (160.0 * PRECISION_MULTIPLIER)
+.equ Particles_CentreY,          (255.0 * PRECISION_MULTIPLIER)
 
 .equ _PARTICLES_PLOT_CHUNKY, 0  ; only works in MODE 12/13.
 
@@ -181,8 +181,8 @@ particles_draw_all_as_points:
     ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
-    add r1, r1, #Centre_X               ; [s15.16]
-    rsb r2, r2, #Centre_Y               ; [s15.16]
+    add r1, r1, #Particles_CentreX               ; [s15.16]
+    rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
     mov r1, r1, lsr #16
     cmp r1, #0
@@ -244,8 +244,8 @@ particles_draw_all_as_circles:
     ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
-    add r1, r1, #Centre_X               ; [s15.16]
-    rsb r2, r2, #Centre_Y               ; [s15.16]
+    add r1, r1, #Particles_CentreX               ; [s15.16]
+    rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
     mov r1, r1, lsr #16
     mov r2, r2, lsr #16
@@ -311,8 +311,8 @@ particles_draw_all_as_8x8_tinted:
     ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
-    add r1, r1, #Centre_X               ; [s15.16]
-    rsb r2, r2, #Centre_Y               ; [s15.16]
+    add r1, r1, #Particles_CentreX               ; [s15.16]
+    rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
     mov r1, r1, lsr #16
     mov r2, r2, lsr #16
@@ -453,8 +453,8 @@ particles_draw_all_as_8x8_additive:
     ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
-    add r1, r1, #Centre_X               ; [s15.16]
-    rsb r2, r2, #Centre_Y               ; [s15.16]
+    add r1, r1, #Particles_CentreX               ; [s15.16]
+    rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
     mov r1, r1, lsr #16
     mov r2, r2, lsr #16

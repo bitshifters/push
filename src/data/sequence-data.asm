@@ -16,8 +16,9 @@
     .endif
 
     ; Init FX modules.
-    call_0 new_emitter_init
-    call_0 particles_init
+    ;call_0 new_emitter_init
+    ;call_0 particles_init
+    call_0 balls_init
 
     ; Make sprites.
     call_5 sprite_utils_mode9_make_table, temp_sprite_data, temp_sprite_ptrs_no_adr, 1, 8, temp_sprite_data_buffer_no_adr
@@ -27,16 +28,20 @@
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 0, new_emitter_tick,       screen_cls
+    call_3 fx_set_layer_fns, 0, 0,                      screen_cls
     call_3 fx_set_layer_fns, 1, 0,                      circles_reset_for_frame
 
-    fork seq_loop
+    ; Balls!
+    call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
+    call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
+
+    ;fork seq_loop
     end_script
 
+; Particles!
 seq_loop:
     write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_additive
-    call_3 fx_set_layer_fns, 3, 0,                      0
 
     wait_secs 5.0
 
@@ -50,8 +55,9 @@ seq_loop:
 
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
-
     wait_secs 5.0
+    call_3 fx_set_layer_fns, 3, 0,                      0
+
     fork seq_loop
 
     ; THE END.
