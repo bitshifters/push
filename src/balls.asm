@@ -20,8 +20,8 @@
 .equ Balls_CentreX,     (0.0 * MATHS_CONST_1)
 .equ Balls_CentreY,     (0.0 * MATHS_CONST_1)
 
-.equ Balls_BoardHeight, (256 * MATHS_CONST_1)
-.equ Balls_BoardWidth,  (320 * MATHS_CONST_1)
+.equ Balls_BoardHeight, (180 * MATHS_CONST_1)
+.equ Balls_BoardWidth,  (120 * MATHS_CONST_1)
 
 ; ============================================================================
 
@@ -145,7 +145,7 @@ balls_move_all:
 
     mov r1, r7
     movs r3, r3, asr #1
-    mvnmi r3, r3
+    rsbmi r3, r3, #0
 
 .4:
     ; if ball.x+ball.radius>boardwidth then
@@ -153,11 +153,17 @@ balls_move_all:
     cmp r10, #Balls_BoardWidth
     blt .5
 
-    mov r1, r7
+    rsb r1, r7, #Balls_BoardWidth
     movs r3, r3, asr #1
-    mvnpl r3, r3
+    rsbpl r3, r3, #0
 
 .5:
+    ; TODO: Destroy balls that escape too high!
+
+    ; Zero ix, iy.
+    mov r5, #0
+    mov r6, #0
+
     ; Save ball state w/out radius/colour.
     stmia r12, {r0-r6}
 
@@ -175,9 +181,9 @@ ball_destroy:
     str r0,  [r11, #0]                  ; prev->next = current->next
 
     ; Insert this ball at the front of the free list.
-    ldr r10, balls_next_free        ; next free ball_p
+    ldr r10, balls_next_free            ; next free ball_p
     str r10, [r12, #0]                  ; curr->next = next_free_p
-    str r12, balls_next_free        ; next_free_p = curr
+    str r12, balls_next_free            ; next_free_p = curr
 
     mov r12, r11                        ; step back to previous ball
 
@@ -192,9 +198,173 @@ ball_destroy:
 
 ; ============================================================================
 
+balls_sqrt_p:
+    .long sqrt_table_no_adr
+
+balls_recip_p:
+    .long reciprocal_table_no_adr
+
 balls_resolve_collisions:
-    ; TODO!
-    mov pc, lr
+    str lr, [sp, #-4]!
+
+    ; TODO: Sort balls by y?
+    ; TODO: Store min/max y for speed?
+
+    ldr r14, balls_sqrt_p
+
+    ldr r11, balls_first_active     ; curr_p
+.1:
+    cmp r11, #0
+    beq .2
+
+    ; Load ball context.
+    ldr r0, [r11, #Ball_x]
+    ldr r1, [r11, #Ball_y]
+
+    ; Go through all other balls.
+    ldr r12, balls_first_active     ; other_p
+.3:
+    cmp r12, #0
+    beq .4
+    cmp r12, r11                    ; don't collide with self.
+    beq .5
+
+    ; Load other context.
+    ldr r4, [r12, #Ball_x]
+    ldr r5, [r12, #Ball_y]
+
+    ; Calc distance.
+    sub r8, r0, r4                  ; dx=ball.x-other.x
+    sub r9, r1, r5                  ; dy=ball.y-other.y
+
+    mov r6, r8, asr #9              ; [9.7]
+    mov r10, r6
+    mul r6, r10, r6                 ; dx*dx [18.14]
+    mov r6, r6, lsl #2              ; [16.16]
+
+    mov r7, r9, asr #9
+    mov r10, r7
+    mul r7, r10, r7                 ; dy*dy
+    add r7, r6, r7, lsl #2          ; dx*dx + dy*dy
+
+    ; TODO: Figure out likely fp precision issue here!
+
+    mov r7, r7, lsr #22             ; [10.0]
+    ldr r10, [r14, r7, lsl #2]      ; dist=sqrt(dx*dx + dy*dy) [16.16]
+
+    ldr r6, [r11, #Ball_radius]
+    mov r6, r6, lsl #16             ; ball.radius [16.16]
+    ldr r7, [r12, #Ball_radius]
+    add r6, r6, r7, lsl #16         ; ball.radius+other.radius
+
+    ; if dist<ball.radius+other.radius
+    cmp r10, r6
+    bge .5
+
+    ; Collision!
+    sub r6, r6, r10                 ; push=ball.radius+other.radius-dist
+
+    ; TODO: Calculate str1 as ratio between ball weights(=radius).
+    mov r7, #MATHS_CONST_HALF       ; str1=0.5 (equal weights)
+
+    ; Calculate 1/dist.
+
+    ; Put divisor in table range.
+    mov r10, r10, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (b<<s)
+
+    .if _DEBUG
+    cmp r10, #0
+    adrle r0,divrange           ; and flag an error
+    swile OS_GenerateError      ; when necessary
+
+    ; Limited precision.
+    cmp r10, #1<<LibDivide_Reciprocal_t    ; Test for numerator too large
+    adrge r0,divrange           ; and flag an error
+    swige OS_GenerateError      ; when necessary
+    .endif
+
+    ; Lookup 1/dist.
+    ldr r3, balls_recip_p
+    ldr r10, [r3, r10, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
+
+    ; dx/dist
+    mov r8, r8, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (a<<s)
+    mul r8, r10, r8                      ; [10.22]   (a<<s)*(1<<16)/b = (a<<16+s)/b
+    mov r8, r8, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
+
+    ; dy/dist
+    mov r9, r9, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (a<<s)
+    mul r9, r10, r9                      ; [10.22]   (a<<s)*(1<<16)/b = (a<<16+s)/b
+    mov r9, r9, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
+
+    ; Calculate displacement.
+    mov r6, r6, asr #8              ; push
+
+    mov r8, r8, asr #8
+    mul r8, r6, r8                  ; dx*push
+
+    mov r9, r9, asr #8
+    mul r9, r6, r9                  ; dy*push
+
+    mov r7, r7, asr #8              ; str1
+
+    mov r8, r8, asr #8
+    mul r8, r7, r8                  ; dx*push*str1
+
+    mov r9, r9, asr #8
+    mul r9, r7, r9                  ; dy*push*str1
+
+    ; ball.ix+=dx*push*str1
+    ; ball.iy+=dy*push*str1
+    ldr r2, [r11, #Ball_ix]
+    ldr r3, [r11, #Ball_iy]
+    add r2, r2, r8
+    add r3, r3, r9
+    str r2, [r11, #Ball_ix]
+    str r3, [r11, #Ball_iy]
+
+    ; other.ix-=dx*push*str1
+    ; other.iy-=dy*push*str1
+    ldr r2, [r12, #Ball_ix]
+    ldr r3, [r12, #Ball_iy]
+    sub r2, r2, r8
+    sub r3, r3, r9
+    str r2, [r12, #Ball_ix]
+    str r3, [r12, #Ball_iy]
+
+.5:
+    ldr r12, [r12, #Ball_Next]
+    b .3
+
+.4:
+    ; Compared with all other balls.
+
+    ; Next ball.
+    ldr r11, [r11, #Ball_Next]
+    b .1
+
+.2:
+
+    ; Finally make all collision adjustments.
+    ldr r11, balls_first_active     ; curr_p
+.10:
+    cmp r11, #0
+    beq .20
+
+    ; TODO: Don't need to load the full context.
+    ldmia r11, {r0-r7}              ; load ball context
+
+    add r1, r1, r5, asr #1          ; ball.x+=ball.ix*.7
+    add r2, r2, r6, asr #1          ; ball.y+=ball.iy*.7
+    add r3, r3, r5, asr #2          ; ball.vx+=ball.ix*.35
+    add r4, r4, r6, asr #2          ; ball.vy+=ball.iy*.35
+
+    stmia r11, {r0-r6}
+    mov r11, r0                     ; curr_p=next_p
+    b .10
+
+.20:
+    ldr pc, [sp], #4
 
 ; ============================================================================
 
@@ -237,7 +407,7 @@ balls_draw_all:
 
 .if _DEBUG
 balls_debug_pos:
-    .long 160
+    .long 60
 
 ; R1=dir.
 balls_debug_cursor:

@@ -17,8 +17,10 @@ sinus_table_no_adr:
 sqrt_table_no_adr:
 	.incbin "data/raw/sqrt_1024.bin"
 
+.if LibSqrt_IncludeRsqrt
 rsqrt_table_no_adr:
 	.incbin "data/raw/rsqrt_1024.bin"
+.endif
 .endif
 
 ; ============================================================================

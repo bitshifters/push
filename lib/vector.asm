@@ -132,7 +132,7 @@ vector_lerp:
     mov pc, lr
 
 
-.if LibConfig_IncludeSqrt           ; these functions rely on SQRT.
+.if LibConfig_IncludeSqrt && 0           ; these functions rely on SQRT.
 ; Length of vector.
 ; Parameters:
 ;  R1=ptr to vector A.

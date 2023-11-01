@@ -4,7 +4,7 @@
 
 ; TODO: Allow configuration of more than one screen mode?
 
-.equ LibConfig_IncludeSqrt,     0
+.equ LibConfig_IncludeSqrt,     1
 .equ LibConfig_IncludeLine,     0
 .equ LibConfig_IncludeTriangle, 1
 .equ LibConfig_IncludePolygon,  0
@@ -27,5 +27,7 @@
 .equ LibCircles_MaxRadius,      70
 .equ LibCircles_MaxCircles,     32                                      ; Max circles drawn in a frame (!)
 .equ LibCircles_DataWords,      4                                       ; {X centre, colour word, ptr to size table, line count}
+
+.equ LibSqrt_IncludeRsqrt,      0
 
 ; ============================================================================
