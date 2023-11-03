@@ -21,8 +21,10 @@
 .equ Balls_CentreX,     (0.0 * MATHS_CONST_1)
 .equ Balls_CentreY,     (0.0 * MATHS_CONST_1)
 
-.equ Balls_BoardWidth,  (160 * MATHS_CONST_1)
+.equ Balls_BoardWidth,  (320 * MATHS_CONST_1)
 .equ Balls_BoardHeight, (256 * MATHS_CONST_1)
+
+.equ Balls_ResolveAgainstAll, 0     ; slower and more jittery.
 
 ; ============================================================================
 
@@ -287,15 +289,28 @@ balls_resolve_collisions:
     mov r14, r14, lsl #16           ; ball.radius [16.16]
     rsb r14, r1, r14                ; ymin=ball.y-ball.radius
 
+    .if Balls_ResolveAgainstAll
+    ldr r12, balls_first_active
+    .else
     ; Go through all other balls above us.
     ldr r12, [r11, #Ball_Next]      ; other=ball->next
+    .endif
 .3:
     cmp r12, #0
     beq .4
 
+    .if Balls_ResolveAgainstAll
+    cmp r11, r12                    ; don't test against self!
+    beq .5
+    .endif
+
     ldr r8, [r12, #Ball_ymax]       ; other.ymax
     cmp r8, r14                     ; other.ymax < ymin?
+    .if Balls_ResolveAgainstAll
+    blt .5                          ; assume no collision.
+    .else
     blt .4                          ; terminate early as all remaining balls are above our miny.
+    .endif
 
     ; Load other context.
     ldr r4, [r12, #Ball_x]          ; other.x
