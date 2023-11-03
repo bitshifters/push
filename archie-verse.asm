@@ -14,7 +14,7 @@
 
 .equ DebugDefault_PlayPause,    1		; play
 .equ DebugDefault_ShowRasters,  0
-.equ DebugDefault_ShowVars,     0		; slow so off by default.
+.equ DebugDefault_ShowVars,     1		; slow so off by default.
 
 ; ============================================================================
 ; Includes.
@@ -82,9 +82,9 @@ main:
     bl app_init_audio
 
     ; Register debug vars. NOTE: These could go in the sequence script...
-    DEBUG_REGISTER_VAR vsync_count
+    DEBUG_REGISTER_VAR vsync_delta
     DEBUG_REGISTER_VAR frame_counter
-    DEBUG_REGISTER_VAR music_pos
+    ;DEBUG_REGISTER_VAR music_pos
     DEBUG_REGISTER_KEY RMKey_Space,      debug_toggle_main_loop_pause,  0
     DEBUG_REGISTER_KEY RMKey_A,          debug_restart_sequence,        0
     DEBUG_REGISTER_KEY RMKey_S,          debug_set_byte_true,           debug_main_loop_step

@@ -59,3 +59,4 @@ Timing on ARM2.
 - Tinted 8x8 sprites (radius ~3.5) ~= 350
 - Tinted pixels (radius 0) ~= 600
 - Additive 8x8 sprites (radius ~3.5) ~= 170
+- Full ball collision (radius 4-24) ~= 20

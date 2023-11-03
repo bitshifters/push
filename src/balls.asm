@@ -20,8 +20,8 @@
 .equ Balls_CentreX,     (0.0 * MATHS_CONST_1)
 .equ Balls_CentreY,     (0.0 * MATHS_CONST_1)
 
-.equ Balls_BoardHeight, (180 * MATHS_CONST_1)
-.equ Balls_BoardWidth,  (120 * MATHS_CONST_1)
+.equ Balls_BoardWidth,  (320 * MATHS_CONST_1)
+.equ Balls_BoardHeight, (256 * MATHS_CONST_1)
 
 ; ============================================================================
 
@@ -56,8 +56,8 @@ balls_init:
     DEBUG_REGISTER_VAR balls_debug_pos   ; TODO: Make this not a bl call!
     DEBUG_REGISTER_VAR balls_alive_count    ; TODO: Make this not a bl call!
 
-    DEBUG_REGISTER_KEY RMKey_Z, balls_debug_cursor, -1
-    DEBUG_REGISTER_KEY RMKey_X, balls_debug_cursor,  1
+    DEBUG_REGISTER_KEY RMKey_Z, balls_debug_cursor, -4
+    DEBUG_REGISTER_KEY RMKey_X, balls_debug_cursor,  4
     DEBUG_REGISTER_KEY RMKey_1, balls_debug_drop,    1
     DEBUG_REGISTER_KEY RMKey_2, balls_debug_drop,    2
     DEBUG_REGISTER_KEY RMKey_3, balls_debug_drop,    3
@@ -158,8 +158,14 @@ balls_move_all:
     rsbpl r3, r3, #0
 
 .5:
-    ; TODO: Destroy balls that escape too high!
+    ; Destroy balls that escape too high!
+    cmp r2, #-Balls_BoardHeight
+    bgt .6
+    
+    bl ball_destroy
+    b .1
 
+.6:
     ; Zero ix, iy.
     mov r5, #0
     mov r6, #0
@@ -207,7 +213,7 @@ balls_recip_p:
 balls_resolve_collisions:
     str lr, [sp, #-4]!
 
-    ; TODO: Sort balls by y?
+    ; TODO: Sort balls by y (descending i.e. bottom to top)?
     ; TODO: Store min/max y for speed?
 
     ldr r14, balls_sqrt_p
@@ -237,44 +243,53 @@ balls_resolve_collisions:
     sub r8, r0, r4                  ; dx=ball.x-other.x
     sub r9, r1, r5                  ; dy=ball.y-other.y
 
-    mov r6, r8, asr #9              ; [9.7]
+    ; Calculate dist=sqrt(dx*dx + dy*dy
+
+    mov r6, r8, asr #10             ; [10.6]
     mov r10, r6
-    mul r6, r10, r6                 ; dx*dx [18.14]
-    mov r6, r6, lsl #2              ; [16.16]
+    mul r6, r10, r6                 ; dx*dx [20.12]
 
-    mov r7, r9, asr #9
+    mov r7, r9, asr #10
     mov r10, r7
-    mul r7, r10, r7                 ; dy*dy
-    add r7, r6, r7, lsl #2          ; dx*dx + dy*dy
+    mul r7, r10, r7                 ; dy*dy [20.12]
 
-    ; TODO: Figure out likely fp precision issue here!
+    add r7, r6, r7                  ; distsq=dx*dx + dy*dy [20.12]
+    mov r7, r7, asr #16             ; distsq/4             [16.0]
 
-    mov r7, r7, lsr #22             ; [10.0]
-    ldr r10, [r14, r7, lsl #2]      ; dist=sqrt(dx*dx + dy*dy) [16.16]
+    ; SQRT table goes from [1, 512*512) = [0x00001, 0x40000) (18 bits)
+    ; Contains 65536 = 0x10000 entries                       (16 bits)
+    ; Values are in 16.16 format.
 
-    ldr r6, [r11, #Ball_radius]
-    mov r6, r6, lsl #16             ; ball.radius [16.16]
-    ldr r7, [r12, #Ball_radius]
-    add r6, r6, r7, lsl #16         ; ball.radius+other.radius
+    subs r7, r7, #1
+    movmi r10, #MATHS_CONST_1       ; should be 0 but avoid div by 0.
+    ldrpl r10, [r14, r7, lsl #2]    ; sqrt(distsq / 4) [16.16]
 
-    ; if dist<ball.radius+other.radius
+    mov r10, r10, asl #1            ; dist=2*sqrt(distsq / 4)
+
+    ; Calc combined distance.
+    ldr r7, [r11, #Ball_radius]
+    mov r7, r7, lsl #16             ; ball.radius [16.16]
+    ldr r6, [r12, #Ball_radius]
+    add r6, r7, r6, lsl #16         ; ball.radius+other.radius
+
+    ; If dist<ball.radius+other.radius then balls touching ;)
     cmp r10, r6
     bge .5
 
     ; Collision!
-    sub r6, r6, r10                 ; push=ball.radius+other.radius-dist
+    sub r2, r6, r10                 ; push=ball.radius+other.radius-dist
+    cmp r2, r7                      ; push > ball.radius?
+    movgt r2, r7                    ; limit push to our own radius.
 
-    ; TODO: Calculate str1 as ratio between ball weights(=radius).
-    mov r7, #MATHS_CONST_HALF       ; str1=0.5 (equal weights)
-
-    ; Calculate 1/dist.
+   ; Calculate 1/dist.
+    ldr r3, balls_recip_p
 
     ; Put divisor in table range.
     mov r10, r10, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (b<<s)
 
     .if _DEBUG
     cmp r10, #0
-    adrle r0,divrange           ; and flag an error
+    adrle r0,divbyzero          ; and flag an error
     swile OS_GenerateError      ; when necessary
 
     ; Limited precision.
@@ -284,51 +299,80 @@ balls_resolve_collisions:
     .endif
 
     ; Lookup 1/dist.
-    ldr r3, balls_recip_p
     ldr r10, [r3, r10, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
 
-    ; dx/dist
+    ; dx/=dist
     mov r8, r8, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (a<<s)
     mul r8, r10, r8                      ; [10.22]   (a<<s)*(1<<16)/b = (a<<16+s)/b
     mov r8, r8, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
 
-    ; dy/dist
+    ; dy/=dist
     mov r9, r9, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (a<<s)
     mul r9, r10, r9                      ; [10.22]   (a<<s)*(1<<16)/b = (a<<16+s)/b
     mov r9, r9, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
 
-    ; Calculate displacement.
-    mov r6, r6, asr #8              ; push
+    ; Calculate str1 as ratio between ball weights(=radius).
+    sub r7, r6, r7              ; other.radius
 
+    ; Calculate 1/(ball.radius+other.radius)
+    mov r6, r6, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (b<<s)
+
+    .if _DEBUG
+    cmp r6, #0
+    adrle r0,divbyzero          ; and flag an error
+    swile OS_GenerateError      ; when necessary
+
+    ; Limited precision.
+    cmp r6, #1<<LibDivide_Reciprocal_t    ; Test for numerator too large
+    adrge r0,divrange           ; and flag an error
+    swige OS_GenerateError      ; when necessary
+    .endif
+
+    ; Lookup 1/(ball.radius+other.radius).
+    ldr r6, [r3, r6, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
+
+    .if 1
+    mov r7, r7, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (a<<s)
+    mul r7, r6, r7                  ; str1=other.radius/(ball.radius+other.radius)
+    mov r7, r7, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
+    .else
+    mov r7, #MATHS_CONST_HALF       ; str1=0.5 (equal weights)
+    .endif
+
+     ; Calculate displacement.
+    mov r2, r2, asr #8              ; push
     mov r8, r8, asr #8
-    mul r8, r6, r8                  ; dx*push
-
+    mul r8, r2, r8                  ; dx*push
     mov r9, r9, asr #8
-    mul r9, r6, r9                  ; dy*push
+    mul r9, r2, r9                  ; dy*push
 
     mov r7, r7, asr #8              ; str1
-
-    mov r8, r8, asr #8
-    mul r8, r7, r8                  ; dx*push*str1
-
-    mov r9, r9, asr #8
-    mul r9, r7, r9                  ; dy*push*str1
+    mov r10, r8, asr #8             ; dx*push
+    mul r10, r7, r10                ; dx*push*str1
+    mov r6, r9, asr #8              ; dx*push
+    mul r6, r7, r6                  ; dy*push*str1
 
     ; ball.ix+=dx*push*str1
     ; ball.iy+=dy*push*str1
     ldr r2, [r11, #Ball_ix]
     ldr r3, [r11, #Ball_iy]
-    add r2, r2, r8
-    add r3, r3, r9
+    add r2, r2, r10
+    add r3, r3, r6
     str r2, [r11, #Ball_ix]
     str r3, [r11, #Ball_iy]
 
-    ; other.ix-=dx*push*str1
-    ; other.iy-=dy*push*str1
+    rsb r7, r7, #MATHS_CONST_1>>8   ; (1-str1)
+    mov r10, r8, asr #8             ; dx*push
+    mul r10, r7, r10                ; dx*push*(1-str1)
+    mov r6, r9, asr #8              ; dy*push
+    mul r6, r7, r6                  ; dy*push*(1-str1)
+
+    ; other.ix-=dx*push*(1-str1)
+    ; other.iy-=dy*push*(1-str1)
     ldr r2, [r12, #Ball_ix]
     ldr r3, [r12, #Ball_iy]
-    sub r2, r2, r8
-    sub r3, r3, r9
+    sub r2, r2, r10
+    sub r3, r3, r6
     str r2, [r12, #Ball_ix]
     str r3, [r12, #Ball_iy]
 
