@@ -24,6 +24,7 @@
 .equ Balls_BoardWidth,  (320 * MATHS_CONST_1)
 .equ Balls_BoardHeight, (256 * MATHS_CONST_1)
 
+.equ Balls_HaveRadiusAsMass,  1     ; otherwise all balls have the same mass.
 .equ Balls_ResolveAgainstAll, 0     ; slower and more jittery.
 
 ; ============================================================================
@@ -216,7 +217,6 @@ ball_destroy:
 ; ============================================================================
 
 balls_sort:
-
     ; Bubble sort FTW!
     ldr r9, balls_alive_count
     mov r0, #0                      ; i
@@ -389,7 +389,9 @@ balls_resolve_collisions:
     mul r9, r10, r9                      ; [10.22]   (a<<s)*(1<<16)/b = (a<<16+s)/b
     mov r9, r9, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
 
+    .if Balls_HaveRadiusAsMass
     ; Calculate str1 as ratio between ball weights(=radius).
+    ; TODO: Ball mass should probably be proportional to radius^2.
     sub r7, r6, r7              ; other.radius
 
     ; Calculate 1/(ball.radius+other.radius)
@@ -409,7 +411,6 @@ balls_resolve_collisions:
     ; Lookup 1/(ball.radius+other.radius).
     ldr r6, [r3, r6, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
 
-    .if 1
     mov r7, r7, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (a<<s)
     mul r7, r6, r7                  ; str1=other.radius/(ball.radius+other.radius)
     mov r7, r7, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
@@ -480,7 +481,7 @@ balls_resolve_collisions:
     add r3, r3, r5, asr #2          ; ball.vx+=ball.ix*.35
     add r4, r4, r6, asr #2          ; ball.vy+=ball.iy*.35
 
-    stmia r11, {r0-r6}
+    stmia r11, {r0-r4}
     mov r11, r0                     ; curr_p=next_p
     b .10
 
