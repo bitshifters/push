@@ -12,7 +12,8 @@
 .equ Ball_iy,       24      ; R6
 .equ Ball_radius,   28      ; R7
 .equ Ball_colour,   30      ; R7
-.equ Ball_SIZE,     32
+.equ Ball_ymax,     32      ; R8
+.equ Ball_SIZE,     36
 
 .equ Balls_Max,     30      ; ?
 .equ Ball_Gravity,  5.0     ; ? 
@@ -20,7 +21,7 @@
 .equ Balls_CentreX,     (0.0 * MATHS_CONST_1)
 .equ Balls_CentreY,     (0.0 * MATHS_CONST_1)
 
-.equ Balls_BoardWidth,  (320 * MATHS_CONST_1)
+.equ Balls_BoardWidth,  (160 * MATHS_CONST_1)
 .equ Balls_BoardHeight, (256 * MATHS_CONST_1)
 
 ; ============================================================================
@@ -53,7 +54,7 @@ ball_gravity:
 balls_init:
     str lr, [sp, #-4]!
 
-    DEBUG_REGISTER_VAR balls_debug_pos   ; TODO: Make this not a bl call!
+    DEBUG_REGISTER_VAR balls_debug_pos      ; TODO: Make this not a bl call!
     DEBUG_REGISTER_VAR balls_alive_count    ; TODO: Make this not a bl call!
 
     DEBUG_REGISTER_KEY RMKey_Z, balls_debug_cursor, -4
@@ -89,6 +90,8 @@ balls_tick_all:
     str lr, [sp, #-4]!
 
     bl balls_move_all
+    ; Sort balls by y (descending i.e. bottom to top).
+    bl balls_sort
     bl balls_resolve_collisions
 
     ldr pc, [sp], #4
@@ -97,16 +100,16 @@ balls_tick_all:
 balls_move_all:
     str lr, [sp, #-4]!
 
-    ldr r8, ball_gravity
+    ldr r9, ball_gravity
 
     adr r12, balls_first_active         ; R12=current_p
-    ldr r0, [r12, #0]                   ; R0=next_p
+    ldr r0, [r12, #Ball_Next]           ; R0=next_p
 .1:
     mov r11, r12                        ; r11 = prev_p = current_p
     movs r12, r0                        ; current_p = next_p
     beq .2
 
-    ldmia r12, {r0-r7}                  ; load ball context
+    ldmia r12, {r0-r4}                  ; load ball context
     ; R0=next
     ; R1=x
     ; R2=y
@@ -115,13 +118,15 @@ balls_move_all:
     ; R5=ix
     ; R6=iy
     ; R7=radius + colour
-    mov r9, r7, lsr #16                 ; colour
+    ; R8=ymax
+    ldr r7, [r12, #Ball_radius]
+    ;mov r9, r7, lsr #16                 ; colour
     mov r7, r7, lsl #16                 ; radius [16.16]
 
     ; Ball dynamics.
 
     ; vel += acceleration
-    add r4, r4, r8
+    add r4, r4, r9
 
     ; pos += vel
     add r1, r1, r3
@@ -173,6 +178,10 @@ balls_move_all:
     ; Save ball state w/out radius/colour.
     stmia r12, {r0-r6}
 
+    ; Calculate ymax.
+    add r8, r2, r7                  ; ymax=y+radius    
+    str r8, [r12, #Ball_ymax]
+
     b .1
 
 .2:
@@ -204,6 +213,58 @@ ball_destroy:
 
 ; ============================================================================
 
+balls_sort:
+
+    ; Bubble sort FTW!
+    ldr r9, balls_alive_count
+    mov r0, #0                      ; i
+.1:
+    cmp r0, r9                      ; i >= count
+    bge .4
+
+    adr r10, balls_first_active     ; h (prev)
+    mov r3, #0                      ; swapped
+
+    sub r2, r9, r0                  ; count-i
+    sub r2, r2, #1                  ; count-i-i
+    mov r1, #0                      ; j
+.2:
+    cmp r1, r2
+    bge .3
+
+    ldr r11, [r10, #Ball_Next]      ; p1=*h (prev->next)
+    ldr r12, [r11, #Ball_Next]      ; p2=p1->next
+
+    ldr r8, [r11, #Ball_ymax]       ; p1->ymax
+    ldr r7, [r12, #Ball_ymax]       ; p2->ymax
+
+    cmp r8, r7                      ; p1->ymax > p2->ymax?
+    bge .5
+
+    ; Swap p1 & p2.
+    ldr r6, [r12, #Ball_Next]       ; tmp=p2->next
+    str r11, [r12, #Ball_Next]      ; p2->next=p1
+    str r6, [r11, #Ball_Next]       ; p1->next=tmp
+    str r12, [r10, #Ball_Next]      ; *h=p2 (prev->next=p2)
+
+    add r3, r3, #1                  ; swapped++
+
+.5:
+    ldr r10, [r10, #Ball_Next]      ; h=&(*h)->next (prev=prev->next)
+    add r1, r1, #1                  ; j++
+    b .2
+
+.3:
+    cmp r3, #0
+    beq .4
+
+    add r0, r0, #1                  ; i++
+    b .1
+
+.4:
+    mov pc, lr
+
+
 balls_sqrt_p:
     .long sqrt_table_no_adr
 
@@ -213,31 +274,32 @@ balls_recip_p:
 balls_resolve_collisions:
     str lr, [sp, #-4]!
 
-    ; TODO: Sort balls by y (descending i.e. bottom to top)?
-    ; TODO: Store min/max y for speed?
-
-    ldr r14, balls_sqrt_p
-
-    ldr r11, balls_first_active     ; curr_p
+    ldr r11, balls_first_active
 .1:
     cmp r11, #0
     beq .2
 
     ; Load ball context.
-    ldr r0, [r11, #Ball_x]
-    ldr r1, [r11, #Ball_y]
+    ldr r0, [r11, #Ball_x]          ; ball.x
+    ldr r1, [r11, #Ball_y]          ; ball.y
 
-    ; Go through all other balls.
-    ldr r12, balls_first_active     ; other_p
+    ldr r14, [r11, #Ball_radius]    ; TODO: Remove repeated LDR below?
+    mov r14, r14, lsl #16           ; ball.radius [16.16]
+    rsb r14, r1, r14                ; ymin=ball.y-ball.radius
+
+    ; Go through all other balls above us.
+    ldr r12, [r11, #Ball_Next]      ; other=ball->next
 .3:
     cmp r12, #0
     beq .4
-    cmp r12, r11                    ; don't collide with self.
-    beq .5
+
+    ldr r8, [r12, #Ball_ymax]       ; other.ymax
+    cmp r8, r14                     ; other.ymax < ymin?
+    blt .4                          ; terminate early as all remaining balls are above our miny.
 
     ; Load other context.
-    ldr r4, [r12, #Ball_x]
-    ldr r5, [r12, #Ball_y]
+    ldr r4, [r12, #Ball_x]          ; other.x
+    ldr r5, [r12, #Ball_y]          ; other.y
 
     ; Calc distance.
     sub r8, r0, r4                  ; dx=ball.x-other.x
@@ -262,7 +324,8 @@ balls_resolve_collisions:
 
     subs r7, r7, #1
     movmi r10, #MATHS_CONST_1       ; should be 0 but avoid div by 0.
-    ldrpl r10, [r14, r7, lsl #2]    ; sqrt(distsq / 4) [16.16]
+    ldrpl r3, balls_sqrt_p
+    ldrpl r10, [r3, r7, lsl #2]     ; sqrt(distsq / 4) [16.16]
 
     mov r10, r10, asl #1            ; dist=2*sqrt(distsq / 4)
 
@@ -382,8 +445,7 @@ balls_resolve_collisions:
 
 .4:
     ; Compared with all other balls.
-
-    ; Next ball.
+    ; Resolve next ball.
     ldr r11, [r11, #Ball_Next]
     b .1
 
@@ -395,8 +457,8 @@ balls_resolve_collisions:
     cmp r11, #0
     beq .20
 
-    ; TODO: Don't need to load the full context.
-    ldmia r11, {r0-r7}              ; load ball context
+    ; Don't need to load the full context.
+    ldmia r11, {r0-r6}              ; load ball context
 
     add r1, r1, r5, asr #1          ; ball.x+=ball.ix*.7
     add r2, r2, r6, asr #1          ; ball.y+=ball.iy*.7
@@ -422,8 +484,9 @@ balls_draw_all:
     cmp r11, #0
     beq .2
 
-    ; TODO: Don't need to load the full context.
-    ldmia r11, {r0-r7}                  ; load ball context
+    ; Don't need to load the full context.
+    ldmia r11, {r0-r2}                  ; load ball context
+    ldr r7, [r11, #Ball_radius]
     mov r11, r0                         ; curr_p=next_p
 
     ; For now just plot 2D balls.
