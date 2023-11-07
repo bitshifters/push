@@ -476,6 +476,7 @@ balls_resolve_collisions:
     ; Don't need to load the full context.
     ldmia r11, {r0-r6}              ; load ball context
 
+    ; TODO: This is approximated as *0.5 and *0.25.
     add r1, r1, r5, asr #1          ; ball.x+=ball.ix*.7
     add r2, r2, r6, asr #1          ; ball.y+=ball.iy*.7
     add r3, r3, r5, asr #2          ; ball.vx+=ball.ix*.35

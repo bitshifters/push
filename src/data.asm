@@ -13,14 +13,6 @@
 
 ; ============================================================================
 
-.if 0
-.p2align 2
-scroller_font_data_no_adr:
-.incbin "build/big-font.bin"
-.endif
-
-; ============================================================================
-
 .if !AppConfig_LoadModFromFile
 .p2align 2
 music_mod_no_adr:
@@ -29,7 +21,11 @@ music_mod_no_adr:
 
 ; ============================================================================
 
-.if 0
+.if 0   ; fx/scroller.asm
+.p2align 2
+scroller_font_data_no_adr:
+.incbin "build/big-font.bin"
+
 .p2align 2
 scroller_text_string_no_adr:
 ; Add 20 blank chars so that scroller begins on RHS of the screen, as per Amiga.
@@ -41,7 +37,7 @@ scroller_text_string_end_no_adr:
 
 ; ============================================================================
 
-.if 0
+.if 0   ; fx/dot-tunnel.asm
 .p2align 6
 dots_y_table_1_no_adr:
 .incbin "data/dots_y_table_1.bin"
@@ -67,7 +63,7 @@ dots_y_table_2_b_end_no_adr:
 
 ; ============================================================================
 
-.if 0
+.if 0   ; fx/dot-tunnel.asm
 .p2align 6
 dot_tunnel_offset_xy_no_adr:
     .incbin "data\dot_tunnel_xy_offset.bin"
@@ -102,12 +98,15 @@ credits_pal_no_adr:
 
 ; ============================================================================
 
+.if 0   ; fx/3d-scene.asm
 .include "src/data/3d-model-data.asm"
+.endif
 
 ; ============================================================================
 ; Sprite data.
 ; ============================================================================
 
+; src/particles.asm
 ; TODO: Fully masked sprites not tinted masks. Interleave data?
 temp_sprite_data:
 .long 0x01111110

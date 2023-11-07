@@ -517,8 +517,6 @@ rnd_seed:
 ; FX code modules.
 ; ============================================================================
 
-.include "src/3d-scene.asm"
-.include "src/scene-2d.asm"
 .include "src/particles.asm"
 .include "src/balls.asm"
 

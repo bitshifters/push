@@ -35,9 +35,9 @@ Particle demo
         - Additional forces (wind etc.?)
 
 5) Particle collision :)
-    - Use circle plotting for smaller number of larger objects.
-    - Sort by Y value, determine min/max Y values.
-    - Resolve collisions in a double loop; for each particle:
+    - Use circle plotting for smaller number of larger objects. - DONE
+    - Sort by Y value, determine min/max Y values. - DONE
+    - Resolve collisions in a double loop; for each particle: - DONE
         - Find all collision candidates with min/max y.
         - Calculate distance between particles and test radius.
         - Calculate collision axis.
@@ -47,6 +47,7 @@ Particle demo
 
 MISSING framework features:
 - Add arbitrary tick/task functions (with self-remove?) e.g. screen fades.
+- Background task functions that are preempted by rendering. e.g. decompress.
 - Direct VIDC write fns for palette changes.
 - Palette pending to sync palette changes on vsync.
 - Fast debug print to screen.

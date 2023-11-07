@@ -1,5 +1,6 @@
 ; ============================================================================
 ; 3D Scene.
+; TODO: Remove code specific to previous demos.
 ; ============================================================================
 
 .equ OBJ_MAX_VERTS, 164
@@ -46,9 +47,6 @@
 ; This now gives us z=[0,176] to play with before any overflow errors are
 ; likely to occur. If this does happen, then we can further reduce the
 ; coordinate space and use d=40, h=4, etc.
-
-; TODO: Probably don't need 8.8 precision when doing division [which is the
-;       cause of the overflow] - could likely reduce to 10.6 or similar.
 
 
 camera_pos:
@@ -302,7 +300,6 @@ update_3d_scene_from_vu_bars:
 	mov r0, #0
 	swi QTM_ReadVULevels
 	; R0 = word containing 1 byte per channel 1-4 VU bar heights 0-64
-    ; TODO: Finalise mapping of vu levels to scale & rotation deltas.
   	mov r10, r0, lsr #24            ; channel 4 = scale
 	ands r10, r10, #0xff
     bne .1

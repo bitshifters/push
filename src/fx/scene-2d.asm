@@ -3,6 +3,7 @@
 ; 2D Wireframe objects that move in 3D space but are camera facing.
 ; Assume single face, no culling.
 ; Assume multiple objects with independent position, rotation, scale.
+; TODO: Remove code specific to previous demos etc.
 ; ============================================================================
 
 .equ Scene2D_ObjectBuffer_Size, 10 * VECTOR3_SIZE * 10 + 10 * 4 ; 10 objects with max 10 verts each.
@@ -138,7 +139,6 @@ scene2d_init:
 
 ; ============================================================================
 
-; TODO: Move camera, spawn objects, move objects etc.
 scene2d_update:
     str lr, [sp, #-4]!
 

@@ -790,7 +790,7 @@ Scanline_Y2_End:
         LDMFD sp!,{r0-r1,r4-r12,r14} ; Restore registers before returning
         MOV pc,lr
 
-; TODO: Move to .data segment.
+; TODO: Move to .data segment or use existing reciprocal table.
 triangle_recip_table:
     .long 0
     .set num, 1

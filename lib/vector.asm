@@ -4,9 +4,6 @@
 
 .equ LibVector_IncludeAddSub, 0
 
-; TODO: Add batch vector direct rotate code from arc-django-2. 
-; TODO: make_vector?
-
 .if LibVector_IncludeAddSub
 ; Vector add.
 ; Parameters:
