@@ -75,12 +75,21 @@ seq_loop:
 ; This wouldn't support the concept of self-terminating tick fns.
 ; E.g. remove tick when fade has completed.
 ; Background tasks spread over arbitrary frames, e.g. decompress.
-seq_test_tick_fn:
+seq_test_fade_down:
+    call_3 palette_init_fade, 0, 1, seq_palette_red_additive
+
+seq_test_fade_down_loop:
     call_0 palette_update_fade_to_black
-    fork_and_wait 1, seq_test_tick_fn
-    end_script
-    ; wait 1                    ; yield (effectively).
-    ; goto seq_test_tick_fn     ; loop.
+    end_script_if_zero palette_interp
+    yield seq_test_fade_down_loop
+
+seq_test_fade_up:
+    call_3 palette_init_fade, 0, 1, seq_palette_red_additive
+
+seq_test_fade_up_loop:
+    call_0 palette_update_fade_from_black
+    end_script_if_zero palette_interp
+    yield seq_test_fade_up_loop
 
 ; ============================================================================
 ; Sequence specific data.

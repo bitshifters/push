@@ -179,6 +179,14 @@ script_call_5:
     str r10, [r12, #ScriptContext_PC]
     mov pc, r11
 
+script_return_if_zero:
+    ldr r0, [r10], #4           ; param=var address.
+    str r10, [r12, #ScriptContext_PC]
+    ldr r0, [r0]
+    cmp r0, #0
+    movne pc, lr
+; FALL THROUGH!
+
 ; R12=context.
 ; R10=script ptr.
 script_return:
@@ -219,8 +227,9 @@ script_gosub:
 
 ; R12=context.
 ; R10=script ptr.
-script_goto:
-    ldr r0, [r10], #4           ; param=program ptr.
+script_goto_and_wait:
+    ldmia r10!, {r0-r1}         ; params=program ptr & wait.
+    str r1, [r12, #ScriptContext_Wait]
     str r0, [r12, #ScriptContext_PC]        ; continue from here.
     mov pc, lr
 
@@ -291,6 +300,10 @@ script_call_swi:
     .long script_return
 .endm
 
+.macro end_script_if_zero address
+    .long script_return_if_zero, \address
+.endm
+
 .macro write_addr address, value
     .long script_write_addr, \address, \value
 .endm
@@ -330,8 +343,8 @@ script_call_swi:
     .long script_fork_and_wait, \program, \secs*50
 .endm
 
-.macro yield
-    wait 1
+.macro yield cont
+    .long script_goto_and_wait, \cont, 1
 .endm
 
 .macro call_swi swi_no, reg0, reg1

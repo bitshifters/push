@@ -76,7 +76,7 @@ palette_make_fade_to_black:
 	ldr pc, [sp], #4			; rts
 
 ; R2 = source palette block ptr
-palette_init_fade_to_black:
+palette_init_fade:
     str r1, palette_speed
     str r1, palette_delay
     str r2, palette_source
@@ -112,15 +112,6 @@ palette_update_fade_to_black:
     str r0, palette_interp
 	ldr pc, [sp], #4			; rts
 
-; R2 = source palette block ptr
-palette_init_fade_from_black:
-    str r1, palette_speed
-    str r1, palette_delay
-    str r2, palette_source
-    mov r0, #0
-    str r0, palette_interp
-    mov pc, lr
-
 ; Returns interp value in R0.
 palette_update_fade_from_black:
    	str lr, [sp, #-4]!			; push lr on stack
@@ -134,8 +125,10 @@ palette_update_fade_from_black:
     str r1, palette_delay
 
     ldr r0, palette_interp
-    cmp r0, #16
-	ldrge pc, [sp], #4			; rts
+    cmp r0, #0
+	ldreq pc, [sp], #4			; rts
+
+    rsb r0, r0, #16             ; TODO: Only line different from palette_update_fade_to_black
 
     ldr r2, palette_source
     bl palette_make_fade_to_black
@@ -144,7 +137,7 @@ palette_update_fade_from_black:
     bl palette_set_block
 
     ldr r0, palette_interp
-    adds r0, r0, #1
+    subs r0, r0, #1
     str r0, palette_interp
 	ldr pc, [sp], #4			; rts
 

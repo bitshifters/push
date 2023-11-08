@@ -46,8 +46,8 @@ Particle demo
 
 
 MISSING framework features:
-- Add arbitrary tick/task functions (with self-remove?) e.g. screen fades.
-- Background task functions that are preempted by rendering. e.g. decompress.
+- Add arbitrary tick/task functions (with self-remove?) e.g. screen fades. - DONE.
+- Background task functions that are preempted by rendering. e.g. decompress. => WHEN NEEDED.
 - Direct VIDC write fns for palette changes. => WHEN NEEDED.
 - Palette pending to sync palette changes on vsync. => WHEN NEEDED.
 - Fast debug print to screen. - DONE
