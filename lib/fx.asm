@@ -10,6 +10,8 @@ fx_tick_callbacks:
 fx_draw_callbacks:
 .skip 4*Fx_MaxLayers
 
+; TODO: Might need fx_init_layers for sequence restart?
+
 ; Call all tick functions in order.
 fx_tick_layers:
     str lr, [sp, #-4]!

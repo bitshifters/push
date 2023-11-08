@@ -16,8 +16,8 @@
     .endif
 
     ; Init FX modules.
-    ;call_0 new_emitter_init
-    ;call_0 particles_init
+    call_0 new_emitter_init
+    call_0 particles_init
     call_0 balls_init
 
     ; Make sprites.
@@ -35,19 +35,22 @@
     call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
 
-    ;fork seq_loop
+    wait_secs 10.0
+
+    fork seq_loop
     end_script
 
 ; Particles!
 seq_loop:
-    write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
-    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_additive
+    call_3 fx_set_layer_fns, 1, new_emitter_tick        circles_reset_for_frame
 
+    write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
+    call_3 fx_set_layer_fns, 3, 0,                      0
+    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_additive
     wait_secs 5.0
 
     write_addr particles_sprite_table_p, temp_mask_ptrs_no_adr
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_tinted
-
     wait_secs 5.0
 
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_points
@@ -56,7 +59,6 @@ seq_loop:
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
     wait_secs 5.0
-    call_3 fx_set_layer_fns, 3, 0,                      0
 
     fork seq_loop
 
@@ -64,17 +66,16 @@ seq_loop:
     end_script
 
 ; ============================================================================
-; Sequence tasks?
+; Sequence tasks can be forked and self-terminate on completion.
+; Rather than have a task management system it just uses the existing script
+; system and therefore supports any arbitrary sequence of fn calls.
+;
+;  Use 'yield <label>' to continue the script on the next from a given label.
+;  Use 'end_script_if_zero <var>' to terminate a script conditionally.
+;
+; (Yes I know this is starting to head into 'real language' territory.)
 ; ============================================================================
 
-; This would make a neverending tick call for 6 words.
-; No method for removing this though..!
-; Could extend script context to call a fn for N iterations.
-; Ideally have some sort of goto <script ptr> command to avoid
-; forking and using two script contexts for a loop.
-; This wouldn't support the concept of self-terminating tick fns.
-; E.g. remove tick when fade has completed.
-; Background tasks spread over arbitrary frames, e.g. decompress.
 seq_test_fade_down:
     call_3 palette_init_fade, 0, 1, seq_palette_red_additive
 
@@ -103,15 +104,15 @@ seq_palette_red_additive:
     .long 0x00000080                    ; 04 = 0100 =
     .long 0x000000a0                    ; 05 = 0101 =
     .long 0x000000c0                    ; 06 = 0110 =
-    .long 0x000000e0                    ; 07 = 0111 =
+    .long 0x000000e0                    ; 07 = 0111 = reds
     .long 0x000020e0                    ; 08 = 1000 =
     .long 0x000040e0                    ; 09 = 1001 =
     .long 0x000060e0                    ; 10 = 1010 =
     .long 0x000080e0                    ; 11 = 1011 =
     .long 0x0000a0e0                    ; 12 = 1100 =
     .long 0x0000c0e0                    ; 13 = 1101 =
-    .long 0x0000e0e0                    ; 14 = 1110 =
-    .long 0x00e0e0e0                    ; 15 = 1111 =
+    .long 0x0000e0e0                    ; 14 = 1110 = oranges
+    .long 0x00e0e0e0                    ; 15 = 1111 = white
 
 ; ============================================================================
 ; ============================================================================

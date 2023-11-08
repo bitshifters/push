@@ -12,9 +12,14 @@ sequence_init:
     mov r0, #0
     str r0, frame_counter
 
+    ; Register debug vars etc.
+    .if _DEBUG
+    bl app_init_debug               ; exact debug equired is app dependent.
+    .endif
+
     bl script_init
 
-    .if _DEBUG && 0
+    .if _DEBUG && 0                 ; TODO: Reinstate dynamic sequence load?
 	; Load seq file.
 	mov r0, #0xff
     ldr r2, sequence_program_p

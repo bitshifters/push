@@ -85,7 +85,12 @@ balls_init:
     bne .1
 
     mov r10, #0
-    str r10, [r12, #0]                  ; last ball has zero pointer.
+    str r10, [r12, #0]              ; last ball has zero pointer.
+    str r10, balls_first_active     ; no balls active.
+    .if _DEBUG
+    str r10, balls_alive_count
+    .endif
+
     ldr pc, [sp], #4
 
 

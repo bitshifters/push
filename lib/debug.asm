@@ -245,6 +245,17 @@ debug_font_mode9_p:
     .long debug_font_mode9_no_adr
 
 debug_init:
+    ; Reset debug keys & vars.
+    mov r0, #0
+    str r0, debug_num_keys
+
+    adr r1, debug_var_stack
+    mov r2, #Debug_MaxVars
+.3:
+    str r0, [r1], #4
+    subs r2, r2, #1
+    bne .3
+
     ; Explode font to MODE 9 for fast plotting.
     ldr r10, debug_font_p               ; src
     ldr r11, debug_font_mode9_p         ; dst

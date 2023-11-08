@@ -54,9 +54,6 @@
 
 lib_init:
     str lr, [sp, #-4]!
-    .if _DEBUG
-    bl debug_init
-    .endif
     .if LibSine_MakeSinusTable
     bl MakeSinus
     .endif
