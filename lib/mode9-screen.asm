@@ -53,7 +53,6 @@ screen_dup_lines:
 	cmp r12, r9
 	blt .1
 	mov pc, lr
-.endif
 
 static_screen_p:
     .long 0
@@ -85,3 +84,4 @@ screen_copy:
     subs r10, r10, #1
     bne .1
     mov pc, lr
+.endif

@@ -9,7 +9,7 @@
 ; ============================================================================
 
 ; R3 = index
-; R4 = RGBx word
+; R4 = RGBx word (actually 0x00BbGgRr) where bgr are ignored.
 ; Uses R0,R1 
 palette_set_colour:
     adrl r1, palette_osword_block

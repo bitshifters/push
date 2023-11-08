@@ -322,7 +322,7 @@ debug_plot_string_mode9:
 
     ; Handle VDU codes.
 .2:
-    cmp r0, #31                 ; set cursor
+    cmp r0, #VDU_SetPos                 ; set cursor
     bne .3
 
     ldrb r1, [r8], #1
@@ -330,7 +330,7 @@ debug_plot_string_mode9:
     b debug_set_cursor
 
 .3:
-    cmp r0, #17                 ; set colour
+    cmp r0, #VDU_TextColour             ; set colour
     bne .4
 
     ldrb r9, [r8], #1
@@ -339,7 +339,7 @@ debug_plot_string_mode9:
     b .1
 
 .4:
-    cmp r0, #30                 ; home cursor
+    cmp r0, #VDU_Home                   ; home cursor
     b debug_cursor_home
 
 debug_cursor_home:

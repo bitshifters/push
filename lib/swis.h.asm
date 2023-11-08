@@ -203,4 +203,6 @@
 .equ ASCII_LessThan, 60
 .equ ASCII_MoreThan, 62
 
+.equ VDU_TextColour, 17
+.equ VDU_Home, 30
 .equ VDU_SetPos, 31
