@@ -6,6 +6,15 @@
 
 ; ============================================================================
 
+.if _DEBUG
+debug_font_no_adr:
+;    .incbin "data/lib/BBC.bin"
+    .incbin "data/lib/Spectrum.bin"
+;    .incbin "data/lib/Apple2e.bin"
+.endif
+
+; ============================================================================
+
 .if LibConfig_IncludeSine
 sinus_table_no_adr:
 	.incbin "data/lib/sine_8192.bin"

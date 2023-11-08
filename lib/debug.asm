@@ -8,6 +8,8 @@
 .equ Debug_TempLen, 16
 .equ Debug_MaxVars, 8
 .equ Debug_MaxKeys, 32
+.equ Debug_MaxGlyphs, 96
+.equ Debug_Colour, 0xf
 
 debug_num_keys:
     .long 0
@@ -20,14 +22,10 @@ debug_prev_mask:
 
 ; Plot a string to the screen at the current cursor position.
 ; R0=ptr to null terminated string.
-debug_plot_string:
-    swi OS_WriteO   ; slow.
-    mov pc, lr
-
-; R0=VDU character
-debug_vdu:
-    swi OS_WriteC   ; slow.
-    mov pc, lr
+.if Screen_Mode==9
+.equ debug_plot_string, debug_plot_string_mode9
+.endif
+; TODO: debug font for MODE!=9
 
 ; R0=value to plot as %04x
 ; Trashes R1-R2.
@@ -96,22 +94,21 @@ debug_plot_vars:
 
 	SET_BORDER 0xffffff		; white = debug
 
-    ; TODO: Replace OS VDU handling for cursor etc.
-	swi OS_WriteI + 30  ; home cursor
+    bl debug_cursor_home
 
     adr r10, debug_var_stack
-    mov r11, #0
+    mov r9, #0
 .1:
-    ldr r1, [r10, r11, lsl #2]
+    ldr r1, [r10, r9, lsl #2]
     cmp r1, #0
     beq .2
 
     ldr r0, [r1]
     bl debug_plot_hex4
-	swi OS_WriteI+32        ; TODO: SPACE
+    bl debug_cursor_right
 
-    add r11, r11, #1
-    cmp r11, #Debug_MaxVars
+    add r9, r9, #1
+    cmp r9, #Debug_MaxVars
     blt .1
 
 .2:
@@ -239,4 +236,140 @@ error_out_of_keys:
     .byte "Out of debug keys!"
     .p2align 2
     .long 0
+
+; Font is 8 bytes per glyph, 1bpp.
+debug_font_p:
+    .long debug_font_no_adr
+
+debug_font_mode9_p:
+    .long debug_font_mode9_no_adr
+
+debug_init:
+    ; Explode font to MODE 9 for fast plotting.
+    ldr r10, debug_font_p               ; src
+    ldr r11, debug_font_mode9_p         ; dst
+
+    mov r9, #Debug_MaxGlyphs
+.1:
+
+    ldr r0, [r10], #4                   ; src word = 4x8-bit rows.
+    mov r2, #8                          ; glyph height.
+.2:
+    mov r1, #0                          ; dst word.
+    .rept 8
+    movs r0, r0, lsr #1
+    orrcs r1, r1, #Debug_Colour         ; or 0xf for mask.
+    mov r1, r1, lsl #4
+    .endr
+    str r1, [r11], #4
+
+    cmp r2, #5
+    ldreq r0, [r10], #4
+    subs r2, r2, #1
+    bne .2
+
+    subs r9, r9, #1
+    bne .1
+    mov pc, lr
+
+
+debug_cursor_x:
+    .byte 0
+
+debug_cursor_y:
+    .byte 0
+.p2align 2
+
+; R0=ptr to string
+; R12=screen addr
+; Trashes: R1-R2, R8-R11.
+debug_plot_string_mode9:
+    stmfd sp!, {r1-r11, lr}
+
+    bl debug_calc_scr_ptr
+    ldr r9, debug_font_mode9_p
+
+    mov r8, r0
+    adr lr, .1
+.1:
+    ldrb r0, [r8], #1
+
+    cmp r0, #0
+    ldmeqfd sp!, {r1-r11, pc}   ; exit
+
+    cmp r0, #ASCII_Space
+    blt .2                      ; vdu code.
+
+    subs r0, r0, #ASCII_Space
+    cmp r0, #Debug_MaxGlyphs
+    bge .10                     ; ascii>127
+
+    ; Blit glyph.
+    add r10, r9, r0, lsl #5    ; 32 bytes per glyph.
+    ldmia r10, {r0-r7}
+    str r0, [r11], #Screen_Stride
+    str r1, [r11], #Screen_Stride
+    str r2, [r11], #Screen_Stride
+    str r3, [r11], #Screen_Stride
+    str r4, [r11], #Screen_Stride
+    str r5, [r11], #Screen_Stride
+    str r6, [r11], #Screen_Stride
+    str r7, [r11], #Screen_Stride
+
+    .10:
+    ; Update cursor.
+    b debug_cursor_right
+
+    ; Handle VDU codes.
+.2:
+    cmp r0, #31                 ; set cursor
+    bne .3
+
+    ldrb r1, [r8], #1
+    ldrb r2, [r8], #1
+    b debug_set_cursor
+
+.3:
+    cmp r0, #17                 ; set colour
+    bne .4
+
+    ldrb r9, [r8], #1
+    ; TODO: Support debug text colour at runtime.
+    ;strb r9, debug_colour       ; not supported!
+    b .1
+
+.4:
+    cmp r0, #30                 ; home cursor
+    b debug_cursor_home
+
+debug_cursor_home:
+    mov r1, #0
+    mov r2, #0
+    b debug_set_cursor
+
+debug_cursor_right:
+    ldrb r1, debug_cursor_x
+    ldrb r2, debug_cursor_y
+    add r1, r1, #1
+    cmp r1, #40
+    movge r1, #0
+    addge r2, r2, #1
+    cmp r2, #32
+    movge r2, #0
+; FALL THROUGH!
+
+; R1=x, R2=y
+debug_set_cursor:
+    strb r1, debug_cursor_x
+    strb r2, debug_cursor_y
+; FALL THROUGH!
+
+; R12=screen addr.
+debug_calc_scr_ptr:
+    ldrb r1, debug_cursor_x
+    ldrb r2, debug_cursor_y
+    add r11, r12, r2, lsl #7
+    add r11, r11, r2, lsl #5        ; y*160
+    add r11, r11, r1, lsl #2        ; x*4
+    mov pc, lr
 .endif

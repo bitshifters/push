@@ -50,7 +50,7 @@ MISSING framework features:
 - Background task functions that are preempted by rendering. e.g. decompress.
 - Direct VIDC write fns for palette changes.
 - Palette pending to sync palette changes on vsync.
-- Fast debug print to screen.
+- Fast debug print to screen. - DONE
 
 
 

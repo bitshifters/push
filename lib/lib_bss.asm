@@ -4,6 +4,15 @@
 
 .p2align 6
 
+; ============================================================================
+
+.if _DEBUG
+debug_font_mode9_no_adr:
+    .skip Debug_MaxGlyphs * 4*8
+.endif
+
+; ============================================================================
+
 .if LibConfig_IncludePolygon
 polygon_span_table_no_adr:
     .skip Screen_Height * 4     ; per scanline.
