@@ -267,3 +267,18 @@ app_vsync_code:
 	mov r0, #0
 	str r0, pending_bank
     b exitVs
+
+; ============================================================================
+; FX code modules.
+; ============================================================================
+
+.include "src/fx/particles.asm"
+.include "src/fx/balls.asm"
+.include "src/fx/scene-3d.asm"
+
+; ============================================================================
+; Support library code modules used by the FX sequence.
+; ============================================================================
+
+.include "lib/mode9-screen.asm"
+.include "lib/palette.asm"

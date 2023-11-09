@@ -493,7 +493,10 @@ debug_show_rasters:
 rnd_seed:
     .long 0x87654321
 
-.include "src/app.asm"
+; ============================================================================
+; Support library code modules used by the FX.
+; ============================================================================
+
 .include "lib/debug.asm"
 .include "lib/fx.asm"
 .include "lib/script.asm"
@@ -501,22 +504,7 @@ rnd_seed:
 .if AppConfig_UseSyncTracks
 .include "src/sync.asm"
 .endif
-
-; ============================================================================
-; FX code modules.
-; ============================================================================
-
-.include "src/particles.asm"
-.include "src/balls.asm"
-.include "src/fx/scene-3d.asm"
-
-; ============================================================================
-; Support library code modules.
-; ============================================================================
-
-.include "lib/palette.asm"
-.include "lib/mode9-screen.asm"
-.include "lib/line.asm"
+.include "src/app.asm"
 .include "lib/lib_code.asm"
 
 ; ============================================================================

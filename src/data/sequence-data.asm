@@ -2,7 +2,7 @@
 ; The actual sequence for the demo.
 ; ============================================================================
 
-    ; Init QTM.
+    ; Init QTM. NB: This could be in app.asm.
     call_swi QTM_VUBarControl, AudioConfig_VuBars_Effect, AudioConfig_VuBars_Gravity
     call_swi QTM_Stereo, 1, AudioConfig_StereoPos_Ch1
     call_swi QTM_Stereo, 2, AudioConfig_StereoPos_Ch2
