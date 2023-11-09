@@ -6,14 +6,25 @@
 ; Supports position, rotation & scale of the object within the scene.
 ; ============================================================================
 
-; TODO: Rename as Mesh maybe?
-.equ Obj_Header_NumVerts,       0
-.equ Obj_Header_NumFaces,       4
-.equ Obj_Header_VertsPtr,       8
-.equ Obj_Header_NormalsPtr,     12
-.equ Obj_Header_FaceIndices,    16
-.equ Obj_Header_FaceColours,    20
-.equ Obj_Header_SIZE,           24
+.equ MeshHeader_NumVerts,       0
+.equ MeshHeader_NumFaces,       4
+.equ MeshHeader_VertsPtr,       8
+.equ MeshHeader_NormalsPtr,     12
+.equ MeshHeader_FaceIndices,    16
+.equ MeshHeader_FaceColours,    20
+.equ MeshHeader_SIZE,           24
+
+.equ Entity_Pos,                0
+.equ Entity_PosX,               0
+.equ Entity_PosY,               4
+.equ Entity_PosZ,               8
+.equ Entity_Rot,                12
+.equ Entity_RotX,               12
+.equ Entity_RotY,               16
+.equ Entity_RotZ,               20
+.equ Entity_Scale,              24
+;.equ Entity_MeshPtr,           28     ; TODO: Lookup ptr to mesh from entity.
+.equ Entity_SIZE,               28
 
 ; ============================================================================
 ; The camera viewport is assumed to be [-1,+1] across its widest axis.
@@ -52,21 +63,20 @@
 camera_pos:
     VECTOR3 0.0, 0.0, -80.0
 
-object_pos:
-    VECTOR3 0.0, 0.0, 16.0
-
-object_rot:
-    VECTOR3 0.0, 0.0, 0.0
-
-object_scale:
-    FLOAT_TO_FP 1.0
-
 ; ============================================================================
 ; Pointer to a single 3D object in the scene.
 ; ============================================================================
 
-obj_header_p:
-    .long obj_cube_header
+scene3d_entity_p:
+    .long scene_3d_entity
+
+scene_3d_entity:
+    VECTOR3 0.0, 0.0, 16.0      ; object_pos
+    VECTOR3 0.0, 0.0, 0.0       ; object_rot
+    FLOAT_TO_FP 1.0             ; object_scale
+
+scene3d_mesh_p:
+    .long mesh_header_cube
 
 ; ============================================================================
 ; Ptrs to buffers / tables.
@@ -90,7 +100,7 @@ scene3d_reciprocal_table_p:
 ; ============================================================================
 ; ============================================================================
 
-init_3d_scene:
+scene3d_init:
     str lr, [sp, #-4]!
     ldr pc, [sp], #4
 
@@ -98,32 +108,33 @@ init_3d_scene:
 ; Transform the current object (not scene) into world space.
 ; ============================================================================
 
-transform_3d_scene:
+scene3d_transform_entity:
     str lr, [sp, #-4]!
 
     ; Skip matrix multiplication altogether.
     ; Transform (x,y,z) into (x'',y'',z'') directly.
     ; Uses 12 muls / rotation.
 
-    ldr r0, object_rot + 8
-    bl sin_cos
+    ldr r2, scene3d_entity_p
+    ldr r0, [r2, #Entity_RotZ]              ; object_rot+8
+    bl sin_cos                              ; trashes R9
     mov r10, r0, asr #MULTIPLICATION_SHIFT  ; r10 = sin(A)
     mov r11, r1, asr #MULTIPLICATION_SHIFT  ; r11 = cos(A)
 
-    ldr r0, object_rot + 0
-    bl sin_cos
+    ldr r0, [r2, #Entity_RotX]              ; object_rot+0
+    bl sin_cos                              ; trashes R9
     mov r6, r0, asr #MULTIPLICATION_SHIFT  ; r6 = sin(C)
     mov r7, r1, asr #MULTIPLICATION_SHIFT  ; r7 = cos(C)
 
-    ldr r0, object_rot + 4
-    bl sin_cos                  ; uses r9
+    ldr r0, [r2, #Entity_RotY]              ; object_rot+4
+    bl sin_cos                              ; trashes R9
     mov r8, r0, asr #MULTIPLICATION_SHIFT  ; r8 = sin(B)
     mov r9, r1, asr #MULTIPLICATION_SHIFT  ; r9 = cos(B)
 
-    ldr r12, obj_header_p
-    ldr r1, [r12, #Obj_Header_VertsPtr]
-    ldr r3, [r12, #Obj_Header_NumFaces]
-    ldr r12, [r12, #Obj_Header_NumVerts]
+    ldr r12, scene3d_mesh_p
+    ldr r1, [r12, #MeshHeader_VertsPtr]
+    ldr r3, [r12, #MeshHeader_NumFaces]
+    ldr r12, [r12, #MeshHeader_NumVerts]
 
     ldr r2, transformed_verts_p
     add r4, r2, r12, lsl #3
@@ -178,18 +189,18 @@ transform_3d_scene:
     bne .1
 
     ; Transform to world coordinates.
-    adr r11, object_pos
+    ldr r11, scene3d_entity_p
     ldmia r11, {r6-r8}
 
     ; NB. No longer transformed to camera relative.
 
     ; Apply object scale after rotation.
-    ldr r0, object_scale
+    ldr r0, [r11, #Entity_Scale]        ; object_scale
     mov r0, r0, asr #MULTIPLICATION_SHIFT
 
     ldr r2, transformed_verts_p
-    ldr r12, obj_header_p
-    ldr r12, [r12, #Obj_Header_NumVerts]
+    ldr r12, scene3d_mesh_p
+    ldr r12, [r12, #MeshHeader_NumVerts]
     .2:
     ldmia r2, {r3-r5}
 
@@ -222,42 +233,46 @@ transform_3d_scene:
 object_rot_speed:
     VECTOR3 0.5, 0.5, 0.5
 
-update_3d_scene_from_vars:
+scene3d_rotate_entity:
     str lr, [sp, #-4]!
 
     ; Update any scene vars, camera, object position etc. (Rocket?)
+    ldr r2, scene3d_entity_p
     ldr r1, object_rot_speed + 0 ; ROTATION_X
-    ldr r0, object_rot+0
+    ldr r0, [r2, #Entity_RotX]
     add r0, r0, r1
     bic r0, r0, #0xff000000         ; brads
-    str r0, object_rot+0
+    str r0, [r2, #Entity_RotX]
 
     ldr r1, object_rot_speed + 4 ; ROTATION_Y
-    ldr r0, object_rot+4
+    ldr r0, [r2, #Entity_RotY]
     add r0, r0, r1
     bic r0, r0, #0xff000000         ; brads
-    str r0, object_rot+4
+    str r0, [r2, #Entity_RotY]
 
     ldr r1, object_rot_speed + 8 ; ROTATION_Z
-    ldr r0, object_rot+8
+    ldr r0, [r2, #Entity_RotZ]
     add r0, r0, r1
     bic r0, r0, #0xff000000         ; brads
-    str r0, object_rot+8
+    str r0, [r2, #Entity_RotZ]
 
     ; Transform the object into world space.
-    bl transform_3d_scene
+    bl scene3d_transform_entity
     ldr pc, [sp], #4
 
-update_3d_scene_from_vu_bars:
+scene3d_update_entity_from_vubars:
     str lr, [sp, #-4]!
 
 	mov r0, #0
 	swi QTM_ReadVULevels
+
+    ldr r2, scene3d_entity_p
+
 	; R0 = word containing 1 byte per channel 1-4 VU bar heights 0-64
   	mov r10, r0, lsr #24            ; channel 4 = scale
 	ands r10, r10, #0xff
     bne .1
-    ldr r1, object_scale
+    ldr r1, [r2, #Entity_Scale]     ; object_scale
     cmp r1, #MATHS_CONST_HALF
     subgt r1, r1, #MATHS_CONST_1*0.01
     b .2
@@ -266,38 +281,39 @@ update_3d_scene_from_vu_bars:
     mov r1, #MATHS_CONST_1
     add r1, r1, r10, asl #10         ; scale maps [1, 2]
     .2:
-    str r1, object_scale
+    str r1, [r2, #Entity_Scale]
 
     ; TODO: Make this code more compact?
+
   	mov r10, r0, lsr #8             ; channel 2 = inc_x
 	and r10, r10, #0xff
     mov r10, r10, asl #11           ; inc_x maps [0, 2]
-    ldr r1, object_rot + 0
+    ldr r1, [r2, #Entity_RotX]
     add r1, r1, r10                 ; object_rot_x += inc_x
-    str r1, object_rot + 0
+    str r1, [r2, #Entity_RotX]
 
   	mov r10, r0, lsr #16            ; channel 3 = inc_y
 	and r10, r10, #0xff
     mov r10, r10, asl #11           ; inc_y maps [0, 2]
-    ldr r1, object_rot + 4
+    ldr r1, [r2, #Entity_RotY]
     add r1, r1, r10                 ; object_rot_y += inc_y
-    str r1, object_rot + 4
+    str r1, [r2, #Entity_RotY]
 
     and r10, r0, #0xff              ; channel 1 = inc_z
     mov r10, r10, asl #11           ; inc_z maps [0, 2]
-    ldr r1, object_rot + 8
+    ldr r1, [r2, #Entity_RotZ]
     add r1, r1, r10                 ; object_rot_z += inc_z
-    str r1, object_rot + 8
+    str r1, [r2, #Entity_RotZ]
 
     ; Transform the object into world space.
-    bl transform_3d_scene
+    bl scene3d_transform_entity
     ldr pc, [sp], #4
 
 ; ============================================================================
 ; Project the transformed vertex array into screen space.
 ; ============================================================================
 
-project_3d_scene:
+scene3d_project_verts:
     ; Load camera [x, y, z].
     adr r0, camera_pos
     ldmia r0, {r6-r8}
@@ -306,8 +322,8 @@ project_3d_scene:
     ldr r2, transformed_verts_p
     ldr r9, scene3d_reciprocal_table_p
 
-    ldr r1, obj_header_p
-    ldr r1, [r1, #Obj_Header_NumVerts]
+    ldr r1, scene3d_mesh_p
+    ldr r1, [r1, #MeshHeader_NumVerts]
     ldr r10, projected_verts_p
     .1:
     ; R2=ptr to world pos vector
@@ -382,20 +398,20 @@ project_3d_scene:
 ; ============================================================================
 
 ; R12=screen addr
-draw_3d_scene_solid:
+scene3d_draw_entity_as_solid_quads:
     str lr, [sp, #-4]!
 
     ; Project world space verts to screen space.
-    bl project_3d_scene
+    bl scene3d_project_verts
  
     ; Plot faces as polys.
-    ldr r11, obj_header_p
-    ldr r11, [r11, #Obj_Header_NumFaces]
+    ldr r11, scene3d_mesh_p
+    ldr r11, [r11, #MeshHeader_NumFaces]
     sub r11, r11, #1
 
     .2:
-    ldr r9, obj_header_p
-    ldr r9, [r9, #Obj_Header_FaceIndices]
+    ldr r9, scene3d_mesh_p
+    ldr r9, [r9, #MeshHeader_FaceIndices]
     ldrb r5, [r9, r11, lsl #2]  ; vertex0 of polygon N.
     
     ldr r1, transformed_verts_p
@@ -437,8 +453,8 @@ draw_3d_scene_solid:
     stmfd sp!, {r11,r12}
 
     ; Look up colour index per face (no lighting).
-    ldr r4, obj_header_p
-    ldr r4, [r4, #Obj_Header_FaceColours]
+    ldr r4, scene3d_mesh_p
+    ldr r4, [r4, #MeshHeader_FaceColours]
     ldrb r4, [r4, r11]
 
     ;  R12=screen addr

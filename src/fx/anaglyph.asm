@@ -93,7 +93,7 @@ anaglyph_draw_3d_scene_as_solid:             ; TODO: Dedupe this code!
     ; Subtract blue & green.
     mov r4, #7                  ; brightest red
     adr r4, colour_lookup_red
-    bl draw_3d_scene_solid
+    bl scene3d_draw_entity_as_solid_quads
 
     ; Right eye.
     ldr r0, RightEye_X_Pos
@@ -102,6 +102,6 @@ anaglyph_draw_3d_scene_as_solid:             ; TODO: Dedupe this code!
     ; Subtract red.
     mov r4, #11                 ; brightest cyan
     adr r4, colour_lookup_cyan
-    bl draw_3d_scene_solid
+    bl scene3d_draw_entity_as_solid_quads
 
     ldr pc, [sp], #4

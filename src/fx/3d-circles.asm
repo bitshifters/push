@@ -12,7 +12,7 @@ draw_3d_object_as_circles:
     str r4, object_colour_index
 
     ; Project world space verts to screen space.
-    bl project_3d_scene
+    bl scene3d_project_verts
 
     ; Plot all verts as circles...
     ldr r6, projected_verts_p

@@ -21,7 +21,7 @@ draw_3d_scene_wire:             ; TODO: Dedupe this code!
     str r4, object_colour_index
 
     ; Project world space verts to screen space.
-    bl project_3d_scene
+    bl scene3d_project_verts
 
     ; Plot faces as polys.
     mov r9, #0                  ; face count
@@ -151,7 +151,7 @@ draw_3d_scene_outline:             ; TODO: Dedupe this code!
     str r4, object_colour_index
 
     ; Project world space verts to screen space.
-    bl project_3d_scene
+    bl scene3d_project_verts
 
     ldr r8, object_num_edges
     sub r8, r8, #1              ; edge no.

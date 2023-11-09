@@ -16,7 +16,7 @@
 .equ Model_Cube_Num_Verts, 8
 .equ Model_Cube_Num_Faces, 6
 
-obj_cube_header:
+mesh_header_cube:
     .long  Model_Cube_Num_Verts
     .long  Model_Cube_Num_Faces
     .long  model_cube_verts
@@ -96,7 +96,7 @@ model_cube_edge_indices:
 .equ Model_Cobra_Num_Verts, 22
 .equ Model_Cobra_Num_Faces, 13
 
-obj_cobra_header:
+mesh_header_cobra:
     .long  Model_Cobra_Num_Verts
     .long  Model_Cobra_Num_Faces
     .long  model_cobra_verts

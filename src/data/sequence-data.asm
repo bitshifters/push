@@ -32,16 +32,16 @@
     call_3 fx_set_layer_fns, 1, 0,                      circles_reset_for_frame
 
     ; Cube!
-    write_addr obj_header_p, obj_cube_header
-    call_3 fx_set_layer_fns, 2, update_3d_scene_from_vars,  draw_3d_scene_solid
+    write_addr scene3d_mesh_p, mesh_header_cube
+    call_3 fx_set_layer_fns, 2, scene3d_rotate_entity,  scene3d_draw_entity_as_solid_quads
     call_3 fx_set_layer_fns, 3, 0,                          0
 
     wait_secs 10.0
-    write_addr obj_header_p, obj_cobra_header
+    write_addr scene3d_mesh_p, mesh_header_cobra
     wait_secs 10.0
-    write_addr obj_header_p, obj_cube_header
+    write_addr scene3d_mesh_p, mesh_header_cube
     wait_secs 10.0
-    write_addr obj_header_p, obj_cobra_header
+    write_addr scene3d_mesh_p, mesh_header_cobra
     wait_secs 10.0
 
     ; Balls!
