@@ -508,6 +508,7 @@ rnd_seed:
 
 .include "src/particles.asm"
 .include "src/balls.asm"
+.include "src/fx/3d-scene.asm"
 
 ; ============================================================================
 ; Support library code modules.

@@ -1,25 +1,26 @@
 ; ============================================================================
 ; 3D Scene.
-; TODO: Remove code specific to previous demos.
+; Note camera is fixed to view down +z axis.
+; Does not support camera rotation / look at.
+; Single 3D object per scene.
+; Supports position, rotation & scale of the object within the scene.
 ; ============================================================================
 
-.equ OBJ_MAX_VERTS, 164
-.equ OBJ_MAX_FACES, 16
+; TODO: Rename as Mesh maybe?
+.equ Obj_Header_NumVerts,       0
+.equ Obj_Header_NumFaces,       4
+.equ Obj_Header_VertsPtr,       8
+.equ Obj_Header_NormalsPtr,     12
+.equ Obj_Header_FaceIndices,    16
+.equ Obj_Header_FaceColours,    20
+.equ Obj_Header_SIZE,           24
 
-.equ Model_Cube_Num_Verts, 8
-.equ Model_Cube_Num_Faces, 6
-
-.equ Model_Cobra_Num_Verts, 22
-.equ Model_Cobra_Num_Faces, 13
-
-.equ Model_Circle_Num_Verts, 8
-.equ Model_Circle_Num_Faces, 0
-.equ Model_Circle_Radius, 48
-
+; ============================================================================
 ; The camera viewport is assumed to be [-1,+1] across its widest axis.
 ; Therefore we multiply all projected coordinates by the screen width/2
 ; in order to map the viewport onto the entire screen.
 
+; TODO: Could also speed this up by choosing a viewport scale as a shift, e.g. 128.
 .equ VIEWPORT_SCALE,    (Screen_Width /2) * PRECISION_MULTIPLIER
 .equ VIEWPORT_CENTRE_X, 160 * PRECISION_MULTIPLIER
 .equ VIEWPORT_CENTRE_Y, 128 * PRECISION_MULTIPLIER
@@ -48,12 +49,8 @@
 ; likely to occur. If this does happen, then we can further reduce the
 ; coordinate space and use d=40, h=4, etc.
 
-
 camera_pos:
     VECTOR3 0.0, 0.0, -80.0
-
-; Note camera is fixed to view down +z axis.
-; TODO: Camera rotation/direction/look at?
 
 object_pos:
     VECTOR3 0.0, 0.0, 16.0
@@ -64,45 +61,19 @@ object_rot:
 object_scale:
     FLOAT_TO_FP 1.0
 
-object_dir_z:
-    FLOAT_TO_FP 1.0
-
-object_dir_max_z:
-    FLOAT_TO_FP 128.0
-
-object_dir_min_z:
-    FLOAT_TO_FP -24.0
-
-object_rot_speed:
-    VECTOR3 0.5, 0.5, 0.5
-
+; ============================================================================
+; Pointer to a single 3D object in the scene.
 ; ============================================================================
 
-object_num_verts:
-    .long Model_Cobra_Num_Verts
+obj_header_p:
+    .long obj_cube_header
 
-object_num_faces:
-    .long Model_Cobra_Num_Faces
-
-object_num_edges:
-    .long 0
-
-object_verts_p:
-    .long model_cobra_verts
-
-object_face_indices_p:
-    .long model_cobra_face_indices
-
-object_edge_list_per_face_p:
-    .long model_cobra_edges_per_face
-
-object_edge_indices_p:
-    .long model_cobra_edge_indices
-
-object_colour_p:
-    .long model_cobra_colour_per_face
- 
 ; ============================================================================
+; Ptrs to buffers / tables.
+; ============================================================================
+
+.equ OBJ_MAX_VERTS, 128
+.equ OBJ_MAX_FACES, 128
 
 transformed_verts_p:
     .long transformed_verts_no_adr
@@ -121,19 +92,10 @@ scene3d_reciprocal_table_p:
 
 init_3d_scene:
     str lr, [sp, #-4]!
-
-    ; Make circle object.
-    mov r3, #Model_Circle_Radius
-    mov r7, #Model_Circle_Num_Verts
-    ldr r8, circle_verts_p 
-    bl make_2d_object
-
     ldr pc, [sp], #4
 
-circle_verts_p:
-    .long model_circle_verts
-
 ; ============================================================================
+; Transform the current object (not scene) into world space.
 ; ============================================================================
 
 transform_3d_scene:
@@ -158,15 +120,16 @@ transform_3d_scene:
     mov r8, r0, asr #MULTIPLICATION_SHIFT  ; r8 = sin(B)
     mov r9, r1, asr #MULTIPLICATION_SHIFT  ; r9 = cos(B)
 
-    ldr r1, object_verts_p
-    ldr r2, transformed_verts_p
-    ldr r12, object_num_verts
+    ldr r12, obj_header_p
+    ldr r1, [r12, #Obj_Header_VertsPtr]
+    ldr r3, [r12, #Obj_Header_NumFaces]
+    ldr r12, [r12, #Obj_Header_NumVerts]
 
+    ldr r2, transformed_verts_p
     add r4, r2, r12, lsl #3
     add r4, r4, r12, lsl #2               ; transform_normals=&transformed_verts[object_num_verts]
     str r4, transformed_normals_p
 
-    ldr r3, object_num_faces
     add r12, r12, r3                      ; object_num_verts + object_num_faces
 
     ; ASSUMES THAT VERTEX AND NORMAL ARRAYS ARE CONSECUTIVE!
@@ -225,12 +188,12 @@ transform_3d_scene:
     mov r0, r0, asr #MULTIPLICATION_SHIFT
 
     ldr r2, transformed_verts_p
-    ldr r12, object_num_verts
+    ldr r12, obj_header_p
+    ldr r12, [r12, #Obj_Header_NumVerts]
     .2:
     ldmia r2, {r3-r5}
 
     ; Scale rotated verts.
-    ; TODO: Can we do this with a shift instead of MUL?
     mov r3, r3, asr #MULTIPLICATION_SHIFT
     mov r4, r4, asr #MULTIPLICATION_SHIFT
     mov r5, r5, asr #MULTIPLICATION_SHIFT
@@ -239,7 +202,9 @@ transform_3d_scene:
     mul r4, r0, r4      ; y_scaled=y*object_scale
     mul r5, r0, r5      ; z_scaled=z*object_scale
 
-    ; Make object vertices camera relative.
+    ; TODO: Make camera relative again for speed?
+
+    ; Move object vertices into world space.
     add r3, r3, r6      ; x_scaled + object_pos_x - camera_pos_x
     add r4, r4, r7      ; y_scaled + object_pos_y - camera_pos_y
     add r5, r5, r8      ; z_scaled + object_pos_z - camera_pos_z
@@ -250,23 +215,12 @@ transform_3d_scene:
 
     ldr pc, [sp], #4
 
-update_3d_scene_move_in_z:
-    ldr r0, object_pos+8            ; POSTION_Z
-    ldr r1, object_dir_z
-    add r0, r0, r1
+; ============================================================================
+; Rotate the current object from either vars or VU bars.
+; ============================================================================
 
-    ; TODO: Easing functions when close to min/max.
-
-    ldr r2, object_dir_max_z
-    ldr r3, object_dir_min_z
-    cmp r0, r2
-    mvnge r1, r1                    ; invert dir
-    cmp r0, r3
-    mvnle r1, r1                    ; invert dir
-
-    str r0, object_pos+8
-    str r1, object_dir_z
-
+object_rot_speed:
+    VECTOR3 0.5, 0.5, 0.5
 
 update_3d_scene_from_vars:
     str lr, [sp, #-4]!
@@ -340,116 +294,8 @@ update_3d_scene_from_vu_bars:
     ldr pc, [sp], #4
 
 ; ============================================================================
+; Project the transformed vertex array into screen space.
 ; ============================================================================
-
-.if 0
-; R12=screen addr
-anaglyph_draw_3d_scene_as_circles:             ; TODO: Dedupe this code!
-    str lr, [sp, #-4]!
-
-    ; Stash screen addr for now.
-    str r12, [sp, #-4]!
-
-	; Reset array of circles.
-    bl circles_reset_for_frame
-
-    ; Left eye.
-    ldr r0, LeftEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract blue & green.
-    mov r4, #7                  ; brightest red
-    bl draw_3d_object_as_circles
-
-    ; Right eye.
-    ldr r0, RightEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract red.
-    mov r4, #11                 ; brightest cyan
-    bl draw_3d_object_as_circles
-
-    ; Then plot all the circles.
-    ldr r12, [sp], #4           ; pop screen addr
-    bl plot_all_circles
-
-    ldr pc, [sp], #4
-
-; R12=screen addr
-anaglyph_draw_3d_scene_as_wire:             ; TODO: Dedupe this code!
-    str lr, [sp, #-4]!
-
-    ; Left eye.
-    ldr r0, LeftEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract blue & green.
-    mov r4, #7                 ; brightest red
-    ;mov r4, #8                  ; bic 0b1000
-    bl draw_3d_scene_wire
-
-    ; Right eye.
-    ldr r0, RightEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract red.
-    mov r4, #11                ; brightest cyan
-    ;mov r4, #4                  ; bic 0b0100
-    bl draw_3d_scene_wire
-
-    ldr pc, [sp], #4
-
-; R12=screen addr
-anaglyph_draw_3d_scene_as_outline:             ; TODO: Dedupe this code!
-    str lr, [sp, #-4]!
-
-    ; Left eye.
-    ldr r0, LeftEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract blue & green.
-    mov r4, #7                 ; brightest red
-    ;mov r4, #8                  ; bic 0b1000
-    bl draw_3d_scene_outline
-
-    ; Right eye.
-    ldr r0, RightEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract red.
-    mov r4, #11                ; brightest cyan
-    ;mov r4, #4                  ; bic 0b0100
-    bl draw_3d_scene_outline
-
-    ldr pc, [sp], #4
-
-; R12=screen addr
-anaglyph_draw_3d_scene_as_solid:             ; TODO: Dedupe this code!
-    str lr, [sp, #-4]!
-
-    ; Left eye.
-    ldr r0, LeftEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract blue & green.
-    mov r4, #7                  ; brightest red
-    adr r4, colour_lookup_red
-    bl draw_3d_scene_solid
-
-    ; Right eye.
-    ldr r0, RightEye_X_Pos
-    str r0, camera_pos+0        ; camera_pos_x
-
-    ; Subtract red.
-    mov r4, #11                 ; brightest cyan
-    adr r4, colour_lookup_cyan
-    bl draw_3d_scene_solid
-
-    ldr pc, [sp], #4
-.endif
-
-object_colour_index:
-    .long 0
 
 project_3d_scene:
     ; Load camera [x, y, z].
@@ -459,7 +305,9 @@ project_3d_scene:
     ; Project vertices to screen.
     ldr r2, transformed_verts_p
     ldr r9, scene3d_reciprocal_table_p
-    ldr r1, object_num_verts
+
+    ldr r1, obj_header_p
+    ldr r1, [r1, #Obj_Header_NumVerts]
     ldr r10, projected_verts_p
     .1:
     ; R2=ptr to world pos vector
@@ -512,12 +360,6 @@ project_3d_scene:
     mov r0, #VIEWPORT_CENTRE_X  ; [16.16]
     add r3, r3, r0
 
-    .if 0
-    ldrb r0, Anaglyph_Enable_Skew
-    cmp r0, #0
-    addne r3, r3, r6, asl #1     ; camera_pos_x * 2
-    .endif
-
     ; screen_y = vp_centre_y - vp_scale * (y-cy) / (z-cz)
     mov r0, #VIEWPORT_SCALE>>12 ; [16.4]
     mul r4, r0, r4              ; [12.20]
@@ -535,24 +377,25 @@ project_3d_scene:
 
     mov pc, lr
 
-; R4=colour index
+; ============================================================================
+; Draw the current object (not scene) using solid filled quads.
+; ============================================================================
+
 ; R12=screen addr
-draw_3d_scene_solid:             ; TODO: Dedupe this code!
+draw_3d_scene_solid:
     str lr, [sp, #-4]!
-    str r4, object_colour_index
 
     ; Project world space verts to screen space.
     bl project_3d_scene
  
     ; Plot faces as polys.
-    mov r9, #0                  ; face count
-    str r9, edge_plot_cache
-
-    ldr r11, object_num_faces
+    ldr r11, obj_header_p
+    ldr r11, [r11, #Obj_Header_NumFaces]
     sub r11, r11, #1
 
     .2:
-    ldr r9, object_face_indices_p
+    ldr r9, obj_header_p
+    ldr r9, [r9, #Obj_Header_FaceIndices]
     ldrb r5, [r9, r11, lsl #2]  ; vertex0 of polygon N.
     
     ldr r1, transformed_verts_p
@@ -593,11 +436,10 @@ draw_3d_scene_solid:             ; TODO: Dedupe this code!
 
     stmfd sp!, {r11,r12}
 
-    ; TODO: Sort out a colour per face scheme.
-    ldr r4, object_colour_p
+    ; Look up colour index per face (no lighting).
+    ldr r4, obj_header_p
+    ldr r4, [r4, #Obj_Header_FaceColours]
     ldrb r4, [r4, r11]
-    ldr r0, object_colour_index     ; actually colour lookup
-    ldrb r4, [r0, r4]
 
     ;  R12=screen addr
     ;  R2=ptr to projected vertex array (x,y) in screen coords [16.0]
@@ -612,183 +454,8 @@ draw_3d_scene_solid:             ; TODO: Dedupe this code!
 
     ldr pc, [sp], #4
 
-colour_lookup_red:
-    .byte 0,1,4,5,6,7,7,7
-
-colour_lookup_cyan:
-    .byte 0,2,8,9,10,11,11,11
-
-; R4=colour index
-; R12=screen addr
-draw_3d_scene_wire:             ; TODO: Dedupe this code!
-    str lr, [sp, #-4]!
-    str r4, object_colour_index
-
-    ; Project world space verts to screen space.
-    bl project_3d_scene
-
-    ; Plot faces as polys.
-    mov r9, #0                  ; face count
-    str r9, edge_plot_cache
-
-    ldr r11, object_num_faces
-    sub r11, r11, #1
-
-    .2:
-    ldr r9, object_face_indices_p
-    ldrb r5, [r9, r11, lsl #2]   ; vertex0 of polygon N.
-    
-    ldr r1, transformed_verts_p
-    add r1, r1, r5, lsl #3
-    add r1, r1, r5, lsl #2       ; transformed_verts + index*12
-    ldr r2, transformed_normals_p
-    add r2, r2, r11, lsl #3      ; face_normal for polygon N.
-    add r2, r2, r11, lsl #2      ; face_normal for polygon N.
-
-    ; Backfacing culling test (vertex - camera_pos).face_normal
-    ; Parameters:
-    ;  R1=ptr to transformed vertex in camera relative space
-    ;  R2=ptr to face normal vector
-    ; Return:
-    ;  R0=dot product of (v0-cp).n
-    ; Trashes: r3-r8
-    ; vector A = (v0 - camera_pos)
-    ; vector B = face_normal
-
-    ldmia r1!, {r3-r5}          ; [tx, ty, tz]
-    adr r0, camera_pos
-    ldmia r0, {r6-r8}           ; camera_pos
-
-    sub r3, r3, r6
-    sub r4, r4, r7
-    sub r5, r5, r8
-
-    bl vector_dot_product_load_B ; trashes r3-r8
-    cmp r0, #0                  
-    bpl .3                      ; normal facing away from the view direction.
-
-    ; WIREFRAME
-    ldr r4, object_colour_index
-    ldr r5, object_edge_indices_p
-    ldr r6, projected_verts_p   ; projected vertex array.
-    ldr r7, object_edge_list_per_face_p
-    ldr r7, [r7, r11, lsl #2]   ; edge list word for polygon N.
-
-    stmfd sp!, {r11}
-    bl plot_face_edge_list      ; trashes r0-r11
-    ldmfd sp!, {r11}
-
-    .3:
-    subs r11, r11, #1
-    bpl .2
-
-    ldr pc, [sp], #4
-
-edge_plot_cache:
-    .long 0
-
-; Plot all edges in a list.
-; Parameters:
-;  R12=screen addr
-;  R4=colour index
-;  R5=ptr to array of edge indices.
-;  R6=ptr to projected vertex array (x,y) in screen coords [16.0]
-;  R7=edge list word (one bit per edge to be plotted)
-plot_face_edge_list:
-	str lr, [sp, #-4]!			; push lr on stack
-
-    ldr r11, edge_plot_cache
-    mov r8, #0                  ; edge no.
-.1:
-    ; Convert edge no. to bit no.
-    mov r9, #1
-
-    ; Test edge list cache.
-    tst r11, r9, lsl r8         ; already plotted?
-    bne .2
-
-    ; Test if this edge is in the face.
-    tst r7, r9, lsl r8
-    beq .2
-
-    ; Look up vertex indices for edge.
-    ldr r0, [r5, r8, lsl #1]    ; misaligned read!
-    mov r2, r0, lsr #8          ; end index
-    and r0, r0, #0xff           ; start index
-    and r2, r2, #0xff
-
-    ; Load (x,y) for start vertex
-    add r9, r6, r0, lsl #3      ; projected_verts[start_index]
-    ldmia r9, {r0,r1}           ; start_x, start_y
-
-    ; Load (x,y) for end vertex
-    add r9, r6, r2, lsl #3      ; projected_verts[start_index]
-    ldmia r9, {r2,r3}           ; end_x, end_y
-
-    stmfd sp!, {r5-r8}
-    bl mode9_drawline_orr       ; trashes r5-r9
-    ldmfd sp!, {r5-r8}
-
-    ; Mark edge as plotted in cache.
-    mov r9, #1
-    orr r11, r11, r9, lsl r8
-
-.2:
-    ; Early out when edge list word is zero.
-    bics r7, r7, r9, lsl r8
-    beq .3
-
-    ; Next edge no.
-    add r8, r8, #1
-    cmp r8, #32
-    blt .1
-
-.3:
-    str r11, edge_plot_cache
-    ldr pc, [sp], #4
-
-
-; R4=colour index
-; R12=screen addr
-draw_3d_scene_outline:             ; TODO: Dedupe this code!
-    str lr, [sp, #-4]!
-    str r4, object_colour_index
-
-    ; Project world space verts to screen space.
-    bl project_3d_scene
-
-    ldr r8, object_num_edges
-    sub r8, r8, #1              ; edge no.
-
-    ; OUTLINE
-    .1:
-    ldr r4, object_colour_index
-    ldr r5, object_edge_indices_p
-    ldr r6, projected_verts_p   ; projected vertex array.
-
-    ; Look up vertex indices for edge.
-    ldr r0, [r5, r8, lsl #1]    ; misaligned read!
-    mov r2, r0, lsr #8          ; end index
-    and r0, r0, #0xff           ; start index
-    and r2, r2, #0xff
-
-    ; Load (x,y) for start vertex
-    add r9, r6, r0, lsl #3      ; projected_verts[start_index]
-    ldmia r9, {r0,r1}           ; start_x, start_y
-
-    ; Load (x,y) for end vertex
-    add r9, r6, r2, lsl #3      ; projected_verts[start_index]
-    ldmia r9, {r2,r3}           ; end_x, end_y
-
-    stmfd sp!, {r8}
-    bl mode9_drawline_with_clip       ; trashes r5-r9
-    ldmfd sp!, {r8}
-
-    subs r8, r8, #1
-    bpl .1
-
-    ldr pc, [sp], #4
-
+; ============================================================================
+; ============================================================================
 
 ; Project world position to screen coordinates.
 ; TODO: Try weak perspective model, i.e. a single distance for all vertices in the objects.
@@ -814,16 +481,11 @@ project_to_screen:
     bl divide                   ; (x-cx)/(z-cz)
                                 ; [0.16]
 
-    ; TODO: Could also speed this up by choosing a viewport scale as a shift, e.g. 128.
-
     mov r8, #VIEWPORT_SCALE>>12 ; [16.4]
     mul r6, r0, r8              ; [12.20]
     mov r6, r6, asr #4          ; [12.16]
     mov r8, #VIEWPORT_CENTRE_X  ; [16.16]
     add r6, r6, r8
-
-    ; TODO: Speed this up by doing one lookup for the reciprocal of the divisor (z-cz).
-    ;       As this is constant. See scene2d_transform_object as example.
 
     ; Flip Y axis as we want +ve Y to point up the screen!
     ; vp_centre_y - vp_scale * (y-cy) / (z-cz)
@@ -842,46 +504,13 @@ project_to_screen:
     ldr pc, [sp], #4
 .endif
 
-; R4=colour index
-; R12=screen addr
-draw_3d_object_as_circles:
-    str lr, [sp, #-4]!
-    str r4, object_colour_index
-
-    ; Project world space verts to screen space.
-    bl project_3d_scene
-
-    ; Plot all verts as circles...
-    ldr r6, projected_verts_p
-    ldr r7, transformed_verts_p
-    ldr r11, object_num_verts
-    mov r5, #0
-    ldr r4, camera_pos+8        ; camera_pos_z
-
-    ; TODO: Would ultimately need to sort by Z.
-    ; TODO: A fixed number of sprites with radius [1,16] would be faster, i.e. vector balls!
-
-    ; TODO: Compute screen_radius alongside projected X,Y.
-
-    .2:
-    ; screen_radius = VP_SCALE * world_radius / (z-cz)
-    mov r0, #VIEWPORT_SCALE
-    ldr r1, [r7, #8]            ; (z)
-    sub r1, r1, r4              ; (z-cz)
-    bl divide                   ; [s7.16] (trashes r8-r10)
-    mov r2, r0, asr #13         ; radius = VP_SCALE * world_radius / (z-cz) where world_radius=8 (r<<3>>16)
-
-    ldmia r6!, {r0,r1}          ; screen_X & screen_Y.
-
-    ldr r9, object_colour_index
-    bl circles_add_to_plot_by_Y    ; trashes r8,r12
-
-    add r7, r7, #VECTOR3_SIZE
-    add r5, r5, #1
-    cmp r5, r11
-    blt .2
-
-    ldr pc, [sp], #4
-
 ; ============================================================================
 ; ============================================================================
+
+.if _DEBUG
+    errbehindcamera: ;The error block
+    .long 0
+	.byte "Vertex behind camera."
+	.align 4
+	.long 0
+.endif

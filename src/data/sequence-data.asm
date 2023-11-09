@@ -31,6 +31,19 @@
     call_3 fx_set_layer_fns, 0, 0,                      screen_cls
     call_3 fx_set_layer_fns, 1, 0,                      circles_reset_for_frame
 
+    ; Cube!
+    write_addr obj_header_p, obj_cube_header
+    call_3 fx_set_layer_fns, 2, update_3d_scene_from_vars,  draw_3d_scene_solid
+    call_3 fx_set_layer_fns, 3, 0,                          0
+
+    wait_secs 10.0
+    write_addr obj_header_p, obj_cobra_header
+    wait_secs 10.0
+    write_addr obj_header_p, obj_cube_header
+    wait_secs 10.0
+    write_addr obj_header_p, obj_cobra_header
+    wait_secs 10.0
+
     ; Balls!
     call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all

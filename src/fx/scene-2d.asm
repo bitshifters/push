@@ -20,6 +20,10 @@
 ; Can a scene contain a variety of objects?
 ; ============================================================================
 
+.equ Model_Circle_Num_Verts, 8
+.equ Model_Circle_Num_Faces, 0
+.equ Model_Circle_Radius, 48
+
 scene2d_colour_index:
     .long 0
 
@@ -133,6 +137,12 @@ scene2d_init:
     mov r3, #16
     mov r7, #6
     adr r8, model_hexagon_verts
+    bl make_2d_object
+
+    ; Make circle object.
+    mov r3, #Model_Circle_Radius
+    mov r7, #Model_Circle_Num_Verts
+    adr r8, circle_verts
     bl make_2d_object
 
     ldr pc, [sp], #4
@@ -366,14 +376,6 @@ scene2d_draw:
 .3:
     ldr pc, [sp], #4
 
-.if _DEBUG
-    errbehindcamera: ;The error block
-    .long 0
-	.byte "Vertex behind camera."
-	.align 4
-	.long 0
-.endif
-
 ; Transform an object into world coordinates.
 ; And add it to the object draw list.
 ; R0=Ptr to object position vector (3D).
@@ -469,6 +471,7 @@ model_pentagon_verts:
 model_hexagon_verts:
     .skip 6*VECTOR3_SIZE
 
-; ============================================================================
-; TODO: Model data for: triangle, pentagon, hexagon, stars, seagull etc.
+model_circle_verts:             ; Technically an octagon. Used as a 3D object.
+    .skip VECTOR3_SIZE*Model_Circle_Num_Verts
+
 ; ============================================================================

@@ -98,7 +98,7 @@ credits_pal_no_adr:
 
 ; ============================================================================
 
-.if 0   ; fx/3d-scene.asm
+.if 1   ; fx/3d-scene.asm
 .include "src/data/3d-model-data.asm"
 .endif
 

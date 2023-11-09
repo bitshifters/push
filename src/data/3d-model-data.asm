@@ -13,6 +13,17 @@
 ;      3        2
 ; ============================================================================
 
+.equ Model_Cube_Num_Verts, 8
+.equ Model_Cube_Num_Faces, 6
+
+obj_cube_header:
+    .long  Model_Cube_Num_Verts
+    .long  Model_Cube_Num_Faces
+    .long  model_cube_verts
+    .long  model_cube_face_normals
+    .long  model_cube_face_indices
+    .long  model_cube_colour_per_face
+
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
 model_cube_verts:
@@ -47,10 +58,7 @@ model_cube_face_indices:
     .byte 2, 3, 7, 6
 
 model_cube_colour_per_face:
-    .byte 1,2,5,3,4,5,0,0
-
-model_cube_black_per_face:
-    .byte 0,0,0,0,0,0,0,0
+    .byte 4,5,6,7,8,9,10,11
 
 ; TODO: Determine this from model_cube_face_indices.
 ; TODO: Could also calculate face normals from these...
@@ -84,6 +92,17 @@ model_cube_edge_indices:
 ; ============================================================================
 ; Model data: COBRA
 ; ============================================================================
+
+.equ Model_Cobra_Num_Verts, 22
+.equ Model_Cobra_Num_Faces, 13
+
+obj_cobra_header:
+    .long  Model_Cobra_Num_Verts
+    .long  Model_Cobra_Num_Faces
+    .long  model_cobra_verts
+    .long  model_cobra_face_normals
+    .long  model_cobra_face_indices
+    .long  model_cobra_colour_per_face
 
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
@@ -146,7 +165,8 @@ model_cobra_face_indices:
     .byte 4,10,5,4
 
 model_cobra_colour_per_face:
-    .byte 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,0
+    .byte 2,3,4,5,6,7,8,9,10,11,12,13,14
+.p2align 2
 
 model_cobra_edges_per_face:
     .long 0x00000007    ; 3
@@ -200,16 +220,11 @@ model_cobra_edge_indices:
 
 ; ============================================================================
 
-model_circle_verts:
-    .skip VECTOR3_SIZE*Model_Circle_Num_Verts
-
-; ============================================================================
-
+.if 0
 .macro LINE a, b
     .byte \a, \b
 .endm
 
-.if 0
 .include "src/obj/rab.asm"
 .include "src/obj/slp.asm"
 .include "src/obj/rft.asm"

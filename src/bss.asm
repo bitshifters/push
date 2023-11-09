@@ -42,7 +42,7 @@ starfield_y_no_adr:
 
 ; ============================================================================
 
-.if 0   ; fx/3d-scene.asm
+.if 1   ; fx/3d-scene.asm
 transformed_verts_no_adr:
     .skip OBJ_MAX_VERTS * VECTOR3_SIZE
 
