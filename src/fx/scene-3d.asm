@@ -23,8 +23,8 @@
 .equ Entity_RotY,               16
 .equ Entity_RotZ,               20
 .equ Entity_Scale,              24
-;.equ Entity_MeshPtr,           28     ; TODO: Lookup ptr to mesh from entity.
-.equ Entity_SIZE,               28
+.equ Entity_MeshPtr,            28
+.equ Entity_SIZE,               32
 
 ; ============================================================================
 ; The camera viewport is assumed to be [-1,+1] across its widest axis.
@@ -68,15 +68,19 @@ camera_pos:
 ; ============================================================================
 
 scene3d_entity_p:
-    .long scene_3d_entity
+    .long cube_entity
 
-scene_3d_entity:
+cube_entity:
     VECTOR3 0.0, 0.0, 16.0      ; object_pos
     VECTOR3 0.0, 0.0, 0.0       ; object_rot
     FLOAT_TO_FP 1.0             ; object_scale
-
-scene3d_mesh_p:
     .long mesh_header_cube
+
+cobra_entity:
+    VECTOR3 0.0, 0.0, 16.0      ; object_pos
+    VECTOR3 0.0, 0.0, 0.0       ; object_rot
+    FLOAT_TO_FP 2.0             ; object_scale
+    .long mesh_header_cobra
 
 ; ============================================================================
 ; Ptrs to buffers / tables.
@@ -131,7 +135,7 @@ scene3d_transform_entity:
     mov r8, r0, asr #MULTIPLICATION_SHIFT  ; r8 = sin(B)
     mov r9, r1, asr #MULTIPLICATION_SHIFT  ; r9 = cos(B)
 
-    ldr r12, scene3d_mesh_p
+    ldr r12, [r2, #Entity_MeshPtr]
     ldr r1, [r12, #MeshHeader_VertsPtr]
     ldr r3, [r12, #MeshHeader_NumFaces]
     ldr r12, [r12, #MeshHeader_NumVerts]
@@ -199,7 +203,7 @@ scene3d_transform_entity:
     mov r0, r0, asr #MULTIPLICATION_SHIFT
 
     ldr r2, transformed_verts_p
-    ldr r12, scene3d_mesh_p
+    ldr r12, [r11, #Entity_MeshPtr]     ; scene3d_mesh_p
     ldr r12, [r12, #MeshHeader_NumVerts]
     .2:
     ldmia r2, {r3-r5}
@@ -322,7 +326,8 @@ scene3d_project_verts:
     ldr r2, transformed_verts_p
     ldr r9, scene3d_reciprocal_table_p
 
-    ldr r1, scene3d_mesh_p
+    ldr r1, scene3d_entity_p
+    ldr r1, [r1, #Entity_MeshPtr]           ; scene3d_mesh_p
     ldr r1, [r1, #MeshHeader_NumVerts]
     ldr r10, projected_verts_p
     .1:
@@ -405,12 +410,14 @@ scene3d_draw_entity_as_solid_quads:
     bl scene3d_project_verts
  
     ; Plot faces as polys.
-    ldr r11, scene3d_mesh_p
+    ldr r11, scene3d_entity_p
+    ldr r11, [r11, #Entity_MeshPtr]     ; scene3d_mesh_p
     ldr r11, [r11, #MeshHeader_NumFaces]
     sub r11, r11, #1
 
     .2:
-    ldr r9, scene3d_mesh_p
+    ldr r9, scene3d_entity_p
+    ldr r9, [r9, #Entity_MeshPtr]       ; scene3d_mesh_p
     ldr r9, [r9, #MeshHeader_FaceIndices]
     ldrb r5, [r9, r11, lsl #2]  ; vertex0 of polygon N.
     
@@ -453,7 +460,8 @@ scene3d_draw_entity_as_solid_quads:
     stmfd sp!, {r11,r12}
 
     ; Look up colour index per face (no lighting).
-    ldr r4, scene3d_mesh_p
+    ldr r4, scene3d_entity_p
+    ldr r4, [r4, #Entity_MeshPtr]       ; scene3d_mesh_p
     ldr r4, [r4, #MeshHeader_FaceColours]
     ldrb r4, [r4, r11]
 
