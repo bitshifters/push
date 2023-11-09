@@ -13,20 +13,20 @@
 ;      3        2
 ; ============================================================================
 
-.equ Model_Cube_Num_Verts, 8
-.equ Model_Cube_Num_Faces, 6
+.equ Mesh_Cube_NumVerts, 8
+.equ Mesh_Cube_NumFaces, 6
 
 mesh_header_cube:
-    .long  Model_Cube_Num_Verts
-    .long  Model_Cube_Num_Faces
-    .long  model_cube_verts
-    .long  model_cube_face_normals
-    .long  model_cube_face_indices
-    .long  model_cube_colour_per_face
+    .long  Mesh_Cube_NumVerts
+    .long  Mesh_Cube_NumFaces
+    .long  mesh_cube_verts
+    .long  mesh_cube_face_normals
+    .long  mesh_cube_face_indices
+    .long  mesh_cube_colour_per_face
 
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
-model_cube_verts:
+mesh_cube_verts:
     VECTOR3 -16.0,  16.0, -16.0
     VECTOR3  16.0,  16.0, -16.0
     VECTOR3  16.0, -16.0, -16.0
@@ -38,7 +38,7 @@ model_cube_verts:
 
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
-model_cube_face_normals:
+mesh_cube_face_normals:
     VECTOR3  0.0,  0.0, -1.0
     VECTOR3  1.0,  0.0,  0.0
     VECTOR3  0.0,  1.0,  0.0
@@ -49,7 +49,7 @@ model_cube_face_normals:
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
 ; Winding order is clockwise (from outside)
-model_cube_face_indices:
+mesh_cube_face_indices:
     .byte 0, 1, 2, 3
     .byte 1, 5, 6, 2
     .byte 0, 4, 5, 1
@@ -57,13 +57,13 @@ model_cube_face_indices:
     .byte 4, 0, 3, 7
     .byte 2, 3, 7, 6
 
-model_cube_colour_per_face:
+mesh_cube_colour_per_face:
     .byte 4,5,6,7,8,9,10,11
 
-; TODO: Determine this from model_cube_face_indices.
+; TODO: Determine this from mesh_cube_face_indices.
 ; TODO: Could also calculate face normals from these...
 ; TODO: Handle more than 32 total edges.
-model_cube_edges_per_face:
+mesh_cube_edges_per_face:
 ;            3         2         1         
 ;           10987654321098765432109876543210
     .long 0b00000000000000000000000000001111
@@ -73,8 +73,8 @@ model_cube_edges_per_face:
     .long 0b00000000000000000000100110001000
     .long 0b00000000000000000000110001000100
 
-; TODO: Determine this from model_cube_face_indices.
-model_cube_edge_indices:
+; TODO: Determine this from mesh_cube_face_indices.
+mesh_cube_edge_indices:
     .byte 0, 1              ; 0
     .byte 1, 2              ; 1
     .byte 2, 3              ; 2
@@ -93,20 +93,20 @@ model_cube_edge_indices:
 ; Model data: COBRA
 ; ============================================================================
 
-.equ Model_Cobra_Num_Verts, 22
-.equ Model_Cobra_Num_Faces, 13
+.equ Mesh_Cobra_NumVerts, 22
+.equ Mesh_Cobra_NumFaces, 13
 
 mesh_header_cobra:
-    .long  Model_Cobra_Num_Verts
-    .long  Model_Cobra_Num_Faces
-    .long  model_cobra_verts
-    .long  model_cobra_face_normals
-    .long  model_cobra_face_indices
-    .long  model_cobra_colour_per_face
+    .long  Mesh_Cobra_NumVerts
+    .long  Mesh_Cobra_NumFaces
+    .long  mesh_cobra_verts
+    .long  mesh_cobra_face_normals
+    .long  mesh_cobra_face_indices
+    .long  mesh_cobra_colour_per_face
 
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
-model_cobra_verts:
+mesh_cobra_verts:
     VECTOR3 -19,-8,0
     VECTOR3 -19,-4.5,0
     VECTOR3 -16,-8,-1
@@ -132,7 +132,7 @@ model_cobra_verts:
 
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
-model_cobra_face_normals:
+mesh_cobra_face_normals:
     VECTOR3 -0.316228, 0.000000, -0.948683      ; MD_SURF 0,1,2
     VECTOR3 -0.147398, 0.152857, -0.977194      ; MD_SURF 1,3,2
     VECTOR3 -0.322292, 0.262051, -0.909647      ; MD_SURF 2,3,6
@@ -149,7 +149,7 @@ model_cobra_face_normals:
 
 ; !VERTEX AND NORMAL ARRAYS MUST BE CONSECUTIVE!
 
-model_cobra_face_indices:
+mesh_cobra_face_indices:
     .byte 0,1,2,0
     .byte 1,3,2,1
     .byte 2,3,6,2
@@ -164,11 +164,11 @@ model_cobra_face_indices:
     .byte 4,3,0,4
     .byte 4,10,5,4
 
-model_cobra_colour_per_face:
+mesh_cobra_colour_per_face:
     .byte 2,3,4,5,6,7,8,9,10,11,12,13,14
 .p2align 2
 
-model_cobra_edges_per_face:
+mesh_cobra_edges_per_face:
     .long 0x00000007    ; 3
     .long 0x0000001C    ; 3
     .long 0x000000B0    ; 3
@@ -183,7 +183,7 @@ model_cobra_edges_per_face:
     .long 0x40200009    ; 4
     .long 0x3FFE8002    ; 15
 
-model_cobra_edge_indices:
+mesh_cobra_edge_indices:
     .byte 0,1
     .byte 0,2
     .byte 1,2
