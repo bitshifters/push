@@ -1,5 +1,7 @@
 ; ============================================================================
 ; FX handler.
+; Calls tick functions in order with R0=frame counter, R1=vsync delta.
+; Calls draw functions in order with R12=screen base address.
 ; ============================================================================
 
 .equ Fx_MaxLayers, 4
@@ -40,6 +42,8 @@ fx_tick_layers:
 	.endif
 
     ; Call tick fn.
+    ldr r0, frame_counter
+    ldr r1, vsync_delta
     str r9, [sp, #-4]!
     adr lr, .2
     mov pc, r11

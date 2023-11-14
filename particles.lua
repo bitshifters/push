@@ -50,7 +50,7 @@ function TIC()
     -- update emitter here.
     emitter.pos.x = 100.0 * math.sin(f/60)
     emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
-    emitter.colour = (emitter.colour + 1) & 7
+    emitter.colour = (emitter.colour + 1) & 15
     emitter.radius = 8.0 + 6 * math.sin(f/10)
     emitter.dir.x = 2.0 * math.sin(f/100)
     emitter.dir.y = 1.0 + 5.0 * math.random() --0.0 * math.cos(f/100)

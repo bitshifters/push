@@ -17,6 +17,11 @@ sequence_init:
     bl app_init_debug               ; exact debug equired is app dependent.
     .endif
 
+    ; Install sync editor.
+    .if AppConfig_UseSyncTracks
+    bl sync_init
+    .endif
+
     bl script_init
 
     .if _DEBUG && 0                 ; TODO: Reinstate dynamic sequence load?
@@ -30,6 +35,7 @@ sequence_init:
 
 	ldr r0, sequence_program_p
 	bl script_add_program
+
     ldr pc, [sp], #4
 
 .if _DEBUG

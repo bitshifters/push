@@ -21,10 +21,12 @@ sync_track_num:
 sync_init:
     str lr, [sp, #-4]!
 
+    mov r0, #0
+    str r0, sync_track_num
+
     bl luapod_init
     ldr r0, frame_counter
     bl luapod_set_sync_time
-    bl sync_update_vars
 
     ldr pc, [sp], #4
 

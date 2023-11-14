@@ -84,11 +84,6 @@ main:
 	; Bootstrap the main sequence.
     bl sequence_init
 
-    ; Install sync editor.
-    .if AppConfig_UseSyncTracks
-    bl sync_init
-    .endif
-
     ; Tick script once for module init.
     bl script_tick_all
 
@@ -175,14 +170,12 @@ main_loop_skip_tick:
 	; This will block if there isn't a bank available to write to.
 	bl get_next_bank_for_writing
 
-	; Useful to determine frame rate for debug.
-	.if _DEBUG || _CHECK_FRAME_DROP
+	; Useful to determine frame rate for debug or frame-rate independent animation.
 	ldr r1, last_vsync
 	ldr r2, vsync_count
 	sub r0, r2, r1
 	str r2, last_vsync
 	str r0, vsync_delta
-	.endif
 
 	; R0 = vsync delta since last frame.
 	.if _CHECK_FRAME_DROP
@@ -317,25 +310,11 @@ debug_skip_to_next_pattern:
 screen_addr_input:
 	.long VD_ScreenStart, -1
 
-displayed_bank:
-	.long 0				; VIDC sreen bank being displayed
-
-write_bank:
-	.long 0				; VIDC screen bank being written to
-
-pending_bank:
-	.long 0				; VIDC screen to be displayed next
-
-vsync_count:
-	.long 0				; current vsync count from start of exe.
-
-.if _DEBUG || _CHECK_FRAME_DROP
 last_vsync:
 	.long 0
 
 vsync_delta:
 	.long 0
-.endif
 
 .if _CHECK_FRAME_DROP
 last_dropped_frame:
@@ -473,6 +452,18 @@ error_handler:
 
 screen_addr:
 	.long 0					; ptr to the current VIDC screen bank being written to.
+
+displayed_bank:
+	.long 0				; VIDC sreen bank being displayed
+
+write_bank:
+	.long 0				; VIDC screen bank being written to
+
+pending_bank:
+	.long 0				; VIDC screen to be displayed next
+
+vsync_count:
+	.long 0				; current vsync count from start of exe.
 
 .if _DEBUG
 debug_main_loop_pause:
