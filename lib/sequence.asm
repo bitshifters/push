@@ -22,6 +22,7 @@ sequence_init:
     bl sync_init
     .endif
 
+    ; Initialise script system.
     bl script_init
 
     .if _DEBUG && 0                 ; TODO: Reinstate dynamic sequence load?
@@ -33,8 +34,12 @@ sequence_init:
 	swi OS_File
     .endif
 
+    ; Set the PC for the sequence.
 	ldr r0, sequence_program_p
 	bl script_add_program
+
+    ; Tick script once for module init.
+    bl script_tick_all
 
     ldr pc, [sp], #4
 

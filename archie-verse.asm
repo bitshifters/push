@@ -84,9 +84,6 @@ main:
 	; Bootstrap the main sequence.
     bl sequence_init
 
-    ; Tick script once for module init.
-    bl script_tick_all
-
 	; LATE INITALISATION HERE!
 	bl get_next_bank_for_writing    ; can now write to screen.
 
@@ -104,12 +101,12 @@ main_loop:
 	; PREPARE
 	; ========================================================================
 
-    .if AppConfig_UseSyncTracks
-    bl sync_update_vars
-    .endif
-
     .if _DEBUG
     bl debug_do_key_callbacks
+
+    ldrb r0, debug_restart_flag
+    cmp r0, #0
+    blne debug_restart_sequence
 
 	ldrb r0, debug_main_loop_pause
 	cmp r0, #0
@@ -120,6 +117,10 @@ main_loop:
 	beq main_loop_skip_tick
 	.3:
 	.endif
+
+    .if AppConfig_UseSyncTracks
+    bl sync_update_vars
+    .endif
 
 	; ========================================================================
 	; TICK
@@ -281,6 +282,7 @@ debug_toggle_main_loop_pause:
 debug_restart_sequence:
     ; Start music again.
     mov r0, #0
+    strb r0, debug_restart_flag
     mov r1, #0
 	swi QTM_Pos
 
@@ -477,6 +479,9 @@ debug_show_info:
 
 debug_show_rasters:
 	.byte DebugDefault_ShowRasters
+
+debug_restart_flag:
+    .byte 0
 
 .p2align 2
 .endif
