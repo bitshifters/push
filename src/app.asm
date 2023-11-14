@@ -273,6 +273,7 @@ app_vsync_code:
 ; ============================================================================
 
 .include "src/fx/particles.asm"
+.include "src/fx/math-emitter.asm"
 .include "src/fx/balls.asm"
 .include "src/fx/scene-3d.asm"
 

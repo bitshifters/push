@@ -380,7 +380,7 @@ mark_write_bank_as_pending_display:
 	bne .1
 	str r1, pending_bank
 
-	; Show panding bank at next vsync.
+	; Show pending bank at next vsync.
 	MOV r0, #OSByte_WriteDisplayBank
 	swi OS_Byte
 	mov pc, lr

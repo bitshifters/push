@@ -44,14 +44,69 @@ Particle demo
         - Push particles apart with a damping factor.
         - Calculate collision forces with a damping factor.
 
+6) Make a demo!
+    - Prototype FX until Christmas or so.
+    - Pick a theme for the demo (perhaps all particles and save 3D?)
+    - Aim for 64K demo at Revision? If not, NOVA.
+    - Get Steve to cut down QTM (strip out SWIs etc.)
+
 
 MISSING framework features:
+~~~
 - Add arbitrary tick/task functions (with self-remove?) e.g. screen fades. - DONE.
 - Background task functions that are preempted by rendering. e.g. decompress. => WHEN NEEDED.
-- Direct VIDC write fns for palette changes. => WHEN NEEDED.
-- Palette pending to sync palette changes on vsync. => WHEN NEEDED.
+- Sort out ye olde palette code.  => WHEN NEEDED.
+    - Direct VIDC write fns for palette changes.
+    - Palette pending to sync palette changes on vsync.
 - Fast debug print to screen. - DONE
+- Steve's suggestion of reprogramming the pointer sprite for debug?!
+- Debug lines? (Will be slow but useful.)
+    - List of 2D lines to plot.
+    - Helper fn. to plot debug lines in 3D.
+- URGENT ==> Remove dependency on Lua for runtime. <==
+- Deal with frame count vs vsync count discrepancy.
+    - What do we want to script in? Frames (shown) or seconds?
+    - If timed exactly to music then needs to be in vsyncs/seconds.
+    - Move to fixed point seconds anyway as music patterns are not whole vsyncs?
 
+
+TODO Particles
+~~~
+- Lua export to tables or whatever runtime solution.
+- Sprite sheets for animated particles.
+- Plot particles in 3D.
+- Select sprite from sheet when plotting in 3D for depth.
+- Specific particle FX if Dave hasn't given us some: (Use Processing?)
+    - Smoke
+    - Vortex
+
+
+TODO Balls
+~~~
+- Add bouyancy?
+- Add lifetime to balls then pop?
+    - Send pop force to nearby / touching balls.
+    - Produce particles.
+    - Make smaller balls?
+- Plot as sprites or fixed circle draw fns.
+- Plot as ellipses (separate radii for X&Y) and animate wobble?
+
+
+TODO 3D
+~~~
+- Python script to convert OBJs to runtime binary format.
+- Renderqueue for drawing more complex 3D objects with sorted faces.
+- Add multiple lights to the scene.
+    - Time for MODE 13?!?!
+    - Reprogram 16 colour palette if <16 faces?
+- Render multiple objects in the scene.
+- Screen clipping.
+- Object outline => copying Sarah's idea, so not yet!
+    - All faces have an edge list.
+    - Count how many times each edge is used when plotting faces.
+    - For any edge that has a count of 1, draw this edge as a black line.
+- More interesting platonic shapes for reference and perf testing.
+- Morphing.
 
 
 Timing on ARM2.
@@ -61,3 +116,30 @@ Timing on ARM2.
 - Tinted pixels (radius 0) ~= 600
 - Additive 8x8 sprites (radius ~3.5) ~= 170
 - Full ball collision (radius 4-24) ~= 20
+
+
+LUA vs runtime
+~~~
+Examples:
+    emitter.pos.x = 100.0 * math.sin(2 * math.pi * frac / 60)
+    emitter.pos.x = 100.0 * math.sin(fram / 60)
+    emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
+    emitter.colour = (emitter.colour + 1) & 15
+    emitter.radius = 8.0 + 6 * math.sin(f/10)
+    emitter.dir.x = 2.0 * math.sin(f/100)
+    emitter.dir.y = 1.0 + 5.0 * math.random() --0.0 * math.cos(f/100)
+
+Table?
+    -- f/60 cycles at 60*2*PI~=377 frames.
+    -- f/80 cycles at 80*2*PI~=502 frames.
+    -- f/10 cycles at 10*2*PI~=63 frames.
+    -- f/100 cycles at 100*2*PI~=628 frames.
+    -- What precision do we need for each track? (Easier if full word.)
+    -- We have a large, high precision SINUS table in RAM.
+    -- Could calculate tracks using a fairly standard formula here.
+    -- v = a + b * f(c * i)
+    -- Where a, b, c are constants, f = sin, cos, rand, etc.
+    -- And i=frame or i=vsync or i+=1 per emission.
+    -- colour = i & 15
+    -- Kinda want to write it in some Rose like code and have it JIT'd!?!
+    -- Depends how all-in we want to go with sophisticated particle systems.

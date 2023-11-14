@@ -15,26 +15,14 @@
 .equ Particle_Radius,   31      ; R7
 .equ Particle_SIZE,     32
 
-; (New) Emitter variable block:
-.equ NewEmitter_Timer,  0       ; R0
-.equ NewEmitter_XPos,   4       ; R1
-.equ NewEmitter_YPos,   8       ; R2
-.equ NewEmitter_ZPos,   12      ; R3
-.equ NewEmitter_XDir,   16      ; R4  Q: would this be better as angles? (in brads?)
-.equ NewEmitter_YDir,   20      ; R5
-.equ NewEmitter_ZDir,   24      ; R6
-.equ NewEmitter_Life,   28      ; R7
-.equ NewEmitter_Colour, 32      ; R8
-.equ NewEmitter_Radius, 36      ; R0 <=0 means not active.
-.equ NewEmitter_SIZE,   40
-
 .equ Particles_Max,     680     ; ARM2 ~= 680. ARM250 ~= 1024.
 .equ Particle_Gravity, -5.0     ; Or some sort of particle force fn.
 
 .equ Particles_CentreX,          (160.0 * PRECISION_MULTIPLIER)
 .equ Particles_CentreY,          (255.0 * PRECISION_MULTIPLIER)
 
-.equ _PARTICLES_PLOT_CHUNKY, 0  ; only works in MODE 12/13.
+.equ _PARTICLES_PLOT_CHUNKY,    0  ; only works in MODE 12/13.
+.equ _PARTICLES_ASSERT_SPAWN,   (_DEBUG && 0)
 
 ; ============================================================================
 
@@ -553,6 +541,45 @@ particles_draw_all_as_8x8_additive:
 
 ; ============================================================================
 
+; Spawn a particle.
+;  R1=x position, R2=y position, R3=z position
+;  R4=x velocity, R5=y velocity, R6=z velocity
+;  R7=lifetime | colour index
+; Returns:
+;  R0=next active particle.
+;  R8=alive count.
+;  R9=ptr to particle.
+particle_spawn:
+    ldr r9, particles_next_free    ; particle_p
+
+    ; Emit particles.
+    cmp r9, #0
+    .if _PARTICLES_ASSERT_SPAWN
+    adreq r0, emiterror
+    swieq OS_GenerateError
+    .else
+    moveq pc, lr                   ; ran out of particle space!
+    .endif
+
+    ldr r8, [r9, #Particle_Next]   ; curr_p->next_p
+
+    ; Insert this particle at the front of the active list.
+    ldr r0, particles_first_active
+    stmia r9, {r0-r7}
+    str r9, particles_first_active
+
+    str r8, particles_next_free
+
+    .if _DEBUG
+    ldr r8, particles_alive_count
+    add r8, r8, #1
+    str r8, particles_alive_count
+    .endif
+
+    mov pc, lr
+
+; ============================================================================
+
 .if _DEBUG
 emiterror: ;The error block
 .long 18
@@ -560,100 +587,5 @@ emiterror: ;The error block
 .align 4
 .long 0
 .endif
-
-new_emitter_timer:
-    FLOAT_TO_FP 0.0
-
-new_emitter_init:
-    str lr, [sp, #-4]!
-    SYNC_REGISTER_VAR 0, new_emitter+0
-    SYNC_REGISTER_VAR 1, new_emitter+4
-    SYNC_REGISTER_VAR 2, new_emitter+8
-    SYNC_REGISTER_VAR 3, new_emitter+12
-    SYNC_REGISTER_VAR 4, new_emitter+16
-    SYNC_REGISTER_VAR 5, new_emitter+20
-    SYNC_REGISTER_VAR 6, new_emitter+24
-    SYNC_REGISTER_VAR 7, new_emitter+28
-    SYNC_REGISTER_VAR 8, new_emitter+32
-    SYNC_REGISTER_VAR 9, new_emitter+36
-    ldr pc, [sp], #4
-
-new_emitter_tick:
-    str lr, [sp, #-4]!
-
-    ; Update time between particle emissions.
-    ldr r11, new_emitter_timer
-    subs r11, r11, #MATHS_CONST_1    ; timer-=1.0
-    bgt .2
-
-.1:
-    ; Load emitter context.
-    adr r12, new_emitter            ; emitter_p
-    ldmia r12, {r0-r9}              ; load emitter context.
-
-    movs r12, r0                    ; frames per emitter.
-    beq .2                          ; emitter not active.
-
-    mov r9, r9, asr #16             ; [16.0]
-    orr r7, r7, r8, lsl #16         ; combine lifetime & colour into one word.
-    orr r7, r7, r9, lsl #24         ; & radius.
-
-.3:
-    ldr r10, particles_next_free    ; particle_p
-
-    ; Emit particles.
-    cmp r10, #0
-    .if _DEBUG && 0
-    bne .5
-    adr r0, emiterror
-    swi OS_GenerateError
-    .5:
-    .else
-    beq .4                          ; ran out of particle space!
-    .endif
-
-    ; Spawn a particle pointed to by R10.
-    ;  R0=next active particle.
-    ;  R1=x position, R2=y position, R3=z position
-    ;  R4=x velocity, R5=y velocity, R6=z velocity
-    ;  R7=lifetime | colour index
-
-    ldr r8, [r10, #0]               ; curr_p->next_p
-
-    ; Insert this particle at the front of the active list.
-    ldr r0, particles_first_active
-    stmia r10, {r0-r7}
-    str r10, particles_first_active
-
-    mov r10, r8                     ; curr_p = next_p
-    .if _DEBUG
-    ; Safe to use R8 here as just assigned to r10 above.
-    ldr r8, particles_alive_count
-    add r8, r8, #1
-    str r8, particles_alive_count
-    .endif
-
-.4:
-    str r10, particles_next_free
-
-    ; TODO: Emitter iterator fn called per particle?
-
-    ; Check the emissions timer - might have > 1 particle per frame!
-    adds r11, r11, r12                ; timer += frames between emissions.
-    ble .3
-
-.2:
-    str r11, new_emitter_timer
-    ldr pc, [sp], #4
-
-; ============================================================================
-
-new_emitter:
-    FLOAT_TO_FP 50.0/2          ; emission rate (frames per particle = 50.0/particles per second)
-    VECTOR3 0.0, 0.0, 0.0
-    VECTOR3 0.0, 6.0, 0.0
-    .long   255 ; lifetime
-    .long   255 ; colour
-    .long   1   ; radius
 
 ; ============================================================================

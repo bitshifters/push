@@ -16,7 +16,7 @@
     .endif
 
     ; Init FX modules.
-    call_0 new_emitter_init
+    call_0 math_emitter_init
     call_0 particles_init
     call_0 balls_init
 
@@ -31,6 +31,7 @@
     call_3 fx_set_layer_fns, 0, 0,                      screen_cls
     call_3 fx_set_layer_fns, 1, 0,                      circles_reset_for_frame
 
+.if 0
     ; Cube!
     write_addr scene3d_entity_p, cube_entity
     call_3 fx_set_layer_fns, 2, scene3d_rotate_entity,  scene3d_draw_entity_as_solid_quads
@@ -49,29 +50,32 @@
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
 
     wait_secs 10.0
+.endif
 
     fork seq_loop
     end_script
 
 ; Particles!
 seq_loop:
-    call_3 fx_set_layer_fns, 1, new_emitter_tick        circles_reset_for_frame
+    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   circles_reset_for_frame
 
     write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
     call_3 fx_set_layer_fns, 3, 0,                      0
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_additive
-    wait_secs 5.0
+    wait_secs 10.0
 
     write_addr particles_sprite_table_p, temp_mask_ptrs_no_adr
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_tinted
-    wait_secs 5.0
+    wait_secs 10.0
 
+.if 0
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_points
     wait_secs 5.0
 
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
     wait_secs 5.0
+.endif
 
     fork seq_loop
 
