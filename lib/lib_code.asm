@@ -60,6 +60,9 @@ lib_init:
     .if LibDivide_UseReciprocalTable
     bl MakeReciprocal
     .endif
+    .if LibSqrt_MakeSqrtTable
+    bl sqrt_init
+    .endif
     .if LibConfig_IncludeCircles
     bl ClearCircleBuf
     .endif

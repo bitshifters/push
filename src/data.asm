@@ -133,8 +133,8 @@ temp_mask_data:
 ; Sequence data (RODATA Segment - ironically).
 ; ============================================================================
 
-.p2align 6
+.p2align 2
 .rodata
 seq_main_program:
 .include "src/data/sequence-data.asm"
-.p2align 13     ; 8K
+.p2align 12     ; 4K

@@ -27,6 +27,13 @@ reciprocal_table_no_adr:
 
 ; ============================================================================
 
+.if LibSqrt_MakeSqrtTable
+sqrt_table_no_adr:
+    .skip LibSqrt_Entries*4
+.endif
+
+; ============================================================================
+
 .if LibConfig_IncludeCircles
 r_CircleBuffer_no_adr:
 	.skip	(LibCircles_MaxCircles)*(LibCircles_DataWords+1)*4

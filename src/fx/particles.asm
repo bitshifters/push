@@ -17,9 +17,10 @@
 
 .equ Particles_Max,     680     ; ARM2 ~= 680. ARM250 ~= 1024.
 .equ Particle_Gravity, -5.0     ; Or some sort of particle force fn.
+                                ; TODO: Drive with math_func?
 
-.equ Particles_CentreX,          (160.0 * PRECISION_MULTIPLIER)
-.equ Particles_CentreY,          (255.0 * PRECISION_MULTIPLIER)
+.equ Particles_CentreX,          (160.0 * MATHS_CONST_1)
+.equ Particles_CentreY,          (255.0 * MATHS_CONST_1)
 
 .equ _PARTICLES_PLOT_CHUNKY,    0  ; only works in MODE 12/13.
 .equ _PARTICLES_ASSERT_SPAWN,   (_DEBUG && 0)
@@ -418,7 +419,7 @@ particles_draw_all_as_8x8_tinted:
     biceq \src, \src, #0xf0000000
     sub \dst, \dst, \src                ; subtract src nibbles.
     mvn \dst, \dst                      ; invert bits (make additive).
-    ; TODO: Might be possible to do in few cycles with whole word twiddling.
+    ; TODO: Might be possible to do in fewer cycles with whole word twiddling.
 .else
     add \dst, \dst, \src                ; don't worry about nibble overflow.
 .endif
