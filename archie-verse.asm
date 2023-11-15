@@ -48,10 +48,6 @@ main:
     ; Allocate and clear screen buffers etc.
     bl app_init_video
 
-	; Seed RND.
-	;swi OS_ReadMonotonicTime
-	;str r0, rnd_seed
-
 	; Claim the Event vector.
 	MOV r0, #EventV
 	ADR r1, event_handler
@@ -485,9 +481,6 @@ debug_restart_flag:
 
 .p2align 2
 .endif
-
-rnd_seed:
-    .long 0x87654321
 
 ; ============================================================================
 ; Support library code modules used by the FX.

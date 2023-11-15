@@ -68,14 +68,12 @@ seq_loop:
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_tinted
     wait_secs 10.0
 
-.if 0
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_points
     wait_secs 5.0
 
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
     wait_secs 5.0
-.endif
 
     fork seq_loop
 
