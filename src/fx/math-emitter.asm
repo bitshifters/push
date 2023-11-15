@@ -19,6 +19,9 @@
 .equ MathEmitter_Iter,   44      ; i(iteration)
 .equ MathEmitter_SIZE,   48
 
+; TODO: Decide when emitter iteration happens.
+.equ _MATH_EMITTER_ITERATE_PER_FRAME, 0     ; otherwise per spawn.
+
 ; ============================================================================
 
 math_emitter_init:
@@ -45,37 +48,50 @@ math_emitter_tick_all:
 
     adr r10, math_emitter_config_1
     adr r12, math_emitter_context_1
-    bl math_emitter_iterate
-
-    adr r12, math_emitter_context_1
     bl math_emitter_tick
     ldr pc, [sp], #4
 
+; R10=ptr to emitter config.
 ; R12=ptr to emitter context.
 math_emitter_tick:
     str lr, [sp, #-4]!
 
+    .if _MATH_EMITTER_ITERATE_PER_FRAME
+    bl math_emitter_iterate         ; iterate emitter.
+    .endif
+
     ; Update time between particle emissions.
     ldr r11, [r12, #MathEmitter_Timer]
-    subs r11, r11, #MATHS_CONST_1    ; timer-=1.0
+    subs r11, r11, #MATHS_CONST_1    ; timer-=1.0 (frame)
     bgt .2
+
+    .if _MATH_EMITTER_ITERATE_PER_FRAME==0
+    .3:
+    bl math_emitter_iterate         ; iterate emitter.
+    .endif
 
     ldmia r12, {r0-r9}              ; load emitter context.
 
-    movs r10, r0                    ; frames per emitter.
-    beq .2                          ; emitter not active.
+    .if _MATH_EMITTER_ITERATE_PER_FRAME
+    mov r10, r0                     ; junk config ptr.
+    .endif
 
     mov r9, r9, asr #16             ; [16.0]
     orr r7, r7, r8, lsl #16         ; combine lifetime & colour into one word.
     orr r7, r7, r9, lsl #24         ; & radius.
 
-.3:
-    bl particle_spawn
+    .if _MATH_EMITTER_ITERATE_PER_FRAME
+    .3:
+    adds r11, r11, r10              ; timer += frames between emissions.
+    .else
+    adds r11, r11, r0               ; timer += frames between emissions.
+    .endif
 
-    ; TODO: Emitter iterator fn called per particle?
+    ; Spawn!
+    bl particle_spawn               ; trashes r0,r8-r9
 
     ; Check the emissions timer - might have > 1 particle per frame!
-    adds r11, r11, r10                ; timer += frames between emissions.
+    cmp r11, #0
     ble .3
 
 .2:
@@ -84,68 +100,65 @@ math_emitter_tick:
 
 ; R10=ptr to emitter config.
 ; R12=ptr to emitter context.
+; Trashes R0-R5,R7-R9
 math_emitter_iterate:
     str lr, [sp, #-4]!
+    mov r7, r10 ; stash config ptr.
 
-    ldr r11, [r12, #MathEmitter_Iter]
-    add r11, r11, #1
-    str r11, [r12, #MathEmitter_Iter]
+    ; TODO: Some funcs might want to be f(time) not f(i).
+    ldr r8, [r12, #MathEmitter_Iter]
+    add r8, r8, #1
+    str r8, [r12, #MathEmitter_Iter]
 
     ; R10=emitter.rate
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     str r0, [r12, #MathEmitter_Rate]
 
     ; R10=emitter.pos.x
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     str r0, [r12, #MathEmitter_XPos]
 
     ; R10=emitter.pos.y
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     str r0, [r12, #MathEmitter_YPos]
 
     ; R10=emitter.dir.x
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     str r0, [r12, #MathEmitter_XDir]
 
     ; R10=emitter.dir.y
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     str r0, [r12, #MathEmitter_YDir]
 
     ; R10=emitter.life
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     mov r0, r0, lsr #16             ; [16.0]
     str r0, [r12, #MathEmitter_Life]
 
     ; R10=emitter.colour
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     mov r0, r0, lsr #16             ; [16.0]
     str r0, [r12, #MathEmitter_Colour]
 
     ; R10=emitter.radius
-    mov r0, r11
+    mov r0, r8
     bl math_evaluate_func
     str r0, [r12, #MathEmitter_Radius]
 
+    mov r10, r7     ; restore config ptr.
     ldr pc, [sp], #4
 
 ; ============================================================================
 
 math_emitter_context_1:
-    FLOAT_TO_FP 50.0/80         ; emission rate (frames per particle = 50.0/particles per second)
-    VECTOR3 0.0, 128.0, 0.0     ; pos [x,y,z]
-    VECTOR3 0.0, 6.0, 0.0       ; dir [x,y,z]
-    .long   255                 ; lifetime
-    .long   7                   ; colour
-    FLOAT_TO_FP 8               ; radius
-    FLOAT_TO_FP 0               ; timer
-    .long   0                   ; i(teration)
+    .skip MathEmitter_SIZE
 
 ; ============================================================================
 
@@ -154,7 +167,7 @@ math_emitter_context_1:
 ;  R10=ptr to func parameters [a, b, c, d, f]
 ;  R0=i [16.0]
 ; Trashes: R1-R5, R9
-; Returns: R0=v, R10=ptr to next config.
+; Returns: R0=v, R10=ptr to next func.
 math_evaluate_func:
     str lr, [sp, #-4]!
     ldmia r10!, {r1-r5}      ; [a, b, c, d, f]

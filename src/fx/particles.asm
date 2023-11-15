@@ -200,7 +200,7 @@ particles_draw_all_as_points:
 	andne r8, r8, #0x0f		    ; mask out right hand pixel
 	orrne r8, r8, r7, lsl #4	; mask in colour as right hand pixel
 
-    strb r8, [r10, r1]!                  ; screen_y[screen_x]=colour index.
+    strb r8, [r10, r1, lsr #1]!         ; screen_y[screen_x]=colour index.
 
     .if _PARTICLES_PLOT_CHUNKY
     strb r7, [r10, #1]                  ; screen_y[screen_x+1]=colour index.
