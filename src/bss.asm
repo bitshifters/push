@@ -83,17 +83,14 @@ balls_array_no_adr:
 ; ============================================================================
 
 ; src/particles.asm
-temp_sprite_data_buffer_no_adr:
-    .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts
-
-temp_sprite_mask_buffer_no_adr:
+additive_block_sprite_buffer_no_adr:
     .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts
 
 temp_sprite_ptrs_no_adr:
     .skip 4*8   ; sizeof(ptr) * 8 pixel shifts
 
-temp_mask_ptrs_no_adr:
-    .skip 4*8   ; sizeof(ptr) * 8 pixel shifts
+sprite_buffer_no_adr:
+    .skip AppConfig_SpriteBufferSize
 
 ; ============================================================================
 ; Library BSS.

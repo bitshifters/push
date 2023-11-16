@@ -19,10 +19,11 @@
     call_0 math_emitter_init
     call_0 particles_init
     call_0 balls_init
+    call_0 sprite_utils_init
 
     ; Make sprites.
-    call_5 sprite_utils_mode9_make_table, temp_sprite_data, temp_sprite_ptrs_no_adr, 1, 8, temp_sprite_data_buffer_no_adr
-    call_5 sprite_utils_mode9_make_table, temp_mask_data, temp_mask_ptrs_no_adr, 1, 8, temp_sprite_mask_buffer_no_adr
+    call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
+    call_1 sprite_utils_make_shifted_sheet, block_sprite_sheet_def_no_adr
 
     ; Screen setup.
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
@@ -44,14 +45,12 @@
     wait_secs 10.0
     write_addr scene3d_entity_p, cobra_entity
     wait_secs 10.0
-.endif
 
     ; Balls!
     call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
-    end_script
-
     wait_secs 10.0
+.endif
 
     fork seq_loop
     end_script
@@ -59,14 +58,14 @@
 ; Particles!
 seq_loop:
     call_3 fx_set_layer_fns, 1, math_emitter_tick_all   circles_reset_for_frame
-
-    write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
     call_3 fx_set_layer_fns, 3, 0,                      0
-    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_additive
+
+    write_addr particles_sprite_def_p, block_sprite_sheet_def_no_adr
+    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_tinted
     wait_secs 10.0
 
-    write_addr particles_sprite_table_p, temp_mask_ptrs_no_adr
-    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_tinted
+    write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
+    call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_8x8_additive
     wait_secs 10.0
 
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_points
@@ -129,6 +128,10 @@ seq_palette_red_additive:
     .long 0x0000c0e0                    ; 13 = 1101 =
     .long 0x0000e0e0                    ; 14 = 1110 = oranges
     .long 0x00e0e0e0                    ; 15 = 1111 = white
+
+block_sprite_sheet_def_no_adr:
+    ; 8 sprites at 2 words (8 pixels) x 8 rows.
+    SpriteSheetDef_Mode9 8, 1, 8, block_sprites_no_adr
 
 ; ============================================================================
 ; ============================================================================

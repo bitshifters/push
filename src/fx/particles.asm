@@ -273,8 +273,10 @@ particles_draw_next_p:
     .long 0
 
 particles_sprite_table_p:
-    .long temp_sprite_ptrs_no_adr
+    .long 0
 
+particles_sprite_def_p:
+    .long 0
 
 .macro mask_and_tint_pixels src, dst, tint
     bic \dst, \dst, \src                ; mask out src.
@@ -341,9 +343,14 @@ particles_draw_all_as_8x8_tinted:
     add r10, r10, r1, lsl #2            ; xw*4
 
     ; Calculate src ptr.
-    ldr r11, particles_sprite_table_p
+    ldr r11, particles_sprite_def_p
+
+    ; TODO: More versatile scheme for sprite_num. Radius?
+    mov r7, r7, lsr #4
+    and r7, r7, #7                      ; sprite_num~=f(life)
+    SPRITE_UTILS_GETPTR r11, r7, r11
+
     ldr r11, [r11, r0, lsl #2]          ; ptr[x_shift]
-    ; TODO: Convert particle sprite index into sprite table ptr.
 
     ; Plot 2x8 words of tinted mask data to screen.
     ldmia r11!, {r0-r7}                 ; read 8 src words.
@@ -483,7 +490,7 @@ particles_draw_all_as_8x8_additive:
     ldr r11, [r11, r0, lsl #2]          ; ptr[x_shift]
     ; TODO: Convert particle sprite index into sprite table ptr.
 
-    ; Plot 2x8 words of tinted mask data to screen.
+    ; Plot 2x8 words of additive sprite data (mask orr 0x11111111) to screen.
     ldmia r11!, {r0-r7}                 ; read 8 src words.
     ldmia r10, {r8-r9}                  ; read 2 screen words.
     additive_blend r0, r8, r14

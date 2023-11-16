@@ -1,5 +1,28 @@
 ; ============================================================================
 ; Sprite Utils
+; All MODE 9 unless stated otherwise.
+; ============================================================================
+
+.equ SpriteSheetDef_NumSprites,     0
+.equ SpriteSheetDef_WidthWords,     1
+.equ SpriteSheetDef_HeightRows,     2
+.equ SpriteSheetDef_Flags,          3
+.equ SpriteSheetDef_SrcData,        4
+.equ SpriteSheetDef_PtrTable,       8
+
+; ============================================================================
+
+sprite_utils_buffer_base:
+    .long sprite_buffer_no_adr
+
+sprite_utils_buffer_top:
+    .long sprite_buffer_no_adr
+
+sprite_utils_init:
+    ldr r0, sprite_utils_buffer_base
+    str r0, sprite_utils_buffer_top
+    mov pc, lr
+
 ; ============================================================================
 
 ; Shift MODE 9 image data by N pixels to the right.
@@ -11,7 +34,7 @@
 ;  R10=pixel shift right [0-7] (preseved)
 ;  R12=dst address. (updated)
 ; Trashes: R0-R2, R11
-sprite_utils_mode9_shift_pixel_data:
+sprite_utils_shift_pixel_data:
     str lr, [sp, #-4]!
     
     mov r10, r10, lsl #2        ; word shift
@@ -43,14 +66,19 @@ sprite_utils_mode9_shift_pixel_data:
 
 ; Make all shifted sprites and put ptrs in a table.
 ;  R0=src address.
-;  R1=ptr to sprite table [8 entries].
+;  R1=ptr to sprite table to be completed [8 entries].
 ;  R2=src width in words.
 ;  R3=src height in rows.
 ;  R4=dst address [buffer (width+1) x height x 8 words.]
-sprite_utils_mode9_make_table:
+; Trashes: R5-R11
+; Returns:
+;  R6=end of ptr table.
+;  R9=end of src.
+;  R12=end of dst buffer.
+sprite_utils_make_table:
     str lr, [sp, #-4]!
 
-    ; TODO: Renumber registers.
+    ; TODO: Renumber registers?
     mov r5, r0
     mov r6, r1
     mov r7, r2
@@ -62,10 +90,77 @@ sprite_utils_mode9_make_table:
     mov r9, r5                  ; reset src ptr.
     str r12, [r6], #4           ; store ptr to next dst.
 
-    bl sprite_utils_mode9_shift_pixel_data
+    bl sprite_utils_shift_pixel_data
 
     add r10, r10, #1
     cmp r10, #8
     bne .1
 
     ldr pc, [sp], #4
+
+; Helper for sequence script.
+; R0=sprite def.
+; R1=sprite no.
+; R2=address of table ptr to fill.
+sprite_utils_set_ptr:
+    .if _DEBUG
+    ldrb r3, [r0, #SpriteSheetDef_NumSprites]
+    cmp r1, r3
+    adrge r0, err_spriteoutofrange
+    swige OS_GenerateError
+    .endif
+    SPRITE_UTILS_GETPTR r0, r1, r0
+    str r0, [r2]
+    mov pc, lr
+
+; R0=address of sprite sheet definition.
+sprite_utils_make_shifted_sheet:
+    str lr, [sp, #-4]!
+
+    ldr r12, sprite_utils_buffer_top
+    mov r11, r0
+
+    add  r6, r11, #SpriteSheetDef_PtrTable
+    ldr  r9, [r11, #SpriteSheetDef_SrcData]
+    ldrb r2, [r11, #SpriteSheetDef_WidthWords]
+    ldrb r3, [r11, #SpriteSheetDef_HeightRows]
+    ldrb r10, [r11, #SpriteSheetDef_NumSprites]          ; num_sprites.
+.1:
+    mov  r0, r9                      ; src data.
+    mov  r1, r6                      ; ptr table.
+    mov  r4, r12                     ; dst buffer.
+
+    stmfd sp!, {r2-r3, r10}
+    bl sprite_utils_make_table
+    ; Returns R6=next ptr table addr
+    ;         R9=end of src.
+    ;         R12=top of dst buffer.
+    ldmfd sp!, {r2-r3, r10}
+
+    .if _DEBUG
+    ldr r1, sprite_utils_buffer_base
+    sub r1, r12, r1                ; size=top-base
+    cmp r1, #AppConfig_SpriteBufferSize
+    adrgt r0, err_spriteoverflow
+    swigt OS_GenerateError
+    .endif
+
+    subs r10, r10, #1
+    bne .1
+
+    str r12, sprite_utils_buffer_top
+    ldr pc, [sp], #4
+
+.if _DEBUG
+err_spriteoverflow: ;The error block
+.long 18
+.byte "Sprite buffer overflow!"
+.align 4
+.long 0
+
+err_spriteoutofrange: ;The error block
+.long 18
+.byte "Sprite number out of range!"
+.align 4
+.long 0
+.endif

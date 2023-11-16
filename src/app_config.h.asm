@@ -9,6 +9,8 @@
 .equ AppConfig_InstallIrqHandler,       0       ; otherwise uses Event_VSync.
 .equ AppConfig_UseSyncTracks,           0       ; currently Luapod could also be Rocket.
 
+.equ AppConfig_SpriteBufferSize,        8192
+
 ; ============================================================================
 ; Sequence config.
 ; ============================================================================

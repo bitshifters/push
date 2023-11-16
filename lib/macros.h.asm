@@ -27,3 +27,17 @@
     bl sync_register_track_var
     .endif
 .endm
+
+.macro SPRITE_UTILS_GETPTR def_reg, num_reg, ptr_reg
+    add \ptr_reg, \def_reg, #SpriteSheetDef_PtrTable
+    add \ptr_reg, \ptr_reg, \num_reg, lsl #5    ; 8 sprites * 4 bytes per ptr.
+.endm
+
+.macro SpriteSheetDef_Mode9 num_sprites, width_words, height_rows, sprite_data
+    .byte \num_sprites
+    .byte \width_words
+    .byte \height_rows
+    .byte 0                     ; flags tbd
+    .long \sprite_data
+    .skip \num_sprites*8*4      ; sprite ptrs.
+.endm

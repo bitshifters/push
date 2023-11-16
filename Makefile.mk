@@ -73,7 +73,7 @@ shrink: build ./build/archie-verse.shri ./build/!run.txt ./build/icon.bin ./buil
 build:
 	$(MKDIR_P) "./build"
 
-./build/assets.txt: build ./build/icon.bin ./build/bs-logo.bin ./build/tmt-logo.bin ./build/credits.bin
+./build/assets.txt: build ./build/icon.bin ./build/block-sprites.bin
 	echo done > $@
 
 ./build/archie-verse.shri: build ./build/archie-verse.bin
@@ -130,6 +130,9 @@ clean:
 
 ./build/credits.bin: ./data/gfx/crew-credits2.png $(PNG2ARC_DEPS)
 	$(PYTHON2) $(PNG2ARC) -o $@ -p $@.pal $< 9
+
+./build/block-sprites.bin: ./data/gfx/block_sprites_8x8x8.png $(PNG2ARC_DEPS)
+	$(PYTHON2) $(PNG2ARC_FONT) --glyph-dim 8 8 -o $@ $< 9
 
 ##########################################################################
 ##########################################################################
