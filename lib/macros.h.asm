@@ -28,9 +28,14 @@
     .endif
 .endm
 
-.macro SPRITE_UTILS_GETPTR def_reg, num_reg, ptr_reg
+.macro SPRITE_UTILS_GET_TABLE def_reg, num_reg, ptr_reg
     add \ptr_reg, \def_reg, #SpriteSheetDef_PtrTable
     add \ptr_reg, \ptr_reg, \num_reg, lsl #5    ; 8 sprites * 4 bytes per ptr.
+.endm
+
+.macro SPRITE_UTILS_GETPTR def_reg, num_reg, shift_reg, ptr_reg
+    SPRITE_UTILS_GET_TABLE \def_reg, \num_reg, \ptr_reg
+    ldr \ptr_reg, [\ptr_reg, \shift_reg, lsl #2]          ; ptr[x_shift]
 .endm
 
 .macro SpriteSheetDef_Mode9 num_sprites, width_words, height_rows, sprite_data

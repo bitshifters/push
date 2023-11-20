@@ -18,15 +18,15 @@ Particle demo
 3) Rendering investigations.
     - Plot as preshifted 8x8 sprites => 320 tinted.
     - Don't need to tint at run-time, just pre-tint sprites. => needs mask tho.
-    - Have a sprite (sheet) index instead of tint value etc.
-    - Animation frames!
+    - Have a sprite (sheet) index instead of tint value etc. - DONEISH
+    - Animation frames! _ DONEISH
     - Try additive plotting of single colour sprites... - DONE
     - Plotting with Z perspective.
 
 4) Improvements to particle & emitter system
     - Emitter iteration function?
         - Do we need to emit more than one particle per frame? - SUPPORTED
-        - Called after each particle is spawned? _ DONE
+        - Called after each particle is spawned? - DONE
     
     - Particle update function? => WAIT FOR RHINO CONCEPTS IN BLENDER?
         - Called for each particle tick to update size/colour etc.?
@@ -78,7 +78,7 @@ MISSING framework features:
 TODO Particles
 ~~~
 - Lua export to tables or whatever runtime solution. - FOR NOW (MATH EMITTER)
-- Sprite sheets for animated particles.
+- Sprite sheets for animated particles. - STARTED
 - Plot particles in 3D.
 - Select sprite from sheet when plotting in 3D for depth.
 - Specific particle FX if Dave hasn't given us some: (Use Processing?)

@@ -109,7 +109,7 @@ sprite_utils_set_ptr:
     adrge r0, err_spriteoutofrange
     swige OS_GenerateError
     .endif
-    SPRITE_UTILS_GETPTR r0, r1, r0
+    SPRITE_UTILS_GET_TABLE r0, r1, r0
     str r0, [r2]
     mov pc, lr
 

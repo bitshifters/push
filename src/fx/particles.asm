@@ -347,10 +347,8 @@ particles_draw_all_as_8x8_tinted:
 
     ; TODO: More versatile scheme for sprite_num. Radius?
     mov r7, r7, lsr #4
-    and r7, r7, #7                      ; sprite_num~=f(life)
-    SPRITE_UTILS_GETPTR r11, r7, r11
-
-    ldr r11, [r11, r0, lsl #2]          ; ptr[x_shift]
+    and r7, r7, #7                          ; sprite_num~=f(life)
+    SPRITE_UTILS_GETPTR r11, r7, r0, r11    ; def->table[sprite_num*8+shift]
 
     ; Plot 2x8 words of tinted mask data to screen.
     ldmia r11!, {r0-r7}                 ; read 8 src words.
