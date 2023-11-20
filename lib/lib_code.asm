@@ -57,7 +57,7 @@ lib_init:
     .if LibSine_MakeSinusTable
     bl MakeSinus
     .endif
-    .if LibDivide_UseReciprocalTable
+    .if LibDivide_UseRecipTable
     bl MakeReciprocal
     .endif
     .if LibSqrt_MakeSqrtTable

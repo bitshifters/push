@@ -20,7 +20,7 @@ polygon_span_table_no_adr:
 
 ; ============================================================================
 
-.if LibDivide_UseReciprocalTable
+.if LibDivide_UseRecipTable
 reciprocal_table_no_adr:
 	.skip LibDivide_ReciprocalTableSize*4
 .endif
@@ -30,6 +30,13 @@ reciprocal_table_no_adr:
 .if LibSqrt_MakeSqrtTable
 sqrt_table_no_adr:
     .skip LibSqrt_Entries*4
+.endif
+
+; ============================================================================
+
+.if LibSine_MakeSinusTable
+sinus_table_no_adr:
+    .skip LibSine_TableSize*4
 .endif
 
 ; ============================================================================

@@ -16,6 +16,9 @@ p_CircleBufEnd:
 	.long r_circleBufEnd_no_adr
 
 .if _DEBUG
+p_CircleBufBase:
+    .long r_CircleBuffer_no_adr
+
 r_NumCircles:
     .long 0
 
@@ -39,6 +42,10 @@ ClearCircleBuf:
 circles_reset_for_frame:
 	ldr r0, p_CircleBufEnd
 	str r0, r_FreeCircle
+    .if _DEBUG
+    mov r0, #0
+    str r0, r_NumCircles
+    .endif
     mov pc, lr
 
 ; ============================================================================
@@ -95,11 +102,6 @@ clip_circle_nottop:
 
 clip_circle_notbottom:
 
-	; Dupe pixel bits to colour word.
-	ORR r9, r9, r9, LSL #4
-	ORR r9, r9, r9, LSL #8
-	ORR r9, r9, r9, LSL #16
-
 	; Circle data to save:
 	;  r0 = X centre
 	;  r1 = Y start (not saved - used to index Circle Buffer)
@@ -108,17 +110,23 @@ clip_circle_notbottom:
 	;  r12 = ptr to circle size table (clipped to top)
 	;  r14 = line count (clipped)
 
-	ldr r2, p_CircleBufPtrs
-	add r1, r2, r1, lsl #2				; p_CircleBufPtrs[Y]
-
-	ldr r2, [r1]						; get ptr to first circle for Y
 	ldr r8, r_FreeCircle				; get next free circle in buffer
 
 	.if _DEBUG
-	cmp r8, #0
-    adreq r0, outofcircles
-    swieq OS_GenerateError
+    ldr r2, p_CircleBufBase
+	cmp r8, r2
+    adrlt r0, outofcircles
+    swilt OS_GenerateError
 	.endif
+
+	ldr r2, p_CircleBufPtrs
+	add r1, r2, r1, lsl #2				; p_CircleBufPtrs[Y]
+	ldr r2, [r1]						; get ptr to first circle for Y
+
+	; Dupe pixel bits to colour word.
+	ORR r9, r9, r9, LSL #4
+	ORR r9, r9, r9, LSL #8
+	ORR r9, r9, r9, LSL #16
 
     .if LibCircles_DataWords != 4
     .err "Expected LibCircles_DataWords == 4!"

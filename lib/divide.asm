@@ -32,7 +32,7 @@
 
 .equ LibDivide_ReciprocalTableSize, 1<<LibDivide_Reciprocal_t
 
-.if LibDivide_UseReciprocalTable
+.if LibDivide_UseRecipTable
 reciprocal_table_p:
     .long reciprocal_table_no_adr
 .endif
@@ -51,7 +51,7 @@ divide:
     cmp r1, #0
     rsbmi r1, r1, #0            ; make positive  
 
-    .if LibDivide_UseReciprocalTable
+    .if LibDivide_UseRecipTable
     mov r1, r1, asr #16-LibDivide_Reciprocal_s    ; [15.7]    (b<<s)
 
     .if _DEBUG
@@ -134,7 +134,7 @@ divide:
 	.align 4
 	.long 0
 
-.if LibDivide_UseReciprocalTable
+.if LibDivide_UseRecipTable
 ; Trashes: r0-r2, r8-r9, r12
 MakeReciprocal:
     ldr r12, reciprocal_table_p
