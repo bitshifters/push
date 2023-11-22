@@ -30,7 +30,7 @@
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 0, 0,                      screen_cls
-    call_3 fx_set_layer_fns, 1, 0,                      circles_reset_for_frame
+    call_3 fx_set_layer_fns, 1, 0,                      bits_logo_draw
 
 .if 0
     ; Cube!
@@ -48,7 +48,7 @@
 
     ; Balls!
     call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
-    call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
+    call_3 fx_set_layer_fns, 3, circles_reset_for_frame,circles_plot_all
     wait_secs 10.0
 .endif
 
@@ -57,7 +57,7 @@
 
 ; Particles!
 seq_loop:
-    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   circles_reset_for_frame
+    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   bits_logo_draw
     call_3 fx_set_layer_fns, 3, 0,                      0
 
     write_addr particles_sprite_def_p, block_sprite_sheet_def_no_adr
@@ -72,7 +72,7 @@ seq_loop:
     wait_secs 5.0
 
     call_3 fx_set_layer_fns, 2, particles_tick_all,     particles_draw_all_as_circles
-    call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
+    call_3 fx_set_layer_fns, 3, circles_reset_for_frame,circles_plot_all
     wait_secs 5.0
 
     fork seq_loop

@@ -7,7 +7,7 @@ If "<RISCOS$version>"<>"3.1" Then Error This will only run on Archimedes compute
 Set Demo$Dir <Obey$Dir>
 |
 RMLoad <Demo$Dir>.MemAlloc
-FONTSIZE 0K
+FONTSIZE 32K
 SPRITESIZE 0K
 RMASIZE 0K
 SCREENSIZE 80K

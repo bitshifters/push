@@ -48,6 +48,9 @@ Particle demo
     - Prototype FX until Christmas or so.
     - Pick a theme for the demo (perhaps all particles and save 3D?)
     - Aim for 64K demo at Revision? If not, NOVA.
+        - Good compression on the exe ~8K for all particle prototypes so far.
+        - QTM RModule comes down to <12K as a last resort!
+        - Chiptune MOD from 32K down to ~6K.
     - Get Steve to cut down QTM (strip out SWIs etc.)
 
 
@@ -116,6 +119,13 @@ TODO 3D
 - More interesting platonic shapes for reference and perf testing.
 - Morphing.
 
+
+TODO Font
+~~~
+- Investigate RISCOS font library.
+    - Three fonts always available?
+    - Wrapper to plot words and copy out as sprites.
+    - Use VDU type codes for position & size etc.?
 
 Timing on ARM2.
 ~~~

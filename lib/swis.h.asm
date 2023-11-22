@@ -126,6 +126,15 @@
 .equ Event_VSync, 4
 .equ Event_KeyPressed, 11
 
+.equ Font_FindFont, 0x40081
+.equ Font_LoseFont, 0x40082
+.equ Font_Paint, 0x40086
+.equ Font_ConverttoOS, 0x40088
+.equ Font_SetFont, 0x4008a
+.equ Font_SetColours, 0x40092
+.equ Font_SetPalette, 0x40093
+.equ Font_ScanString, 0x400a1
+
 .equ QTM_Load, 0x47E40
 .equ QTM_Start, 0x47E41
 .equ QTM_Stop, 0x47E42

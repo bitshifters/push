@@ -82,6 +82,11 @@ balls_array_no_adr:
 
 ; ============================================================================
 
+bits_logo_no_adr:
+    .skip Bits_Logo_Bytes
+
+; ============================================================================
+
 ; src/particles.asm
 additive_block_sprite_buffer_no_adr:
     .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts

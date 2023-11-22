@@ -120,6 +120,16 @@ app_init_audio:
 
 
 ; ============================================================================
+; App late initialisation.
+; ============================================================================
+
+; R12=screen addr.
+app_late_init:
+    b bits_logo_init
+; TODO: Make this more generic or include in sequence?
+
+
+; ============================================================================
 ; Interrupt handling.
 ; ============================================================================
 
@@ -276,6 +286,7 @@ app_vsync_code:
 .include "src/fx/math-emitter.asm"
 .include "src/fx/balls.asm"
 .include "src/fx/scene-3d.asm"
+.include "src/fx/bits.asm"
 
 ; ============================================================================
 ; Support library code modules used by the FX sequence.
@@ -283,3 +294,4 @@ app_vsync_code:
 
 .include "lib/mode9-screen.asm"
 .include "lib/palette.asm"
+.include "lib/outline-font.asm"
