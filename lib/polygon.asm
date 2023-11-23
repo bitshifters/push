@@ -597,7 +597,7 @@ polygon_plot_spans:
 spanerror: ;The error block
 .long 18
 .byte "Span width too long!"
-.align 4
+.p2align 2
 .long 0
 .endif
 

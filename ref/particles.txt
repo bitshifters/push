@@ -18,8 +18,8 @@ Particle demo
 3) Rendering investigations.
     - Plot as preshifted 8x8 sprites => 320 tinted.
     - Don't need to tint at run-time, just pre-tint sprites. => needs mask tho.
-    - Have a sprite (sheet) index instead of tint value etc. - DONEISH
-    - Animation frames! _ DONEISH
+    - Have a sprite (sheet) index instead of tint value etc. - DONE-ISH
+    - Animation frames! - DONE-ISH
     - Try additive plotting of single colour sprites... - DONE
     - Plotting with Z perspective.
 
@@ -78,7 +78,7 @@ MISSING framework features:
         before the error > 1/50.
 
 
-TODO Particles
+TODO Particles ==> Pending concept?
 ~~~
 - Lua export to tables or whatever runtime solution. - FOR NOW (MATH EMITTER)
 - Sprite sheets for animated particles. - STARTED
@@ -123,9 +123,16 @@ TODO 3D
 TODO Font
 ~~~
 - Investigate RISCOS font library.
-    - Three fonts always available?
-    - Wrapper to plot words and copy out as sprites.
+    - Three fonts always available? - YEP
+    - Wrapper to plot words and copy out as sprites. - DONE
     - Use VDU type codes for position & size etc.?
+- Implement a minimal !Draw file renderer?
+    - See RISCOS PRMs pp.4-457 for file format specification.
+    - Just need to implement FontTable and TextObject objects.
+    - The rest can be skipped over.
+    - Main complexity will be converting coordinates.
+    - Could easily be reused for size constrained intro, greets, credits etc.
+
 
 Timing on ARM2.
 ~~~

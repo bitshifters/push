@@ -89,3 +89,20 @@ bits_logo_string:
     .byte "BITSHIFTERS"
     .byte 0
 .p2align 2
+
+bits_draw_file_test:
+    str lr, [sp, #-4]!
+
+    mov r0, #320                ; x origin [os units]
+    mov r1, #160                ; y origin [os units]
+    ldr r10, bits_draw_file_p
+    ldr r11, bits_draw_file_end
+    bl draw_file_plot_to_screen
+
+    ldr pc, [sp], #4
+
+bits_draw_file_p:
+    .long bits_draw_file_no_adr
+
+bits_draw_file_end:
+    .long bits_draw_file_end_no_adr

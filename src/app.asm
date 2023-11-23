@@ -295,3 +295,4 @@ app_vsync_code:
 .include "lib/mode9-screen.asm"
 .include "lib/palette.asm"
 .include "lib/outline-font.asm"
+.include "lib/draw-file.asm"

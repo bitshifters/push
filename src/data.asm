@@ -122,6 +122,12 @@ block_sprites_no_adr:
     .incbin "build/block-sprites.bin"
 
 ; ============================================================================
+
+bits_draw_file_no_adr:
+    .incbin "data/DrawFile,aff"
+bits_draw_file_end_no_adr:
+
+; ============================================================================
 ; Sequence data (RODATA Segment - ironically).
 ; ============================================================================
 
