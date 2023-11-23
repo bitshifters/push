@@ -94,7 +94,7 @@ bits_draw_file_test:
     str lr, [sp, #-4]!
 
     mov r0, #320                ; x origin [os units]
-    mov r1, #160                ; y origin [os units]
+    mov r1, #32                ; y origin [os units]
     ldr r10, bits_draw_file_p
     ldr r11, bits_draw_file_end
     bl draw_file_plot_to_screen

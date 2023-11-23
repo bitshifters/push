@@ -124,7 +124,7 @@ block_sprites_no_adr:
 ; ============================================================================
 
 bits_draw_file_no_adr:
-    .incbin "data/DrawFile,aff"
+    .incbin "data/sys-req-amiga,aff"
 bits_draw_file_end_no_adr:
 
 ; ============================================================================
