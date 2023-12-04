@@ -1,18 +1,19 @@
 ; ============================================================================
 ; Particle system.
-; 2D particles only.
 ; ============================================================================
 
 ; Particle variables block (VECTOR3):
 .equ Particle_Next,     0       ; R0 = pointer to next active/free.
 .equ Particle_XPos,     4       ; R1
 .equ Particle_YPos,     8       ; R2
-.equ Particle_Life,     12      ; R3
-.equ Particle_Colour,   14      ; R3
-.equ Particle_Radius,   15      ; R3
+.equ Particle_ZPos,     12      ; R3
 .equ Particle_XVel,     16      ; R4
 .equ Particle_YVel,     20      ; R5
-.equ Particle_SIZE,     24
+.equ Particle_ZVel,     24      ; R6
+.equ Particle_Life,     28      ; R7
+.equ Particle_Colour,   30      ; R7
+.equ Particle_Radius,   31      ; R7
+.equ Particle_SIZE,     32
 
 .equ Particles_Max,     680     ; ARM2 ~= 680. ARM250 ~= 1024.
 .equ Particle_Gravity, -5.0     ; Or some sort of particle force fn.
@@ -84,11 +85,11 @@ particles_tick_all:
     movs r12, r0                        ; current_p = next_p
     beq .2
 
-    ldmia r12, {r0-r5}                  ; load full particle context
+    ldmia r12, {r0-r7}                  ; load particle context
 
     ; Particle lifetime.
-    sub r3, r3, #1
-    movs r10, r3, asl #16
+    sub r7, r7, #1
+    movs r10, r7, asl #16
 
     ; If lifetime<0 then add this context to free list.
     adrmi lr, .1
@@ -102,6 +103,7 @@ particles_tick_all:
     ; pos += vel
     add r1, r1, r4
     add r2, r2, r5
+    add r3, r3, r6
 
     ; TODO: Collision detection.
     cmp r1, #160<<16
@@ -117,7 +119,9 @@ particles_tick_all:
     ; TODO: Update particle colour.
 
     ; Save particle state.
-    stmia r12, {r0-r5}
+    stmia r12, {r0-r7}
+
+    ; TODO: Calculate screen (x,y) whilst context is loaded.
 
     b .1
 
@@ -160,7 +164,10 @@ particles_draw_all_as_points:
     movs r11, r0                        ; curr=next
     beq .2
 
-    ldmia r11, {r0-r3}                  ; load particle context for draw
+    ; TODO: Don't need to load the full context.
+    ldmia r11, {r0-r7}                  ; load particle context
+
+    ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
     add r1, r1, #Particles_CentreX               ; [s15.16]
@@ -183,7 +190,7 @@ particles_draw_all_as_points:
 
     add r10, r12, r2, lsl #7
     add r10, r10, r2, lsl #5            ; screen_y=screen_addr+y*160
-    mov r7, r3, lsr #16                 ; colour is upper 16 bits.
+    mov r7, r7, lsr #16                 ; colour is upper 16 bits.
 
     ldrb r8, [r10, r1, lsr #1]          ; screen_y[screen_x/2]
 
@@ -219,23 +226,39 @@ particles_draw_all_as_circles:
     cmp r11, #0
     beq .2
 
-    ldmia r11, {r0-r3}                  ; load particle context for draw
+    ; TODO: Don't need to load the full context.
+    ldmia r11, {r0-r7}                  ; load particle context
     mov r11, r0                         ; curr_p=next_p
+
+    ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
     add r1, r1, #Particles_CentreX               ; [s15.16]
     rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
-    ; NB. Clipping done in circle routine.
+    mov r1, r1, lsr #16
+    mov r2, r2, lsr #16
+
+    .if 0
+    cmp r1, #0
+    blt .3                              ; clip left - TODO: destroy particle?
+    cmp r1, #Screen_Width
+    bge .3                              ; clip right - TODO: destroy particle?
+
+    cmp r2, #0
+    blt .3                              ; clip top - TODO: destroy particle?
+    cmp r2, #Screen_Height-1            ; WHY -1?
+    bge .3                              ; clip bottom - TODO: destroy particle?
+    .endif
 
     ;  r0 = X centre
     ;  r1 = Y centre
     ;  r2 = radius of circle
     ;  r9 = tint
-    mov r0, r1, lsr #16
-    mov r1, r2, lsr #16
-    mov r2, r3, lsr #24                 ; radius.
-    mov r9, r3, lsr #16                 ; colour.
+    mov r0, r1
+    mov r1, r2
+    mov r2, r7, lsr #24                 ; radius.
+    mov r9, r7, lsr #16                 ; colour.
     bic r9, r9, #0xff00
     bl circles_add_to_plot_by_Y
 
@@ -272,8 +295,11 @@ particles_draw_all_as_8x8_tinted:
     cmp r11, #0
     beq .2
 
-    ldmia r11, {r0-r3}                  ; load particle context for draw
+    ; TODO: Don't need to load the full context. Reorder vars?
+    ldmia r11, {r0-r7}                  ; load particle context
     str r0, particles_draw_next_p       ; next_p
+
+    ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
     add r1, r1, #Particles_CentreX               ; [s15.16]
@@ -302,7 +328,7 @@ particles_draw_all_as_8x8_tinted:
     ;  r1 = X centre
     ;  r2 = Y centre
     ;  r14 = tint
-    mov r14, r3, lsr #16                ; colour tint.
+    mov r14, r7, lsr #16                ; colour tint.
     bic r14, r14, #0xff00
     orr r14, r14, r14, lsl #4
     orr r14, r14, r14, lsl #8
@@ -319,8 +345,8 @@ particles_draw_all_as_8x8_tinted:
     ; Calculate src ptr.
     ldr r11, particles_sprite_def_p
 
-    ; TODO: More versatile scheme for sprite_num. Radius? Currently (life DIV 16) MOD 7.
-    mov r7, r3, lsr #4
+    ; TODO: More versatile scheme for sprite_num. Radius?
+    mov r7, r7, lsr #4
     and r7, r7, #7                          ; sprite_num~=f(life)
     SPRITE_UTILS_GETPTR r11, r7, r0, r11    ; def->table[sprite_num*8+shift]
 
@@ -414,8 +440,11 @@ particles_draw_all_as_8x8_additive:
     cmp r11, #0
     beq .2
 
-    ldmia r11, {r0-r2}                  ; load particle context for draw
+    ; TODO: Don't need to load the full context. Reorder vars?
+    ldmia r11, {r0-r7}                  ; load particle context
     str r0, particles_draw_next_p       ; next_p
+
+    ; TODO: Plot 3D.
 
     ; For now just plot 2D particles.
     add r1, r1, #Particles_CentreX               ; [s15.16]
@@ -519,9 +548,9 @@ particles_draw_all_as_8x8_additive:
 ; ============================================================================
 
 ; Spawn a particle.
-;  R1=x position, R2=y position
-;  R3=lifetime | colour index
-;  R4=x velocity, R5=y velocity
+;  R1=x position, R2=y position, R3=z position
+;  R4=x velocity, R5=y velocity, R6=z velocity
+;  R7=lifetime | colour index
 ; Returns:
 ;  R0=next active particle.
 ;  R8=alive count.
@@ -542,7 +571,7 @@ particle_spawn:
 
     ; Insert this particle at the front of the active list.
     ldr r0, particles_first_active
-    stmia r9, {r0-r5}
+    stmia r9, {r0-r7}
     str r9, particles_first_active
 
     str r8, particles_next_free

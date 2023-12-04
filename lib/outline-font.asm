@@ -3,8 +3,8 @@
 ; All MODE 9 unless stated otherwise.
 ; Inbuilt into RISCOS 3:
 ;  Homerton.[Bold|Medium].[Oblique]
-;  Corpus.[Bold|Medium].[Oblique]
-;  Trinity.[Bold|Medium].[Oblique]
+;  Corpus.  [Bold|Medium].[Oblique]
+;  Trinity. [Bold|Medium].[Oblique]
 ; ============================================================================
 
 ; Paint a string to the screen using RISCOS outline fonts.

@@ -126,12 +126,13 @@ TODO Font
     - Three fonts always available? - YEP
     - Wrapper to plot words and copy out as sprites. - DONE
     - Use VDU type codes for position & size etc.?
-- Implement a minimal !Draw file renderer?
+- Implement a minimal !Draw file renderer? - DONE
     - See RISCOS PRMs pp.4-457 for file format specification.
     - Just need to implement FontTable and TextObject objects.
     - The rest can be skipped over.
     - Main complexity will be converting coordinates.
     - Could easily be reused for size constrained intro, greets, credits etc.
+    - Could be extended for Path Objects and Transformed Text Objects etc.
 
 
 Timing on ARM2.

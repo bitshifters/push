@@ -30,7 +30,7 @@
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 0, 0,                      screen_cls
-    call_3 fx_set_layer_fns, 1, 0,                      bits_logo_draw
+    call_3 fx_set_layer_fns, 1, 0,                      0
 
 .if 0
     ; Cube!
@@ -57,7 +57,7 @@
 
 ; Particles!
 seq_loop:
-    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   bits_logo_draw
+    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   0
     call_3 fx_set_layer_fns, 3, 0,                      0
 
     write_addr particles_sprite_def_p, block_sprite_sheet_def_no_adr

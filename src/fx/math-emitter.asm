@@ -8,16 +8,14 @@
 .equ MathEmitter_Rate,   0       ; R0  0=not active.
 .equ MathEmitter_XPos,   4       ; R1
 .equ MathEmitter_YPos,   8       ; R2
-.equ MathEmitter_ZPos,   12      ; R3
+.equ MathEmitter_Life,   12      ; R3
 .equ MathEmitter_XDir,   16      ; R4  Q: would this be better as angles? (in brads?)
 .equ MathEmitter_YDir,   20      ; R5
-.equ MathEmitter_ZDir,   24      ; R6
-.equ MathEmitter_Life,   28      ; R7
-.equ MathEmitter_Colour, 32      ; R8
-.equ MathEmitter_Radius, 36      ; R9
-.equ MathEmitter_Timer,  40      ; counts up until next particle to be emitted.
-.equ MathEmitter_Iter,   44      ; i(iteration)
-.equ MathEmitter_SIZE,   48
+.equ MathEmitter_Colour, 24      ; R6
+.equ MathEmitter_Radius, 28      ; R7
+.equ MathEmitter_Timer,  32      ; counts up until next particle to be emitted.
+.equ MathEmitter_Iter,   36      ; i(iteration)
+.equ MathEmitter_SIZE,   40
 
 ; TODO: Decide when emitter iteration happens.
 .equ _MATH_EMITTER_ITERATE_PER_FRAME, 0     ; otherwise per spawn.
@@ -70,15 +68,15 @@ math_emitter_tick:
     bl math_emitter_iterate         ; iterate emitter.
     .endif
 
-    ldmia r12, {r0-r9}              ; load emitter context.
+    ldmia r12, {r0-r7}              ; load emitter context.
 
     .if _MATH_EMITTER_ITERATE_PER_FRAME
     mov r10, r0                     ; junk config ptr.
     .endif
 
-    mov r9, r9, asr #16             ; [16.0]
-    orr r7, r7, r8, lsl #16         ; combine lifetime & colour into one word.
-    orr r7, r7, r9, lsl #24         ; & radius.
+    mov r7, r7, asr #16             ; radius [16.0]
+    orr r3, r3, r6, lsl #16         ; combine lifetime & colour into one word.
+    orr r3, r3, r7, lsl #24         ; & radius.
 
     .if _MATH_EMITTER_ITERATE_PER_FRAME
     .3:

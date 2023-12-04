@@ -18,6 +18,8 @@
 ;    256 draw units = 1 os unit = 1/4 pixel.
 ; Font size specified also in draw units 1/640 so need to /40 to get to font units.
 ; Probably simplest to work in OS units wherever possible...
+;
+; TODO: Extend to lines and strokes etc.?
 ; ============================================================================
 
 .equ DrawFile_Header_Draw,          0       ; 'Draw'
@@ -120,7 +122,7 @@ draw_file_plot_to_screen:
     swine OS_GenerateError
     .endif
 
-    ; Set colours for this logo.
+    ; Set colours for the font plotting.
     mov r0, #0                              ; font handle.
     mov r1, #0                              ; background logical colour
     mov r2, #15                             ; foreground logical colour
