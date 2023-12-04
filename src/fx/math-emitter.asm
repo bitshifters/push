@@ -44,9 +44,10 @@ math_emitter_init:
 math_emitter_tick_all:
     str lr, [sp, #-4]!
 
-    adr r10, math_emitter_config_1
+    adr r10, math_emitter_config_2
     adr r12, math_emitter_context_1
     bl math_emitter_tick
+
     ldr pc, [sp], #4
 
 ; R10=ptr to emitter config.
@@ -101,6 +102,8 @@ math_emitter_tick:
 ; Trashes R0-R5,R7-R9
 math_emitter_iterate:
     str lr, [sp, #-4]!
+
+    .if AppConfig_UseSyncTracks==0
     mov r7, r10 ; stash config ptr.
 
     ; TODO: Some funcs might want to be f(time) not f(i).
@@ -151,6 +154,8 @@ math_emitter_iterate:
     str r0, [r12, #MathEmitter_Radius]
 
     mov r10, r7     ; restore config ptr.
+    .endif
+
     ldr pc, [sp], #4
 
 ; ============================================================================
@@ -235,5 +240,15 @@ math_emitter_config_1:
     math_const 255                                                      ; emitter.life
     math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
     math_func  8.0,    6.0,    0.0,  1.0/(MATHS_2PI*10.0),  math_sin    ; emitter.radius = 8.0 + 6 * math.sin(f/10)
+
+math_emitter_config_2:
+    math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
+    math_const 0.0                                                      ; emitter.pos.x = 0
+    math_const 300.0                                                    ; emitter.pos.y = 192.0
+    math_func  -1.0,    2.0,    0.0,  0.0,                   math_rand   ; emitter.dir.x = 4.0 + 3.0 * math.random()
+    math_const -1.0                                                     ; emitter.dir.y
+    math_const 512                                                      ; emitter.life
+    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
+    math_const 8.0                                                      ; emitter.radius = 8.0
 
 ; ============================================================================

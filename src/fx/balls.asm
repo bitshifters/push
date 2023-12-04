@@ -325,7 +325,7 @@ balls_resolve_collisions:
     sub r8, r0, r4                  ; dx=ball.x-other.x
     sub r9, r1, r5                  ; dy=ball.y-other.y
 
-    ; Calculate dist=sqrt(dx*dx + dy*dy
+    ; Calculate dist=sqrt(dx*dx + dy*dy)
 
     mov r6, r8, asr #10             ; [10.6]
     mov r10, r6
@@ -337,6 +337,7 @@ balls_resolve_collisions:
 
     add r7, r6, r7                  ; distsq=dx*dx + dy*dy [20.12]
     mov r7, r7, asr #16             ; distsq/4             [16.0]
+    ; TODO: ERROR    ^^ SHOULD BE #14 so distsq/4  TEST THIS!!
 
     ; SQRT table goes from [1, 512*512) = [0x00001, 0x40000) (18 bits)
     ; Contains 65536 = 0x10000 entries                       (16 bits)
@@ -348,6 +349,7 @@ balls_resolve_collisions:
     ldrpl r10, [r3, r7, lsl #2]     ; sqrt(distsq / 4) [16.16]
 
     mov r10, r10, asl #1            ; dist=2*sqrt(distsq / 4)
+    ; TODO: ERROR    ^^ can just remove this line  TEST THIS!!
 
     ; Calc combined distance.
     ldr r7, [r11, #Ball_radius]
