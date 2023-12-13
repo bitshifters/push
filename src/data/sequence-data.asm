@@ -57,22 +57,22 @@
 
 ; Particles!
 seq_loop:
-    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   0
+    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   circles_plot_all
 ;    call_3 fx_set_layer_fns, 3, 0,                      0
-    call_3 fx_set_layer_fns, 3, circles_reset_for_frame,circles_plot_all
+    call_3 fx_set_layer_fns, 3, circles_reset_for_frame, 0
 
     write_addr particles_sprite_def_p, block_sprite_sheet_def_no_adr
-    call_3 fx_set_layer_fns, 2, particles_tick_all_with_circle_collider,     particles_draw_all_as_8x8_tinted
+    call_3 fx_set_layer_fns, 2, particles_tick_all_with_attractor,     particles_draw_all_as_8x8_tinted
     wait_secs 10.0
 
-.if 0
     write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
-    call_3 fx_set_layer_fns, 2, particles_tick_all_with_circle_collider,     particles_draw_all_as_8x8_additive
+    call_3 fx_set_layer_fns, 2, particles_tick_all_with_attractor,     particles_draw_all_as_8x8_additive
     wait_secs 10.0
 
-    call_3 fx_set_layer_fns, 2, particles_tick_all_with_circle_collider,     particles_draw_all_as_points
+    call_3 fx_set_layer_fns, 2, particles_tick_all_with_attractor,     particles_draw_all_as_points
     wait_secs 5.0
 
+.if 0
     call_3 fx_set_layer_fns, 2, particles_tick_all_with_circle_collider,     particles_draw_all_as_circles
     call_3 fx_set_layer_fns, 3, circles_reset_for_frame,circles_plot_all
     wait_secs 5.0

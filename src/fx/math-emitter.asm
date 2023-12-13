@@ -244,9 +244,9 @@ math_emitter_config_1:
 math_emitter_config_2:
     math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
     math_const 0.0                                                      ; emitter.pos.x = 0
-    math_const 300.0                                                    ; emitter.pos.y = 192.0
+    math_const 0.0                                                    ; emitter.pos.y = 192.0
     math_func  -1.0,    2.0,    0.0,  0.0,                   math_rand   ; emitter.dir.x = 4.0 + 3.0 * math.random()
-    math_const -1.0                                                     ; emitter.dir.y
+    math_func  1.0,    3.0,    0.0,  0.0,                   math_rand   ; emitter.dir.y = 1.0 + 5.0 * math.random()
     math_const 512                                                      ; emitter.life
     math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
     math_const 8.0                                                      ; emitter.radius = 8.0

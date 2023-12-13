@@ -22,7 +22,7 @@ polygon_span_table_no_adr:
 
 .if LibDivide_UseRecipTable
 reciprocal_table_no_adr:
-	.skip LibDivide_ReciprocalTableSize*4
+	.skip LibDivide_Reciprocal_TableSize*4
 .endif
 
 ; ============================================================================

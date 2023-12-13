@@ -87,13 +87,19 @@ TODO Particles ==> Pending concept?
 - Specific particle FX if Dave hasn't given us some: (Use Processing?)
     - Smoke ==> no gravity, low +ve y vel, random x vel.
     - Vortex ==> tangential accel.
-    - Repulsion ==> gravitational fields are f(r^2) IIRC.
+    - Repulsion ==> gravitational fields are f(r^2) IIRC. - DONE
         if len < radius then f=M / |d|^2
+        YES: F = G * m1 * m2 / |p2-p1|^2
+             But constrain the distance to [min,max] value first.
+        Because of fixed point arthimetic, large numbers (squares) don't play nice.
+        Will need to think about how to handle the precision here.
+        This is where I could do with prototyping in C...
     - Circular collider:
          d  = particle_pos - object_centre
         |d| = sqrt(dx*dx + dy*dy)
          D  = d / |d|                normalised direction vector.
         if len > radius then f=0
+    - TODO: Reduce duplicated code.
 
 - Some math_emitter functions might want to be f(t) not f(i)?
     E.g. perhaps the position stays the same but the direction & colour

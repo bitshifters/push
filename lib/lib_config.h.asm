@@ -33,4 +33,9 @@
 
 .equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && 0)
 
+.equ LibDivide_Reciprocal_t, 16           ; Table entries = 1<<t
+.equ LibDivide_Reciprocal_m, 9            ; Max value = 1<<m
+.equ LibDivide_Reciprocal_s, LibDivide_Reciprocal_t-LibDivide_Reciprocal_m    ; Table is (1<<16+s)/(x<<s)
+.equ LibDivide_Reciprocal_TableSize, 1<<LibDivide_Reciprocal_t
+
 ; ============================================================================
