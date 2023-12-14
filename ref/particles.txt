@@ -82,7 +82,7 @@ TODO Particles ==> Pending concept?
 ~~~
 - Lua export to tables or whatever runtime solution. - FOR NOW (MATH EMITTER)
 - Sprite sheets for animated particles. - STARTED
-- Plot particles in 3D.
+- Plot particles in 3D. ==> stick with 2D for now.
 - Select sprite from sheet when plotting in 3D for depth.
 - Specific particle FX if Dave hasn't given us some: (Use Processing?)
     - Smoke ==> no gravity, low +ve y vel, random x vel.
@@ -100,6 +100,12 @@ TODO Particles ==> Pending concept?
          D  = d / |d|                normalised direction vector.
         if len > radius then f=0
     - TODO: Reduce duplicated code.
+    - Hook's Spring Law:
+        fa = - [ks.(dist-r) + kd.(va-vb).norm_dir].norm_dir
+      For two particles with velocity va, vb, position pa, pb dir=pa-pb, dist=|dir|, norm_dir = dir/dist
+      ks = spring constant, kd = spring damping
+      r = rest length.
+      Don't need this for returning a particle to it's origin, just f=-k.dist
 
 - Some math_emitter functions might want to be f(t) not f(i)?
     E.g. perhaps the position stays the same but the direction & colour
@@ -108,7 +114,12 @@ TODO Particles ==> Pending concept?
 
 TODO Balls ==> Pending concept?
 ~~~
-- Add bouyancy?
+- Add buoyancy?
+    - Just increasing drag plus an upwards force related to density.
+        F = p V g
+        Where p = density of fluid (kg/m^3) (water=1000kg/m^3=1g/cm^3)
+              V = [submerged] volume of the object (sphere = 4/3 pi r^3)
+              g = acceleration due to gravity
 - Add lifetime to balls then pop?
     - Send pop force to nearby / touching balls.
     - Produce particles.
@@ -133,6 +144,11 @@ TODO 3D
 - More interesting platonic shapes for reference and perf testing.
 - Morphing.
 
+- Simple soft-body system?
+    N (<10) particles that are interconnected and apply force to each other?
+    As per https://paulbourke.net/miscellaneous/particle/ and particlelib.c
+    Perhaps better as a 3D object (with glenz rendering?)
+
 
 TODO Font
 ~~~
@@ -156,6 +172,7 @@ Timing on ARM2.
 - Tinted pixels (radius 0) ~= 600
 - Additive 8x8 sprites (radius ~3.5) ~= 170
 - Full ball collision (radius 4-24) ~= 20
+- Spring grid as pixels ~= 256
 
 
 LUA vs runtime

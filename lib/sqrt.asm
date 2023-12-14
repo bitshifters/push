@@ -98,3 +98,11 @@ sqrt_i32_to_fx16_16:
     addgt r3, r3, #1    ; if( r > q ) ++q;
     mov pc, lr          ; return q;
 .endif
+
+.if _DEBUG
+    sqrtrange: ;The error block
+    .long 18
+	.byte "SQRT out of range"
+	.align 4
+	.long 0
+.endif

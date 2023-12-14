@@ -76,6 +76,12 @@ particles_array_no_adr:
 
 ; ============================================================================
 
+; src/particle-grid.asm
+particle_grid_array_no_adr:
+    .skip ParticleGrid_SIZE * ParticleGrid_Max
+
+; ============================================================================
+
 ; src/balls.asm
 balls_array_no_adr:
     .skip Ball_SIZE * Balls_Max

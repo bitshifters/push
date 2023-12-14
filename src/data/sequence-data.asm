@@ -20,6 +20,7 @@
     call_0 particles_init
     call_0 balls_init
     call_0 sprite_utils_init
+    call_0 particle_grid_init
 
     ; Make sprites.
     call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
@@ -51,6 +52,10 @@
     call_3 fx_set_layer_fns, 3, circles_reset_for_frame,circles_plot_all
     wait_secs 10.0
 .endif
+
+    call_3 fx_set_layer_fns, 1, circles_reset_for_frame,     circles_plot_all
+    call_3 fx_set_layer_fns, 2, particles_grid_tick_all,     particle_grid_draw_all_as_points
+    end_script
 
     fork seq_loop
     end_script

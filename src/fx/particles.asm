@@ -3,7 +3,7 @@
 ; 2D particles only.
 ; ============================================================================
 
-; Particle variables block (VECTOR3):
+; Particle variables block:
 .equ Particle_Next,     0       ; R0 = pointer to next active/free.
 .equ Particle_XPos,     4       ; R1
 .equ Particle_YPos,     8       ; R2
@@ -250,7 +250,7 @@ particles_tick_all_with_circle_collider:
     .if _DEBUG
     ; Limited precision.
     cmp r5, #LibSqrt_Entries    ; Test for numerator too large
-    adrge r0,divrange           ; and flag an error
+    adrge r0,sqrtrange           ; and flag an error
     swige OS_GenerateError      ; when necessary
     .endif
 
@@ -427,7 +427,6 @@ particles_tick_all_with_attractor:
     sub r9, r7, r2                      ; dy = pox.y - obj.y
 
     ; Calcluate dist^2=dx*dx + dy*dy
-
     mov r4, r8, asr #10             ; [10.6]
     mov r14, r4
     mul r4, r14, r4                 ; dx*dx [20.12]
@@ -448,7 +447,7 @@ particles_tick_all_with_attractor:
     .if _DEBUG
     ; Limited precision.
     cmp r5, #LibSqrt_Entries    ; Test for numerator too large
-    adrge r0,divrange           ; and flag an error
+    adrge r0,sqrtrange           ; and flag an error
     swige OS_GenerateError      ; when necessary
     .endif
 

@@ -287,6 +287,7 @@ app_vsync_code:
 .include "src/fx/balls.asm"
 .include "src/fx/scene-3d.asm"
 .include "src/fx/bits.asm"
+.include "src/fx/particle-grid.asm"
 
 ; ============================================================================
 ; Support library code modules used by the FX sequence.
