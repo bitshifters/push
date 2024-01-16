@@ -13,14 +13,6 @@
 
 ; ============================================================================
 
-.if !AppConfig_LoadModFromFile
-.p2align 2
-music_mod_no_adr:
-.incbin "build/three-dee.mod"
-.endif
-
-; ============================================================================
-
 .if 0   ; fx/scroller.asm
 .p2align 2
 scroller_font_data_no_adr:
@@ -136,3 +128,25 @@ bits_draw_file_end_no_adr:
 seq_main_program:
 .include "src/data/sequence-data.asm"
 .p2align 12     ; 4K
+
+; ============================================================================
+; QTM Embedded.
+; ============================================================================
+
+.if AppConfig_UseQtmEmbedded
+.p2align 2
+QtmEmbedded_Base:
+.incbin "data/lib/QTM149c,ffa"
+.endif
+
+; ============================================================================
+; Music MOD.
+; ============================================================================
+
+.if !AppConfig_LoadModFromFile
+.p2align 2
+music_mod_no_adr:
+.incbin "data/music/maze-funky-delicious.mod"
+.endif
+
+; ============================================================================

@@ -4,10 +4,11 @@
 ; ============================================================================
 
 .equ AppConfig_StackSize,               1024
-.equ AppConfig_LoadModFromFile,         1
+.equ AppConfig_LoadModFromFile,         0
 .equ AppConfig_DynamicSampleSpeed,      1
 .equ AppConfig_InstallIrqHandler,       0       ; otherwise uses Event_VSync.
 .equ AppConfig_UseSyncTracks,           0       ; currently Luapod could also be Rocket.
+.equ AppConfig_UseQtmEmbedded,          1
 
 .equ AppConfig_SpriteBufferSize,        8192
 
@@ -70,3 +71,22 @@
 .equ Screen_Stride,             Screen_Width/Screen_PixelsPerByte
 .equ Screen_Bytes,              Screen_Stride*Screen_Height
 .equ Mode_Bytes,                Screen_Stride*VideoConfig_ModeHeight
+
+; ============================================================================
+; QTM Embedded entry points.
+; ============================================================================
+
+.if AppConfig_UseQtmEmbedded
+.macro QTMSWI swi_no
+stmfd sp!, {r11,lr}
+mov r11, #\swi_no - QTM_SwiBase
+mov lr, pc
+ldr pc, QtmEmbedded_Swi
+ldmfd sp!, {r11,lr}
+.endm
+
+.else
+.macro QTMSWI swi_no
+swi \swi_no
+.endm
+.endif

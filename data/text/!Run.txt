@@ -13,9 +13,9 @@ RMASIZE 0K
 SCREENSIZE 80K
 RMKILL MemAlloc 
 |
-RMLOAD <Demo$Dir>.QTM149c { > null: }
+|RMLOAD <Demo$Dir>.QTM149c { > null: }
 |
 wimpslot -min 1000K
 <Demo$Dir>.!RunImage
 |
-RMKILL QTMTracker
+|RMKILL QTMTracker

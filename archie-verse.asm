@@ -94,7 +94,7 @@ main:
 	SWI OS_Byte
 
 	; Play music!
-	swi QTM_Start
+	QTMSWI QTM_Start
 
 main_loop:
 
@@ -152,7 +152,7 @@ main_loop:
     .if _DEBUG
     mov r0, #-1
     mov r1, #-1
-    swi QTM_Pos         ; read position.
+    QTMSWI QTM_Pos         ; read position.
 
     strb r1, music_pos+0
     strb r0, music_pos+1
@@ -213,7 +213,7 @@ main_loop_skip_tick:
 exit:
 	; Disable music
 	mov r0, #0
-	swi QTM_Clear
+	QTMSWI QTM_Clear
 
 	; Remove our IRQ handler
     .if AppConfig_InstallIrqHandler
@@ -256,6 +256,12 @@ exit:
 	mov r1, #1
 	swi OS_Byte
 
+.if AppConfig_UseQtmEmbedded
+    adr lr, .1
+    ldr pc, QtmEmbedded_Exit
+    .1:
+.endif
+
     ; Goodbye.
 	SWI OS_Exit
 
@@ -271,8 +277,17 @@ debug_toggle_main_loop_pause:
 
     ; Toggle music.
     cmp r0, #0
+.if AppConfig_UseQtmEmbedded
+stmfd sp!, {r11,lr}
+    moveq r11, #QTM_Pause-QTM_SwiBase			    ; pause
+    movne r11, #QTM_Start-QTM_SwiBase             ; play
+    mov lr, pc
+    ldr pc, QtmEmbedded_Swi
+    ldmfd sp!, {r11,lr}
+.else
     swieq QTM_Pause			    ; pause
     swine QTM_Start             ; play
+.endif
 
     .if AppConfig_UseSyncTracks
     b sync_set_is_playing
@@ -285,7 +300,7 @@ debug_restart_sequence:
     mov r0, #0
     strb r0, debug_restart_flag
     mov r1, #0
-	swi QTM_Pos
+	QTMSWI QTM_Pos
 
     ; Start script again.
     b sequence_init
@@ -293,7 +308,7 @@ debug_restart_sequence:
 debug_skip_to_next_pattern:
     mov r0, #-1
     mov r1, #-1
-    swi QTM_Pos         ; read position.
+    QTMSWI QTM_Pos         ; read position.
 
     add r0, r0, #1
     cmp r0, #SeqConfig_MaxPatterns
@@ -302,7 +317,7 @@ debug_skip_to_next_pattern:
     bl sequence_jump_to_pattern
 
     mov r1, #0
-    swi QTM_Pos         ; set position.
+    QTMSWI QTM_Pos         ; set position.
     mov pc, lr
 .endif
 
@@ -444,7 +459,7 @@ error_handler:
 	SWI OS_Byte
 
 	; Do these help?
-	swi QTM_Stop
+	QTMSWI QTM_Stop
 
 	LDMIA sp!, {r0-r2, lr}
 	MOVS pc, lr

@@ -268,7 +268,7 @@ scene3d_update_entity_from_vubars:
     str lr, [sp, #-4]!
 
 	mov r0, #0
-	swi QTM_ReadVULevels
+	QTMSWI QTM_ReadVULevels
 
     ldr r2, scene3d_entity_p
 

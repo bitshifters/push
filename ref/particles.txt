@@ -344,3 +344,15 @@ Tech missing:
 
 9. End
     - How?
+
+
+
+QTM Embedded:
+- Sort out conditional SWIs. - DONE
+- Sort out distant SWI calls. - DONE
+- Sort out QTM SWI calls in sequence. - DONE
+
+Shrinkled version:
+- Fix MakeSinusTable.
+- Embed Shrinkled data into loader exe.
+- Progress bar for table creation?

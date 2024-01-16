@@ -5,6 +5,21 @@
 
 .equ RasterSplitLine, 56+90			; 56 lines from vsync to screen start
 
+; ============================================================================
+
+.if AppConfig_UseQtmEmbedded
+QtmEmbedded_Init:
+    .long QtmEmbedded_Base + 52
+
+QtmEmbedded_Swi:
+    .long QtmEmbedded_Base + 56
+
+QtmEmbedded_Service:
+    .long QtmEmbedded_Base + 60
+
+QtmEmbedded_Exit:
+    .long QtmEmbedded_Base + 64
+.endif
 
 ; ============================================================================
 ; App debug code.
@@ -68,7 +83,12 @@ app_init_video:
 	add r1, r1, #1
 	cmp r1, #VideoConfig_ScreenBanks
 	ble .1
+
+.if AppConfig_UseQtmEmbedded
+    ldr pc, QtmEmbedded_Init
+.else
     mov pc, lr
+.endif
 
 ; TODO: Junk this for non_DEBUG?
 error_noscreenmem:
@@ -104,7 +124,35 @@ app_init_audio:
 .endif
 
 	; Setup QTM for our needs.
-	swi QTM_SetSampleSpeed
+	QTMSWI QTM_SetSampleSpeed
+
+    mov r0, #AudioConfig_VuBars_Effect
+    mov r1, #AudioConfig_VuBars_Gravity
+    QTMSWI QTM_VUBarControl
+
+    mov r0, #1
+    mov r1, #AudioConfig_StereoPos_Ch1
+    QTMSWI QTM_Stereo
+
+    mov r0, #2
+    mov r1, #AudioConfig_StereoPos_Ch2
+    QTMSWI QTM_Stereo
+
+    mov r0, #3
+    mov r1, #AudioConfig_StereoPos_Ch3
+    QTMSWI QTM_Stereo
+
+    mov r0, #4
+    mov r1, #AudioConfig_StereoPos_Ch4
+    QTMSWI QTM_Stereo
+
+    mov r0, #0b0010
+    .if SeqConfig_EnableLoop
+    mov r1, #0b0000
+    .else
+    mov r1, #0b0010
+    .endif
+    QTMSWI QTM_MusicOptions
 
 	; Load the music.
     .if AppConfig_LoadModFromFile
@@ -114,7 +162,7 @@ app_init_audio:
 	mov r0, #0              ; load from address, don't copy to RMA.
     ldr r1, music_mod_p
     .endif
-	swi QTM_Load
+	QTMSWI QTM_Load
 
     mov pc, lr
 
@@ -282,10 +330,10 @@ app_vsync_code:
 ; FX code modules.
 ; ============================================================================
 
+.include "src/fx/scene-3d.asm"
 .include "src/fx/particles.asm"
 .include "src/fx/math-emitter.asm"
 .include "src/fx/balls.asm"
-.include "src/fx/scene-3d.asm"
 .include "src/fx/bits.asm"
 .include "src/fx/particle-grid.asm"
 

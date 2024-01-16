@@ -2,19 +2,6 @@
 ; The actual sequence for the demo.
 ; ============================================================================
 
-    ; Init QTM. NB: This could be in app.asm.
-    call_swi QTM_VUBarControl, AudioConfig_VuBars_Effect, AudioConfig_VuBars_Gravity
-    call_swi QTM_Stereo, 1, AudioConfig_StereoPos_Ch1
-    call_swi QTM_Stereo, 2, AudioConfig_StereoPos_Ch2
-    call_swi QTM_Stereo, 3, AudioConfig_StereoPos_Ch3
-    call_swi QTM_Stereo, 4, AudioConfig_StereoPos_Ch4
-
-    .if SeqConfig_EnableLoop
-    call_swi QTM_MusicOptions, 0b0010, 0b0000
-    .else
-    call_swi QTM_MusicOptions, 0b0010, 0b0010
-    .endif
-
     ; Init FX modules.
     call_0 math_emitter_init
     call_0 particles_init

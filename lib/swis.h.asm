@@ -135,6 +135,7 @@
 .equ Font_SetPalette, 0x40093
 .equ Font_ScanString, 0x400a1
 
+.equ QTM_SwiBase, 0x47E40
 .equ QTM_Load, 0x47E40
 .equ QTM_Start, 0x47E41
 .equ QTM_Stop, 0x47E42
