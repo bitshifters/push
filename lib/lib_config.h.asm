@@ -29,9 +29,9 @@
 .equ LibCircles_DataWords,      4                                       ; {X centre, colour word, ptr to size table, line count}
 
 .equ LibSqrt_IncludeRsqrt,      (LibConfig_IncludeSqrt && 0)
-.equ LibSqrt_MakeSqrtTable,     (LibConfig_IncludeSqrt && 0)
+.equ LibSqrt_MakeSqrtTable,     (LibConfig_IncludeSqrt && 1)
 
-.equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && 0)            ; BROKEN!
+.equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && 1)
 
 .equ LibDivide_Reciprocal_t, 16           ; Table entries = 1<<t
 .equ LibDivide_Reciprocal_m, 9            ; Max value = 1<<m
