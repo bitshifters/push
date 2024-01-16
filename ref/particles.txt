@@ -51,7 +51,7 @@ Particle demo
         - Good compression on the exe ~8K for all particle prototypes so far.
         - QTM RModule comes down to <12K as a last resort!
         - Chiptune MOD from 32K down to ~6K.
-    - Get Steve to cut down QTM (strip out SWIs etc.)
+    - Get Steve to cut down QTM (strip out SWIs etc.) - ASKED!
 
 
 MISSING framework features:
@@ -142,12 +142,15 @@ TODO 3D
     - Count how many times each edge is used when plotting faces.
     - For any edge that has a count of 1, draw this edge as a black line.
 - More interesting platonic shapes for reference and perf testing.
+    - I think these were on Zarchos's A3000?!?!
+
 - Morphing.
 
 - Simple soft-body system?
     N (<10) particles that are interconnected and apply force to each other?
     As per https://paulbourke.net/miscellaneous/particle/ and particlelib.c
     Perhaps better as a 3D object (with glenz rendering?)
+- Or do this in 2D only and render as...?
 
 
 TODO Font
@@ -213,3 +216,131 @@ To consider:
 
 https://archi.medes.live/#preset=a3000&disc=https://bitshifters.github.io/content/wip/verse-particles,ddc&autoboot=desktop%20filer_run%20hostfs::hostfs.$.!Verse&soundfilter=2
 https://archi.medes.live/#preset=a3000&disc=https://bitshifters.github.io/content/wip/verse-balls,ddc&autoboot=desktop%20filer_run%20hostfs::hostfs.$.!Verse&soundfilter=2
+
+
+2024
+~~~
+
+Dave's thought:
+"So the ideas I have for particles mostly revolve around them having a relationship to some other key object (the character in a story, I suppose)"
+
+- Perhaps make the ball our key character that connects everything together?
+- This stops it being a random set of effects strung together.
+- Instead the ball is always on screen and the demo is its journey.
+    - Ball is (almost) always the same colour and size?
+    - Other balls always have a different colour.
+- In an ideal world the ball would have some sort of 'character' imbued from it's motion.
+  (Think 'Thomas Was Alone'...) Although this is very hard to do well!
+- Scene transitions can be triggered by the ball.
+    - Exit one side <scene changes> enter same side or a different one.
+
+Potential sequence w/ ball as character.
+
+1. Progress bar can be an expanding circle that fills the screen.
+   When precalc is complete it pops back to its default size to begin.
+
+2. Introduce our character, the ball.
+    - What's the setting? Empty screen or is there a floor/walls etc.?
+    - Ball bounces (ideally collisions are sync'd to beats)
+    - Throw ball at wall(s).
+    - Ball rolls off screen.
+
+3. Ball as the emitter (having fun)
+    - Ball moves in nice lissajous patterns emitting fun particles.
+    - Ball spins in a circle to create a vortex.
+    - Etc.
+    - Q. Does the ball pick up the emitter cf. the fire?
+    - Q. What's the background?
+
+4. Ball on fire (!)
+    - Enter a screen with a small fire effect.
+    - Ball rolls over the effect and becomes the emitter.
+    - Ball moves in more erratic motions with fire/smoke effect.
+
+4. Rain
+    - Enter a screen with rain particles falling from above.
+    - Rain particles collide with the ball and put the fire out.
+    - Ball moves around the rain leaving nice gap underneath.
+
+5. Jar
+    - Ball falls into a jar.
+    - Other balls fall in (but they're a different colour).
+    - Balls of the same size that collide do the pop thing.
+    - Eventually the bottom falls out of the jar everything leaves.
+
+6. Greets
+    - Just text names with the balls falling down on them from the jar above?
+    - Q. How are collisions done?
+
+7. Credits
+    - Name assembles as spring constrained particles.
+    - Ball appears (falling from above?) and repulses them.
+    - Ball moves around to mess up the name
+    -  and the particles reassemble with a new name each time.
+
+8. Group name / logo?
+    - Static Torment logo with ball bouncing in place of the 'o'?
+    - Static Bitshifters logo will ball bouncing on the i?
+    - Q. is this at the end or could be at the beginning?
+
+9. End
+    - Ball comes to a stop.
+    - Ball expands then contracts to a point.
+
+
+Global:
+    - Need a nice colour scheme
+        - Bright and fun or dark & moody? :D
+    - Show a particle counter in the bottom right throughout?
+    - Any text intermissions to explain or let the visuals speak?
+    - Assume no 3D effects in this one, i.e. no vectorballs?
+
+Tech missing:
+    - QTM w/out RM. Is it possible to register an RM from RAM address?
+    - Loader that displays a screen whilst decompressing.
+    - Progress bar for precalc.
+
+1. Archie spec screen, ideally displayed whilst decrunching and precalc.
+    - Do we though? Can just put this on the beam slide.
+
+2. Fade out and fade up 'All calculations are realtime'. -5s
+    - Do we though? Can just put this on the beam slide.
+
+3. Some particle-based disolve of that text -10s
+    - Smoke / fire? (Bit cheesy?)
+    - Take plotted pixels as starting positions?
+        This is a classic effect seen lots before but might be a
+        way to anchor expectations? I.e. that's the past, everything
+        following is new?
+
+4. Start with plain particles w/ pleasing patterns - 30s
+    - Lissajous paths for the emitter, mostly to show numbers?
+    - Vortex
+    - What else?
+
+5. Particles with collisions - 30s
+    - Pouring in from off-screen to collide with a slope?
+        And/or a ledge (so has ends, i.e. not an infinite line)
+    - Raining down to collide with moving sphere
+
+6. Greets - 30s
+    - Particle-particle collisions?
+    - Have Suika-type game screen mocked up?
+    - The balls fall into the jar and jostle around a bit
+    - Then balls with the same size combine and turn into a larger ball
+    - When balls pop they impart a force to keep things moving
+    - As each ball pops a group name is revealed? Too cheesy?
+
+7. Credits - 30s
+    - Could this be our names displayed as constrained particles?
+      Have the repulsion sphere run through them and push everything
+      out of the way. Switch the name at the highest moment of motion
+      so the particles come back to rest on a new name?
+
+8. Bitshifters/Torment
+    - Could have 1bpp logos from Spiny
+    - Have some nice additive particles blended over the top?
+    - Nice fades?
+
+9. End
+    - How?

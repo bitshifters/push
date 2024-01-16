@@ -214,7 +214,7 @@ particles_grid_tick_all:
 
     ; TODO: Make attractor mass variable?
     ; NOTE: Use mvn to make this a repulsor not attractor.
-    mvn r5, r14, asl #5                     ; push=M/distsq where M=4<<5=128 [7.23]
+    mvn r5, r14, asl #6                     ; push=M/distsq where M=4<<5=128 [7.23]
 
     .if LibDivide_Reciprocal_s != 7
     .err "Expected LibDivide_Reciprocal_s==7!"
@@ -307,8 +307,8 @@ particles_grid_tick_all:
     mov r3, r3, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
     
     ; F=k.d where k=0.25
-    add r8, r8, r0, asr #6
-    add r9, r9, r3, asr #6
+    add r8, r8, r0, asr #5
+    add r9, r9, r3, asr #5
 
 .3:
     ; [R8,R9] = force from object
@@ -317,8 +317,8 @@ particles_grid_tick_all:
     ldr r4, [r11, #ParticleGrid_YVel]
 
     ; Subtract a drag force to remove some energy from the system.
-    sub r8, r8, r3, asr #6          ; acc -= -vel/32
-    sub r9, r9, r4, asr #6
+    sub r8, r8, r3, asr #5          ; acc -= -vel/32
+    sub r9, r9, r4, asr #5
 
     ; vel += acceleration
     add r3, r3, r8
