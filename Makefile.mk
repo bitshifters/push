@@ -60,15 +60,13 @@ compress: shrink
 	$(COPY) "$(FOLDER)\*.*" "$(HOSTFS)\$(FOLDER)\*.*"
 
 .PHONY:shrink
-shrink: build ./build/archie-verse.shri ./build/!run.txt ./build/icon.bin ./build/loader.bin ./build/music.mod
+shrink: build ./build/!run.txt ./build/icon.bin ./build/loader.bin
 	$(RM_RF) $(FOLDER)
 	$(MKDIR_P) $(FOLDER)
 	$(COPY) .\folder\*.* "$(FOLDER)\*.*"
 	$(COPY) .\build\!run.txt "$(FOLDER)\!Run,feb"
 	$(COPY) .\build\icon.bin "$(FOLDER)\!Sprites,ff9"
 	$(COPY) .\build\loader.bin "$(FOLDER)\!RunImage,ff8"
-	$(COPY) .\build\music.mod "$(FOLDER)\Music,001"
-	$(COPY) .\build\archie-verse.shri "$(FOLDER)\Demo,ffd"
 
 build:
 	$(MKDIR_P) "./build"
@@ -77,9 +75,9 @@ build:
 	echo done > $@
 
 ./build/archie-verse.shri: build ./build/archie-verse.bin
-	$(SHRINKLER) -b -d -p -z -1 ./build/archie-verse.bin $@
+	$(SHRINKLER) -b -d -p -z -3 ./build/archie-verse.bin $@
 
-./build/loader.bin: build ./src/loader.asm
+./build/loader.bin: build ./src/loader.asm ./build/archie-verse.shri
 	$(VASM) -L build\loader.txt -m250 -Fbin -opt-adr -D_USE_SHRINKLER=1 -o $@ ./src/loader.asm
 
 ./build/seq.bin: build ./build/seq.o link_script2.txt

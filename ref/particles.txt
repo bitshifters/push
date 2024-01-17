@@ -353,6 +353,6 @@ QTM Embedded:
 - Sort out QTM SWI calls in sequence. - DONE
 
 Shrinkled version:
-- Fix MakeSinusTable.
-- Embed Shrinkled data into loader exe.
+- Fix MakeSinusTable. - DONE (just RAM)
+- Embed Shrinkled data into loader exe. - DONE
 - Progress bar for table creation?
