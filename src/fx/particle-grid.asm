@@ -104,7 +104,7 @@ particles_grid_tick_all:
     rsb r1, r1, #255
     mov r2, #Particles_CircleCollider_Radius
     mov r9, #1
-    bl circles_add_to_plot_by_Y
+    bl circles_add_to_plot_by_order
     .endif
 
     mov r10, r10, asr #8                ; [8.8]

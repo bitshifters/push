@@ -189,7 +189,7 @@ particles_tick_all_with_circle_collider:
     rsb r1, r1, #255
     mov r2, #Particles_CircleCollider_Radius
     mov r9, #1
-    bl circles_add_to_plot_by_Y
+    bl circles_add_to_plot_by_order
     .endif
 
     str r10, particles_collider_radius
@@ -393,7 +393,7 @@ particles_tick_all_with_attractor:
     rsb r1, r1, #255
     mov r2, #Particles_CircleCollider_Radius
     mov r9, #1
-    bl circles_add_to_plot_by_Y
+    bl circles_add_to_plot_by_order
     .endif
 
     str r10, particles_collider_radius
@@ -685,7 +685,7 @@ particles_draw_all_as_circles:
     mov r2, r3, lsr #24                 ; radius.
     mov r9, r3, lsr #16                 ; colour.
     bic r9, r9, #0xff00
-    bl circles_add_to_plot_by_Y
+    bl circles_add_to_plot_by_order
 
 .3:
     b .1

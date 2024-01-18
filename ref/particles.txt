@@ -295,64 +295,16 @@ Global:
     - Any text intermissions to explain or let the visuals speak?
     - Assume no 3D effects in this one, i.e. no vectorballs?
 
-Tech missing:
-    - QTM w/out RM. Is it possible to register an RM from RAM address?
-    - Loader that displays a screen whilst decompressing.
-    - Progress bar for precalc.
 
-1. Archie spec screen, ideally displayed whilst decrunching and precalc.
-    - Do we though? Can just put this on the beam slide.
-
-2. Fade out and fade up 'All calculations are realtime'. -5s
-    - Do we though? Can just put this on the beam slide.
-
-3. Some particle-based disolve of that text -10s
-    - Smoke / fire? (Bit cheesy?)
-    - Take plotted pixels as starting positions?
-        This is a classic effect seen lots before but might be a
-        way to anchor expectations? I.e. that's the past, everything
-        following is new?
-
-4. Start with plain particles w/ pleasing patterns - 30s
-    - Lissajous paths for the emitter, mostly to show numbers?
-    - Vortex
-    - What else?
-
-5. Particles with collisions - 30s
-    - Pouring in from off-screen to collide with a slope?
-        And/or a ledge (so has ends, i.e. not an infinite line)
-    - Raining down to collide with moving sphere
-
-6. Greets - 30s
-    - Particle-particle collisions?
-    - Have Suika-type game screen mocked up?
-    - The balls fall into the jar and jostle around a bit
-    - Then balls with the same size combine and turn into a larger ball
-    - When balls pop they impart a force to keep things moving
-    - As each ball pops a group name is revealed? Too cheesy?
-
-7. Credits - 30s
-    - Could this be our names displayed as constrained particles?
-      Have the repulsion sphere run through them and push everything
-      out of the way. Switch the name at the highest moment of motion
-      so the particles come back to rest on a new name?
-
-8. Bitshifters/Torment
-    - Could have 1bpp logos from Spiny
-    - Have some nice additive particles blended over the top?
-    - Nice fades?
-
-9. End
-    - How?
-
-
-
-QTM Embedded:
-- Sort out conditional SWIs. - DONE
-- Sort out distant SWI calls. - DONE
-- Sort out QTM SWI calls in sequence. - DONE
-
-Shrinkled version:
-- Fix MakeSinusTable. - DONE (just RAM)
-- Embed Shrinkled data into loader exe. - DONE
-- Progress bar for table creation?
+Ball
+~~~
+- Single instance (?) special particle (until we need the multi-ball collision).
+- Position, velocity, accumulate force.
+- Use script to set up the world (collisions etc.)
+    - Add plane, add line?
+- Use script to move the ball
+    - Set position (kinematic)
+    - Set velocity
+    - Set constant force (gravity or wind etc.)
+    - Send impulse force
+- Q? Would this be better / quicker to script in Lua?

@@ -51,6 +51,11 @@
     .long 1<<PRECISION_BITS * (\value)
 .endm
 
+.macro VECTOR2 x, y
+    FLOAT_TO_FP \x
+    FLOAT_TO_FP \y
+.endm
+
 .macro VECTOR3 x, y, z
     FLOAT_TO_FP \x
     FLOAT_TO_FP \y

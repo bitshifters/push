@@ -526,7 +526,7 @@ balls_draw_all:
     ;  r9 = tint
     mov r9, r7, lsr #16                 ; colour
     eor r2, r7, r9, lsl #16             ; radius
-    bl circles_add_to_plot_by_Y
+    bl circles_add_to_plot_by_order
 
 .3:
     b .1
