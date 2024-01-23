@@ -307,4 +307,40 @@ Ball
     - Set velocity
     - Set constant force (gravity or wind etc.)
     - Send impulse force
+    - Coefficient of restitution?
 - Q? Would this be better / quicker to script in Lua?
+
+Environment
+~~~
+- How complex should the environment for the ball be?
+    - Let's start with infinite planes...
+- How configurable?
+    - 
+- How accurate should the collision resolution be?
+- How to render the environment?
+- Do particles interact with the environment?
+
+Circle/plane collision.
+~~~
+Plane defined as a point p and normal n.
+Calc distance from circle centre c, radius r to plane
+
+d = (c-p).n or c.n - pd
+Where pd = |p.n|
+
+(Need helper to create a plane from a point and angle.)
+
+if d >= r then no collision.
+if d < r and d > -r then collision with plane boundary.
+if d < 0 then centre is inside the plane.
+
+mv' = mvt - mvn = (1-f).mvt - e.mvn
+
+where vt=velocity tangential to the wall=v-vn, vn=velocity component normal to the wall=(v.n)n
+and f=friction parameter [0,1] and e=elasticity [0,1]
+
+Ideally should find the first collision in time and resolve in turn.
+Here I think resolving in turn or one per frame is probably OK..?
+
+v'= vt-vn where vt=v-vn and vn=v.n
+v'= (v-vn)-vn = v-2vn

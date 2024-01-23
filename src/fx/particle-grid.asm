@@ -21,13 +21,13 @@
 
 .equ ParticleGrid_Max,      (ParticleGrid_NumX*ParticleGrid_NumY)
 
-.equ ParticleGrid_YStart,       (-80.0 * MATHS_CONST_1)
+.equ ParticleGrid_YStart,       (48.0 * MATHS_CONST_1)
 .equ ParticleGrid_XStart,       (-128.0 * MATHS_CONST_1)
 .equ ParticleGrid_XStep,        (16.0 * MATHS_CONST_1)
 .equ ParticleGrid_YStep,        (10.0 * MATHS_CONST_1)
 
 .equ ParticleGrid_CentreX,      (160.0 * MATHS_CONST_1)
-.equ ParticleGrid_CentreY,      (128.0 * MATHS_CONST_1)
+.equ ParticleGrid_CentreY,      (255.0 * MATHS_CONST_1)
 .equ Particles_CentreY,         (255.0 * MATHS_CONST_1)
 
 ; ============================================================================
@@ -77,6 +77,7 @@ particle_grid_init:
 
 ; ============================================================================
 
+; TODO: Pass these in rather than peek the_ball module?
 ; R6=object.x
 ; R7=object.y
 ; R10=object.radius
@@ -85,10 +86,7 @@ particles_grid_tick_all:
 
     mov r10, #Particles_CircleCollider_Radius*MATHS_CONST_1
 
-    .if !_DEBUG
-    mov r6, #Particles_CircleCollider_XPos*MATHS_CONST_1
-    mov r7, #Particles_CircleCollider_YPos*MATHS_CONST_1
-    .else
+    .if 0
     swi OS_Mouse
     mov r6, r0, asl #14
     mov r7, r1, asl #14                  ; [16.16] pixel coords.
@@ -105,6 +103,9 @@ particles_grid_tick_all:
     mov r2, #Particles_CircleCollider_Radius
     mov r9, #1
     bl circles_add_to_plot_by_order
+    .else
+    ldr r6, the_ball_block+4
+    ldr r7, the_ball_block+8
     .endif
 
     mov r10, r10, asr #8                ; [8.8]
@@ -354,8 +355,7 @@ particle_grid_draw_all_as_points:
 
     ; For now just plot 2D particles.
     add r1, r1, #ParticleGrid_CentreX               ; [s15.16]
-    add r2, r2, #ParticleGrid_CentreY               ; [s15.16]
-    rsb r2, r2, #Particles_CentreY
+    rsb r2, r2, #ParticleGrid_CentreY               ; [s15.16]
 
     mov r1, r1, lsr #16
     cmp r1, #0
