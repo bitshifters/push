@@ -18,7 +18,7 @@
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 0, circles_reset_for_frame,    screen_cls
+    call_3 fx_set_layer_fns, 0, 0,                          screen_cls
     call_3 fx_set_layer_fns, 1, particles_grid_tick_all,    particle_grid_draw_all_as_points
     call_3 fx_set_layer_fns, 2, the_ball_tick,              the_ball_draw
     call_3 fx_set_layer_fns, 3, 0,                          circles_plot_all_in_order
@@ -92,7 +92,7 @@ seq_test_fade_up_loop:
 
     ; Balls!
     call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
-    call_3 fx_set_layer_fns, 3, circles_reset_for_frame,circles_plot_all
+    call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
     wait_secs 10.0
 .endif
 

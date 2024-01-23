@@ -680,8 +680,8 @@ particles_draw_all_as_circles:
     ;  r1 = Y centre
     ;  r2 = radius of circle
     ;  r9 = tint
-    mov r0, r1, lsr #16
-    mov r1, r2, lsr #16
+    mov r0, r1, asr #16
+    mov r1, r2, asr #16
     mov r2, r3, lsr #24                 ; radius.
     mov r9, r3, lsr #16                 ; colour.
     bic r9, r9, #0xff00

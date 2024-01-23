@@ -102,6 +102,8 @@ main_loop:
 	; PREPARE
 	; ========================================================================
 
+    bl app_pre_tick_frame
+
     .if _DEBUG
     bl debug_do_key_callbacks
 
@@ -195,6 +197,7 @@ main_loop_skip_tick:
 	; DRAW
 	; ========================================================================
 
+    ; TODO: app_pre_draw_frame if needed.
 	bl fx_draw_layers
 
 	; show debug

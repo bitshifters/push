@@ -235,8 +235,8 @@ the_ball_draw:
 
     ;  r0 = X centre
     ;  r1 = Y centre
-    mov r0, r1, lsr #16
-    mov r1, r2, lsr #16
+    mov r0, r1, asr #16
+    mov r1, r2, asr #16
 
     ;  r2 = radius of circle
     ;  r9 = tint

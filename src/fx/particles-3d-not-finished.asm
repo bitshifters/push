@@ -236,8 +236,8 @@ particles_draw_all_as_circles:
     add r1, r1, #Particles_CentreX               ; [s15.16]
     rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
-    mov r1, r1, lsr #16
-    mov r2, r2, lsr #16
+    mov r1, r1, asr #16
+    mov r2, r2, asr #16
 
     .if 0
     cmp r1, #0
