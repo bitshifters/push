@@ -49,9 +49,9 @@ Particle demo
     - Pick a theme for the demo (perhaps all particles and save 3D?)
     - Aim for 64K demo at Revision? If not, NOVA.
         - Good compression on the exe ~8K for all particle prototypes so far.
-        - QTM RModule comes down to <12K as a last resort!
+        - QTM RModule comes down to <12K as a last resort! - DONE
         - Chiptune MOD from 32K down to ~6K.
-    - Get Steve to cut down QTM (strip out SWIs etc.) - ASKED!
+    - Get Steve to cut down QTM (strip out SWIs etc.) - IN PROGRESS!
 
 
 MISSING framework features:
@@ -128,7 +128,7 @@ TODO Balls ==> Pending concept?
 - Plot as ellipses (separate radii for X&Y) and animate wobble?
 
 
-TODO 3D
+TODO 3D ==> Another demo for another day.
 ~~~
 - Python script to convert OBJs to runtime binary format.
 - Renderqueue for drawing more complex 3D objects with sorted faces.
@@ -143,8 +143,8 @@ TODO 3D
     - For any edge that has a count of 1, draw this edge as a black line.
 - More interesting platonic shapes for reference and perf testing.
     - I think these were on Zarchos's A3000?!?!
-
 - Morphing.
+
 
 - Simple soft-body system?
     N (<10) particles that are interconnected and apply force to each other?
@@ -328,7 +328,8 @@ Calc distance from circle centre c, radius r to plane
 d = (c-p).n or c.n - pd
 Where pd = |p.n|
 
-(Need helper to create a plane from a point and angle.)
+TODO: Need helper to create a plane from a point and angle.
+      Create planes from sequence script.
 
 if d >= r then no collision.
 if d < r and d > -r then collision with plane boundary.
@@ -344,3 +345,29 @@ Here I think resolving in turn or one per frame is probably OK..?
 
 v'= vt-vn where vt=v-vn and vn=v.n
 v'= (v-vn)-vn = v-2vn
+
+
+TODO
+~~~
+- Move all configuration to sequence script.
+- Emitter setup => adding / removing emitters.
+- Environment setup
+    - Adding / removing planes
+    - Constant force (gravity, wind)
+    - Seperate forces for The Ball and Particles (e.g. ball bounces but fire rises)
+- Suport multiple emitters?
+    - All emitters add to the same particle system.
+      Can't mix particle rendering types at the moment.
+    - Would have to link particle system to emitter?
+- Control over The Ball
+    - Send impulse force
+    - Set velocity
+
+- Particle collisions against The Environment? (Expensive)
+- Reinstate hot reload of sequence script for faster iteration.
+- Remember Lua live link for particle system iteration.
+
+- System to attach math functions to any variable?
+    - E.g. could set this up to make the ball colour or radius change over time.
+    - Could this be used for colour fades etc. as well?
+    - Move the ball in a pattern. Interesting...

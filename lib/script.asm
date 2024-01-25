@@ -287,6 +287,26 @@ script_call_swi:
     .long script_call_5, \function, \param1, \param2, \param3, \param4, \param5
 .endm
 
+.macro call_1f function, param1
+    .long script_call_1, \function, MATHS_CONST_1*\param1
+.endm
+
+.macro call_2f function, param1, param2
+    .long script_call_2, \function, MATHS_CONST_1*\param1, MATHS_CONST_1*\param2
+.endm
+
+.macro call_3f function, param1, param2, param3
+    .long script_call_3, \function, MATHS_CONST_1*\param1, MATHS_CONST_1*\param2, MATHS_CONST_1*\param3
+.endm
+
+.macro call_4f function, param1, param2, param3, param4
+    .long script_call_4, \function, MATHS_CONST_1*\param1, MATHS_CONST_1*\param2, MATHS_CONST_1*\param3, MATHS_CONST_1*\param4
+.endm
+
+.macro call_5f function, param1, param2, param3, param4, param5
+    .long script_call_5, \function, MATHS_CONST_1*\param1, MATHS_CONST_1*\param2, MATHS_CONST_1*\param3, MATHS_CONST_1*\param4, MATHS_CONST_1*\param5
+.endm
+
 .macro wait frames
     .long script_wait, \frames
 .endm

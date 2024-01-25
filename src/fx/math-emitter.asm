@@ -22,6 +22,11 @@
 
 ; ============================================================================
 
+math_emitter_p:
+    .long math_emitter_config_3
+
+; ============================================================================
+
 math_emitter_init:
     str lr, [sp, #-4]!
 
@@ -44,8 +49,11 @@ math_emitter_init:
 math_emitter_tick_all:
     str lr, [sp, #-4]!
 
-    adr r10, math_emitter_config_2
+    ; TODO: Support multiple emitters?
     adr r12, math_emitter_context_1
+    ldr r10, math_emitter_p
+    cmp r10, #0
+    blne math_emitter_tick
     bl math_emitter_tick
 
     ldr pc, [sp], #4
@@ -173,10 +181,9 @@ math_emitter_context_1:
 ; Returns: R0=v, R10=ptr to next func.
 math_evaluate_func:
     str lr, [sp, #-4]!
-    ldmia r10!, {r1-r5}      ; [a, b, c, d, f]
+    ldmia r10!, {r1-r5}     ; [a, b, c, d, f]
 
-    mul r0, r4, r0          ; d * i [16.16]
-    add r0, r0, r3          ; c + d * i [16.16]
+    mla r0, r4, r0, r3      ; c + d * i [16.16]
 
     cmp r5, #0
     beq .1
@@ -185,8 +192,7 @@ math_evaluate_func:
 .1:
     mov r0, r0, asr #8
     mov r2, r2, asr #8
-    mul r0, r2, r0          ; b * f(c + d * i)  [16.16]
-    add r0, r0, r1          ; a + b * f(c + d * i)  [16.16]
+    mla r0, r2, r0, r1      ; a + b * f(c + d * i)  [16.16]
     ldr pc, [sp], #4
 
 .equ math_sin, sine
@@ -212,6 +218,11 @@ math_and15:
     and r0, r0, #15<<16
     mov pc, lr
 
+; R0=var address.
+math_get_var:
+    ldr r0, [r0]                ; load the value.
+    mov pc, lr
+
 ; ============================================================================
 
 ; v = a + b * f(c + d * i)      ; linear fn.
@@ -224,31 +235,16 @@ math_and15:
     .long \f
 .endm
 
+.macro math_func_get_var a, b, c
+    FLOAT_TO_FP \a
+    FLOAT_TO_FP \b
+    .long \c
+    .long 0
+    .long math_get_var
+.endm
+
 .macro math_const a
     math_func \a, 0.0, 0.0, 0.0, 0
 .endm
-
-.equ MATHS_PI, 3.1415926535
-.equ MATHS_2PI, 2.0*MATHS_PI
-
-math_emitter_config_1:
-    math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
-    math_func  0.0,    100.0,  0.0,  1.0/(MATHS_2PI*60.0),  math_sin    ; emitter.pos.x = 100.0 * math.sin(fram / 60)
-    math_func  128.0,  60.0,   0.0,  1.0/(MATHS_2PI*80.0),  math_cos    ; emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
-    math_func  0.0,    2.0,    0.0,  1.0/(MATHS_2PI*100.0), math_sin    ; emitter.dir.x = 2.0 * math.sin(f/100)
-    math_func  1.0,    5.0,    0.0,  0.0,                   math_rand   ; emitter.dir.y = 1.0 + 5.0 * math.random()
-    math_const 255                                                      ; emitter.life
-    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
-    math_func  8.0,    6.0,    0.0,  1.0/(MATHS_2PI*10.0),  math_sin    ; emitter.radius = 8.0 + 6 * math.sin(f/10)
-
-math_emitter_config_2:
-    math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
-    math_const 0.0                                                      ; emitter.pos.x = 0
-    math_const 0.0                                                    ; emitter.pos.y = 192.0
-    math_func  -1.0,    2.0,    0.0,  0.0,                   math_rand   ; emitter.dir.x = 4.0 + 3.0 * math.random()
-    math_func  1.0,    3.0,    0.0,  0.0,                   math_rand   ; emitter.dir.y = 1.0 + 5.0 * math.random()
-    math_const 512                                                      ; emitter.life
-    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
-    math_const 8.0                                                      ; emitter.radius = 8.0
 
 ; ============================================================================

@@ -14,6 +14,13 @@
     call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
     call_1 sprite_utils_make_shifted_sheet, block_sprite_sheet_def_no_adr
 
+    ; Environment setup.
+    make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
+    make_and_add_env_plane the_env_left_plane, -240.0, 0.0, 64.0        ; +90 degrees
+    make_and_add_env_plane the_env_left_slope, -80.0, 0.0, 32.0         ; +45 degrees
+    make_and_add_env_plane the_env_right_plane, 240.0, 0.0, -64.0       ; -90 degrees
+    make_and_add_env_plane the_env_right_slope, 80.0, 0.0, -32.0        ; -45 degrees
+
     ; Screen setup.
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
 
@@ -23,26 +30,30 @@
     call_3 fx_set_layer_fns, 2, the_ball_tick,              the_ball_draw
     call_3 fx_set_layer_fns, 3, 0,                          circles_plot_all_in_order
 
-;    fork seq_loop
+    fork seq_loop
     end_script
 
 ; Particles!
 seq_loop:
-    call_3 fx_set_layer_fns, 1, math_emitter_tick_all   0
+    call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
 
     write_addr particles_sprite_def_p, block_sprite_sheet_def_no_adr
-    call_3 fx_set_layer_fns, 2, particles_tick_all_with_attractor,     particles_draw_all_as_8x8_tinted
-    wait_secs 10.0
+    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_8x8_tinted
+    wait_secs 5.0
 
     write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
-    call_3 fx_set_layer_fns, 2, particles_tick_all_with_attractor,     particles_draw_all_as_8x8_additive
-    wait_secs 10.0
-
-    call_3 fx_set_layer_fns, 2, particles_tick_all_with_attractor,     particles_draw_all_as_points
+    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_8x8_additive
     wait_secs 5.0
 
-    call_3 fx_set_layer_fns, 2, particles_tick_all_with_circle_collider,     particles_draw_all_as_circles
+    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_points
     wait_secs 5.0
+
+;    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_circles
+;    wait_secs 5.0
+
+;    call_1 the_env_remove_plane the_env_floor_plane
+    call_2f the_ball_set_vel 0.0, 0.0
+    call_2f the_ball_add_impulse 1.0, 1.0
 
     fork seq_loop
 
@@ -77,19 +88,6 @@ seq_test_fade_up_loop:
     yield seq_test_fade_up_loop
 
 .if 0
-    ; Cube!
-    write_addr scene3d_entity_p, cube_entity
-    call_3 fx_set_layer_fns, 2, scene3d_rotate_entity,  scene3d_draw_entity_as_solid_quads
-    call_3 fx_set_layer_fns, 3, 0,                          0
-
-    wait_secs 10.0
-    write_addr scene3d_entity_p, cobra_entity
-    wait_secs 10.0
-    write_addr scene3d_entity_p, cube_entity
-    wait_secs 10.0
-    write_addr scene3d_entity_p, cobra_entity
-    wait_secs 10.0
-
     ; Balls!
     call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
     call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
@@ -98,6 +96,38 @@ seq_test_fade_up_loop:
 
 ; ============================================================================
 ; Sequence specific data.
+; ============================================================================
+
+math_emitter_config_1:
+    math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
+    math_func  0.0,    100.0,  0.0,  1.0/(MATHS_2PI*60.0),  math_sin    ; emitter.pos.x = 100.0 * math.sin(fram / 60)
+    math_func  128.0,  60.0,   0.0,  1.0/(MATHS_2PI*80.0),  math_cos    ; emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
+    math_func  0.0,    2.0,    0.0,  1.0/(MATHS_2PI*100.0), math_sin    ; emitter.dir.x = 2.0 * math.sin(f/100)
+    math_func  1.0,    5.0,    0.0,  0.0,                   math_rand   ; emitter.dir.y = 1.0 + 5.0 * math.random()
+    math_const 255                                                      ; emitter.life
+    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
+    math_func  8.0,    6.0,    0.0,  1.0/(MATHS_2PI*10.0),  math_sin    ; emitter.radius = 8.0 + 6 * math.sin(f/10)
+
+math_emitter_config_2:
+    math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
+    math_const 0.0                                                      ; emitter.pos.x = 0
+    math_const 0.0                                                    ; emitter.pos.y = 192.0
+    math_func  -1.0,    2.0,    0.0,  0.0,                   math_rand   ; emitter.dir.x = 4.0 + 3.0 * math.random()
+    math_func  1.0,    3.0,    0.0,  0.0,                   math_rand   ; emitter.dir.y = 1.0 + 5.0 * math.random()
+    math_const 512                                                      ; emitter.life
+    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
+    math_const 8.0                                                      ; emitter.radius = 8.0
+
+math_emitter_config_3:  ; attached to the_ball.
+    math_const 50.0/50                                                  ; emission rate=80 particles per second fixed.
+    math_func_get_var 0.0, 1.0, the_ball_block+4                        ; emitter.x = 0.0 + 1.0 * the_ball_block.x
+    math_func_get_var 0.0, 1.0, the_ball_block+8                        ; emitter.y = 0.0 + 1.0 * the_ball_block.y
+    math_const 0.0                                                      ; emitter.dir.x = 2.0 * math.sin(f/100)
+    math_const 0.0                                                      ; emitter.dir.y = 2.0 * math.cos(f/100)
+    math_const 128                                                      ; emitter.life
+    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
+    math_func  8.0,    6.0,    0.0,  1.0/(MATHS_2PI*10.0),  math_sin    ; emitter.radius = 8.0 + 6 * math.sin(f/10)
+
 ; ============================================================================
 
 seq_palette_red_additive:
@@ -123,4 +153,22 @@ block_sprite_sheet_def_no_adr:
     SpriteSheetDef_Mode9 8, 1, 8, block_sprites_no_adr
 
 ; ============================================================================
+; Sequence specific bss.
+; ============================================================================
+
+the_env_floor_plane:
+    .skip EnvPlane_SIZE
+
+the_env_left_plane:
+    .skip EnvPlane_SIZE
+
+the_env_left_slope:
+    .skip EnvPlane_SIZE
+
+the_env_right_plane:
+    .skip EnvPlane_SIZE
+
+the_env_right_slope:
+    .skip EnvPlane_SIZE
+
 ; ============================================================================

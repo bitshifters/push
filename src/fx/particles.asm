@@ -148,7 +148,7 @@ particles_tick_all_under_constant_force:
 .2:
     ldr pc, [sp], #4
 
-
+; TODO: Add rsqrt table?
 particles_sqrt_p:
     .long sqrt_table_no_adr
 
@@ -614,13 +614,13 @@ particles_draw_all_as_points:
     add r1, r1, #Particles_CentreX               ; [s15.16]
     rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
-    mov r1, r1, lsr #16
+    mov r1, r1, asr #16
     cmp r1, #0
     blt .3                              ; clip left - TODO: destroy particle?
     cmp r1, #Screen_Width
     bge .3                              ; clip right - TODO: destroy particle?
 
-    mov r2, r2, lsr #16
+    mov r2, r2, asr #16
     cmp r2, #0
     blt .3                              ; clip top - TODO: destroy particle?
     cmp r2, #Screen_Height
@@ -727,8 +727,8 @@ particles_draw_all_as_8x8_tinted:
     add r1, r1, #Particles_CentreX               ; [s15.16]
     rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
-    mov r1, r1, lsr #16
-    mov r2, r2, lsr #16
+    mov r1, r1, asr #16
+    mov r2, r2, asr #16
 
     ; Centre sprite.
     sub r1, r1, #4
@@ -869,8 +869,8 @@ particles_draw_all_as_8x8_additive:
     add r1, r1, #Particles_CentreX               ; [s15.16]
     rsb r2, r2, #Particles_CentreY               ; [s15.16]
 
-    mov r1, r1, lsr #16
-    mov r2, r2, lsr #16
+    mov r1, r1, asr #16
+    mov r2, r2, asr #16
 
     ; Centre sprite.
     sub r1, r1, #4

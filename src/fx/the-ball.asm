@@ -18,7 +18,7 @@ the_ball_p:
 
 the_ball_block:
     .long 0
-    VECTOR2 80.0, 300.0          ; position
+    VECTOR2 80.0, 280.0         ; position
     VECTOR2 0.5, 0.0            ; velocity
     VECTOR2 0.0, 0.0            ; accumulated force
     .short 16                   ; radius
@@ -26,61 +26,26 @@ the_ball_block:
 
 ; ============================================================================
 
-.equ TheEnv_CentreX,         (160.0 * MATHS_CONST_1)
-.equ TheEnv_CentreY,         (255.0 * MATHS_CONST_1)
+.equ TheEnv_CentreX,            (160.0 * MATHS_CONST_1)
+.equ TheEnv_CentreY,            (255.0 * MATHS_CONST_1)
+.equ TheEnv_MaxPlanes,          8
 
 .equ EnvPlane_Next,     0
 .equ EnvPlane_nx,       4
 .equ EnvPlane_ny,       8
 .equ EnvPlane_nd,       12
-.equ EnvPlane_e,        16
-.equ EnvPlane_f,        20
+.equ EnvPlane_e,        16      ; elasticity [0,1]
+.equ EnvPlane_f,        20      ; 1-friction [0,1]
 .equ EnvPlane_SIZE,     24
 
 the_env_constant_force:
     VECTOR2 0.0, -(Ball_Gravity / 50.0)
 
 ; ============================================================================
-; TODO: Add environment planes as part of the sequence.
 ; TODO: Visualise collision planes (at least for _DEBUG).
 
 the_env_planes_p:
-    .long the_env_floor_plane
-
-the_env_floor_plane:
-    .long the_env_left_plane
-    VECTOR2 0.0, 1.0            ; normal
-    FLOAT_TO_FP 0.0             ; distance
-    FLOAT_TO_FP 1.0             ; elasticity
-    FLOAT_TO_FP 1.0             ; 1-friction    
-
-the_env_left_plane:
-    .long the_env_left_slope
-    VECTOR2 1.0, 0.0            ; normal
-    FLOAT_TO_FP -240.0          ; distance
-    FLOAT_TO_FP 1.0             ; elasticity
-    FLOAT_TO_FP 1.0             ; 1-friction    
-
-the_env_left_slope:
-    .long the_env_right_plane
-    VECTOR2 0.707, 0.707          ; normal
-    FLOAT_TO_FP -80.0           ; distance
-    FLOAT_TO_FP 1.0             ; elasticity
-    FLOAT_TO_FP 1.0             ; 1-friction    
-
-the_env_right_plane:
-    .long the_env_right_slope
-    VECTOR2 -1.0, 0.0            ; normal
-    FLOAT_TO_FP -240.0          ; distance
-    FLOAT_TO_FP 1.0             ; elasticity
-    FLOAT_TO_FP 1.0             ; 1-friction    
-
-the_env_right_slope:
     .long 0
-    VECTOR2 -0.707, 0.707          ; normal
-    FLOAT_TO_FP -80.0           ; distance
-    FLOAT_TO_FP 1.0             ; elasticity
-    FLOAT_TO_FP 1.0             ; 1-friction    
 
 ; ============================================================================
 
@@ -93,7 +58,6 @@ the_ball_tick:
     str lr, [sp, #-4]!
 
     bl the_ball_move
-    bl the_ball_resolve
 
     ldr pc, [sp], #4
 
@@ -150,9 +114,6 @@ the_ball_move:
     stmia r12, {r0-r6}
     ldr pc, [sp], #4
 
-the_ball_resolve:
-    mov pc, lr
-
 ; ============================================================================
 
 ; (R0=next ball)
@@ -166,7 +127,7 @@ the_ball_resolve:
 the_ball_collide_with_plane:
     str lr, [sp, #-4]!
 
-    ldmia r11, {r0,r5-r6,r10}   ; TODO: Reconcile use of R0 next pointer.
+    ldmia r11, {r0,r5-r6,r10}   ; TODO: Reconcile use of R0 next pointer if multiple balls.
     ; R5=nx
     ; R6=ny
     ; R10=nd
@@ -211,7 +172,7 @@ the_ball_collide_with_plane:
     mul r10, r8, r6             ; vny
 
     ; mv' = mvt - mvn = (1-f).mvt - e.mvn
-    ; Ignore friction and elasticity for now.
+    ; TODO: Add friction and elasticity for ball / plane collisions.
 
     ; v' = v-2vn where vn=(v.n)n
     sub r3, r3, r9, asl #1      ; vx=vx-2vnx
@@ -247,5 +208,127 @@ the_ball_draw:
     bl circles_add_to_plot_by_order
 
     ldr pc, [sp], #4
+
+; ============================================================================
+; Sequence helper functions.
+; ============================================================================
+
+; R0=force x
+; R1=force y
+the_env_set_constant_force:
+    str r0, the_env_constant_force + 0
+    str r1, the_env_constant_force + 4
+    mov pc, lr
+
+; Add a plane into the environment.
+; R0=plane block ptr
+; R1=px
+; R2=py
+; R3=brad [0,255] angle
+the_env_make_plane:
+    ; Calculate [nx,ny] from angle.
+    stmfd sp!, {r0-r1,lr}
+    mov r0, r3
+    bl sin_cos
+    ; R0=sin(a), R1=cos(a)
+    mov r3, r0
+    mov r4, r1
+    ldmfd sp!, {r0-r1,lr}
+
+    str r3, [r0, #EnvPlane_nx]
+    str r4, [r0, #EnvPlane_ny]
+
+    ; Compute nd=p.n
+    mov r1, r1, asr #8          ; px [16.8]
+    mov r2, r2, asr #8          ; py [16.8]
+
+    mov r3, r3, asr #8          ; nx [1.8]
+    mov r4, r4, asr #8          ; ny [1.8]
+
+    mul r1, r3, r1              ; x*nx [16.16]
+    mla r1, r4, r2, r1          ; nd=px*nx + py*ny [16.16]
+    str r1, [r0, #EnvPlane_nd]
+
+    mov r2, #0
+    str r2, [r0, #EnvPlane_Next]
+    str r2, [r0, #EnvPlane_e]
+    str r2, [r0, #EnvPlane_f]
+    mov pc, lr
+
+; R0=plane ptr
+the_env_add_plane:
+    ldr r1, the_env_planes_p
+    str r1, [r0, #EnvPlane_Next]
+    str r0, the_env_planes_p
+    mov pc, lr
+
+; R0=plane ptr
+the_env_remove_plane:
+    adr r2, the_env_planes_p        ; prev_p
+.1:
+    movs r1, r2
+    beq .2                          ; end of list.
+    ldr r2, [r1, #EnvPlane_Next]    ; curr_p=prev_p->next
+    cmp r2, r0                      ; curr_p==this_p?
+    bne .1                          ; not matched.
+
+    ; Unlink curr_p.
+    ldr r3, [r2, #EnvPlane_Next]    ; curr_p->next
+    str r3, [r1, #EnvPlane_Next]    ; prev_p->next=curr_p->next
+    mov r3, #0
+    str r3, [r0, #EnvPlane_Next]    ; this_p->next=0
+.2:
+    mov pc, lr
+
+.macro make_and_add_env_plane plane, px, py, brad
+    call_4 the_env_make_plane, \plane, MATHS_CONST_1*\px, MATHS_CONST_1*\py, MATHS_CONST_1*\brad
+    call_1 the_env_add_plane, \plane
+.endm
+
+; ============================================================================
+
+; R0=x pos
+; R1=y pos
+the_ball_set_pos:
+    str r0, the_ball_block + TheBall_x
+    str r1, the_ball_block + TheBall_y
+    mov pc, lr
+
+; R0=x vel
+; R1=y vel
+the_ball_set_vel:
+    str r0, the_ball_block + TheBall_vx
+    str r1, the_ball_block + TheBall_vy
+    mov pc, lr
+
+; R0=radius
+the_ball_set_radius:
+    ldr r1, the_ball_block + TheBall_radius
+    bic r1, r1, #0x00ff
+    bic r1, r1, #0xff00
+    orr r1, r1, r0
+    str r1, the_ball_block + TheBall_radius
+    mov pc, lr
+
+; R0=colour
+the_ball_set_colour:
+    ldr r1, the_ball_block + TheBall_radius
+    bic r1, r1, #0x00ff0000
+    bic r1, r1, #0xff000000
+    orr r1, r1, r0, lsr #16
+    str r1, the_ball_block + TheBall_radius
+    mov pc, lr
+
+; Adds a force to the ball for one frame.
+; R0=fx
+; R1=fy
+the_ball_add_impulse:
+    ldr r2, the_ball_block + TheBall_ix
+    ldr r3, the_ball_block + TheBall_iy
+    add r2, r2, r0
+    add r3, r3, r1
+    str r2, the_ball_block + TheBall_ix
+    str r3, the_ball_block + TheBall_iy
+    mov pc, lr
 
 ; ============================================================================
