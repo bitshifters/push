@@ -13,6 +13,7 @@
 .equ LibConfig_IncludeMatrix,   0
 .equ LibConfig_IncludeCircles,  1
 .equ LibConfig_IncludeSprites,  1
+.equ LibConfig_IncludeMathVar,  1
 
 .equ LibConfig_IncludeSine,     (LibConfig_IncludeMatrix || 1)
 .equ LibConfig_IncludeSpanGen,  (LibConfig_IncludeTriangle || LibConfig_IncludePolygon || LibConfig_IncludeCircles || 0)       ; Required for polygon & triangle & cirlces.

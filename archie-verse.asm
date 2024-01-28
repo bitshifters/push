@@ -129,6 +129,9 @@ main_loop:
 	; TICK
 	; ========================================================================
 
+    .if LibConfig_IncludeMathVar
+    bl math_var_tick                ; TODO: Here or app_tick or lib_tick?
+    .endif
 	bl script_tick_all
 	bl fx_tick_layers
 

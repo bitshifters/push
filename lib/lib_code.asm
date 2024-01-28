@@ -66,6 +66,9 @@ lib_init:
     .if LibConfig_IncludeCircles
     bl ClearCircleBuf
     .endif
+    .if LibConfig_IncludeMathVar
+    bl math_var_init
+    .endif
     .if LibConfig_IncludeSpanGen
     bl gen_code
     .endif
@@ -114,6 +117,9 @@ lib_init:
 .endif
 .if LibConfig_IncludeSprites
 .include "lib/sprite_utils.asm"
+.endif
+.if LibConfig_IncludeMathVar
+.include "lib/math-var.asm"
 .endif
 
 ; ============================================================================

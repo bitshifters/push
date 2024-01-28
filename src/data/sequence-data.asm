@@ -30,6 +30,14 @@
     call_3 fx_set_layer_fns, 2, the_ball_tick,              the_ball_draw
     call_3 fx_set_layer_fns, 3, 0,                          circles_plot_all_in_order
 
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+    call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball.
+    call_2f the_ball_set_vel 0.0, 0.0
+
+    ; Register a variable with an autonomous maths function:
+    ; the_ball.x = 160.0 * sin(f/60)
+    math_register_var the_ball_block+TheBall_x, 0.0, 160.0, math_sin, 0.0, 1.0/(MATHS_2PI*60.0)
+
     fork seq_loop
     end_script
 
@@ -52,8 +60,10 @@ seq_loop:
 ;    wait_secs 5.0
 
 ;    call_1 the_env_remove_plane the_env_floor_plane
-    call_2f the_ball_set_vel 0.0, 0.0
-    call_2f the_ball_add_impulse 1.0, 1.0
+    math_unregister_var                 the_ball_block+TheBall_x
+    call_2f the_ball_set_vel            0.0, 0.0
+    call_2f the_ball_add_impulse        1.0, 1.0
+    call_2f the_env_set_constant_force  0.0, -(Ball_Gravity/50.0)
 
     fork seq_loop
 
@@ -100,33 +110,33 @@ seq_test_fade_up_loop:
 
 math_emitter_config_1:
     math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
-    math_func  0.0,    100.0,  0.0,  1.0/(MATHS_2PI*60.0),  math_sin    ; emitter.pos.x = 100.0 * math.sin(fram / 60)
-    math_func  128.0,  60.0,   0.0,  1.0/(MATHS_2PI*80.0),  math_cos    ; emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
-    math_func  0.0,    2.0,    0.0,  1.0/(MATHS_2PI*100.0), math_sin    ; emitter.dir.x = 2.0 * math.sin(f/100)
-    math_func  1.0,    5.0,    0.0,  0.0,                   math_rand   ; emitter.dir.y = 1.0 + 5.0 * math.random()
+    math_func  0.0,    100.0,  math_sin,  0.0,   1.0/(MATHS_2PI*60.0)   ; emitter.pos.x = 100.0 * math.sin(f/60)
+    math_func  128.0,  60.0,   math_cos,  0.0,   1.0/(MATHS_2PI*80.0)   ; emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
+    math_func  0.0,    2.0,    math_sin,  0.0,   1.0/(MATHS_2PI*100.0)  ; emitter.dir.x = 2.0 * math.sin(f/100)
+    math_func  1.0,    5.0,    math_rand, 0.0,   0.0                    ; emitter.dir.y = 1.0 + 5.0 * math.random()
     math_const 255                                                      ; emitter.life
-    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
-    math_func  8.0,    6.0,    0.0,  1.0/(MATHS_2PI*10.0),  math_sin    ; emitter.radius = 8.0 + 6 * math.sin(f/10)
+    math_func  0.0,    1.0,    math_and15,0.0,   1.0                    ; emitter.colour = (emitter.colour + 1) & 15
+    math_func  8.0,    6.0,    math_sin,  0.0,   1.0/(MATHS_2PI*10.0)   ; emitter.radius = 8.0 + 6 * math.sin(f/10)
 
 math_emitter_config_2:
     math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
     math_const 0.0                                                      ; emitter.pos.x = 0
-    math_const 0.0                                                    ; emitter.pos.y = 192.0
-    math_func  -1.0,    2.0,    0.0,  0.0,                   math_rand   ; emitter.dir.x = 4.0 + 3.0 * math.random()
-    math_func  1.0,    3.0,    0.0,  0.0,                   math_rand   ; emitter.dir.y = 1.0 + 5.0 * math.random()
+    math_const 0.0                                                      ; emitter.pos.y = 192.0
+    math_func -1.0,    2.0,    math_rand,  0.0,  0.0                    ; emitter.dir.x = 4.0 + 3.0 * math.random()
+    math_func  1.0,    3.0,    math_rand,  0.0,  0.0                    ; emitter.dir.y = 1.0 + 5.0 * math.random()
     math_const 512                                                      ; emitter.life
-    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
+    math_func  0.0,    1.0,    math_and15, 0.0,  1.0                    ; emitter.colour = (emitter.colour + 1) & 15
     math_const 8.0                                                      ; emitter.radius = 8.0
 
 math_emitter_config_3:  ; attached to the_ball.
     math_const 50.0/50                                                  ; emission rate=80 particles per second fixed.
-    math_func_get_var 0.0, 1.0, the_ball_block+4                        ; emitter.x = 0.0 + 1.0 * the_ball_block.x
-    math_func_get_var 0.0, 1.0, the_ball_block+8                        ; emitter.y = 0.0 + 1.0 * the_ball_block.y
+    math_func_read_addr 0.0, 1.0, the_ball_block+TheBall_x              ; emitter.x = 0.0 + 1.0 * the_ball_block.x
+    math_func_read_addr 0.0, 1.0, the_ball_block+TheBall_y              ; emitter.y = 0.0 + 1.0 * the_ball_block.y
     math_const 0.0                                                      ; emitter.dir.x = 2.0 * math.sin(f/100)
     math_const 0.0                                                      ; emitter.dir.y = 2.0 * math.cos(f/100)
     math_const 128                                                      ; emitter.life
-    math_func  0.0,    1.0,    0.0,  1.0,                   math_and15  ; emitter.colour = (emitter.colour + 1) & 15
-    math_func  8.0,    6.0,    0.0,  1.0/(MATHS_2PI*10.0),  math_sin    ; emitter.radius = 8.0 + 6 * math.sin(f/10)
+    math_func  0.0,    1.0,    math_and15, 0.0,  1.0                    ; emitter.colour = (emitter.colour + 1) & 15    [0.0+1.0*(0.0+1.0*i)]
+    math_func  8.0,    6.0,    math_sin,   0.0,  1.0/(MATHS_2PI*10.0)   ; emitter.radius = 8.0 + 6 * math.sin(f/10)
 
 ; ============================================================================
 

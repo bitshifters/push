@@ -352,8 +352,8 @@ TODO
 - Move all configuration to sequence script.
 - Emitter setup => adding / removing emitters.
 - Environment setup
-    - Adding / removing planes
-    - Constant force (gravity, wind)
+    - Adding / removing planes - DONE
+    - Constant force (gravity, wind) - DONE
     - Seperate forces for The Ball and Particles (e.g. ball bounces but fire rises)
 - Suport multiple emitters?
     - All emitters add to the same particle system.
@@ -371,3 +371,12 @@ TODO
     - E.g. could set this up to make the ball colour or radius change over time.
     - Could this be used for colour fades etc. as well?
     - Move the ball in a pattern. Interesting...
+    - Use this to attach the emitter to the ball as well.
+        emitter.x = get(ball.x) etc.
+    - Order of evaluation will matter here... should really just use C!!!
+
+math_var
+- next pointer.
+- address of var to write
+- local iteration count
+- math_func v=a + b * f(c + d*i)

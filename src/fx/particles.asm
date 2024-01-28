@@ -50,8 +50,11 @@ particles_alive_count:
     .long 0
 .endif
 
-particle_gravity:
-    FLOAT_TO_FP (Particle_Gravity / 50.0)     ; (pixels/frame not pixels/sec)
+particle_constant_force:
+    FLOAT_TO_FP 0.0                             ; f.x
+; Fall through!
+particle_gravity:    
+    FLOAT_TO_FP (Particle_Gravity / 50.0)       ; f.y (pixels/frame not pixels/sec) 
 
 ; ============================================================================
 
@@ -78,14 +81,15 @@ particles_init:
 
 
 particles_tick_all_under_gravity:
-    mov r8, #0                          ; acc.x
-    ldr r9, particle_gravity            ; acc.y
 ; FALL THROUGH!
-
-; R8 = acceleration.x
-; R9 = acceleration.y
 particles_tick_all_under_constant_force:
     str lr, [sp, #-4]!
+
+    ; R8 = acceleration.x
+    ; R9 = acceleration.y
+    ldr r8, particle_constant_force+0   ; acc.x
+    ldr r9, particle_constant_force+4   ; acc.y
+
     adr r12, particles_first_active     ; R12=current_p
     ldr r0, [r12, #0]                   ; R0=next_p
 
