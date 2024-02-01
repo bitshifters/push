@@ -185,6 +185,12 @@ script_call_6:
     str r10, [r12, #ScriptContext_PC]
     mov pc, r11
 
+script_call_7:
+    ldr r11, [r10], #4          ; fn ptr.
+    ldmia r10!, {r0-r6}         ; params
+    str r10, [r12, #ScriptContext_PC]
+    mov pc, r11
+
 script_return_if_zero:
     ldr r0, [r10], #4           ; param=var address.
     str r10, [r12, #ScriptContext_PC]

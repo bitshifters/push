@@ -380,3 +380,49 @@ math_var
 - address of var to write
 - local iteration count
 - math_func v=a + b * f(c + d*i)
+- function can be RAM[addr]
+- Hard to make equations with multiple variables.
+    e.g. x=radius*sin(i)
+    where radius=f(i)
+- Options:
+    1. Change math_vars to require func block to be supplied, then other funcs can point into other blocks.
+    2. Find some way of specifying whether a,b,c,d are FP values or addresses.
+    3. Make a math_func2 where v=a + b*f1(c1+d1*i)*f2(c2+d2*i)
+        Or v=f1(i)+f2(i)*f3(i) polynomial...
+
+
+Dave's storyboards!
+~~~
+Particle grid is 24x17 = 408 particles.
+Mine is currently 16x16 = 256 particles.
+Mine are super springy! His are much calmer and more damped.
+Mine the gravity field affects all paticles on the screen, Dave's are localised to about 2x ball radius.
+Mine have a much larger 'blast radius'.
+==> could reduce CPU overhead by doing bounding-box check against particles before
+    doing the gravity calculation.
+
+Q. What screen resolution do we want to use?
+    5:4 (320x256) 4:3 (320x240) 16:9 (320x180) or Amiga overscan (320x288)
+
+Q. What particle equations are being used?
+    Get hold of the Blender scene.
+
+Q. What's the coordinate system?
+    If everything is going to be based around the centre of the screen then
+    having (0,0) in the centre will be a lot easier.
+
+Blender node graph
+~~~
+dot_pos
+object_pos
+
+delta_vec = object_pos - dot_pos
+dist = |delta_vec|
+clamp_dist = clamp(dist, 0.0, 0.45, -1.21, 0.0) ; 0.45 is the radius.
+offset_vec = delta_vec * clamp_dist * 0.610
+dot_desired_pos = dot_pos + offset_vec
+new_dot_pos = dot_orig_pos * (1.0-factor) + dot_desired_pos * factor
+
+Where factor = 0.95
+factor = 1.0 ==> points stay where they are left.
+factor = 0.0 ==> points stay at orig_pos.

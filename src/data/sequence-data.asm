@@ -15,33 +15,196 @@
     call_1 sprite_utils_make_shifted_sheet, block_sprite_sheet_def_no_adr
 
     ; Environment setup.
+    .if 0
     make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
     make_and_add_env_plane the_env_left_plane, -240.0, 0.0, 64.0        ; +90 degrees
     make_and_add_env_plane the_env_left_slope, -80.0, 0.0, 32.0         ; +45 degrees
     make_and_add_env_plane the_env_right_plane, 240.0, 0.0, -64.0       ; -90 degrees
     make_and_add_env_plane the_env_right_slope, 80.0, 0.0, -32.0        ; -45 degrees
+    .endif
 
     ; Screen setup.
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 0, 0,                          screen_cls
-    call_3 fx_set_layer_fns, 1, particles_grid_tick_all,    particle_grid_draw_all_as_points
+    ;
     call_3 fx_set_layer_fns, 2, the_ball_tick,              the_ball_draw
     call_3 fx_set_layer_fns, 3, 0,                          circles_plot_all_in_order
 
-    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
-    call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball.
-    call_2f the_ball_set_vel 0.0, 0.0
+    ; Call each part in turn.
+    gosub seq_part1
+    gosub seq_part2
+    gosub seq_part3
 
-    ; Register a variable with an autonomous maths function:
-    ; the_ball.x = 160.0 * sin(f/60)
-    math_register_var the_ball_block+TheBall_x, 0.0, 160.0, math_sin, 0.0, 1.0/(MATHS_2PI*60.0)
-
-    fork seq_loop
     end_script
 
-; Particles!
+; Ball moves in a spiral through the particle grid.
+seq_part1:
+
+	; Setup layers of FX.
+    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+
+    ; Setup the ball.
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+    call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball
+    call_2f the_ball_set_vel  0.0, 0.0
+
+    ; Make the ball the particle grid collider.
+    ; particle_grid_collider_pos.x = the_ball.x
+    ; particle_grid_collider_pos.y = the_ball.y
+    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+
+    ; Inverted (part2)
+    ;math_link_vars particle_grid_collider_pos+0, 0.0, -1.0, the_ball_block+TheBall_x
+    ;math_link_vars particle_grid_collider_pos+4, 255.0, -1.0, the_ball_block+TheBall_y
+
+    ; Equation of the ball.
+    ; x=radius * sin(t/speed)
+    ; y=128 + radius * cos(t/speed)
+    ; Where radius = t/speed as well.
+    ; ~20 seconds to get to max radius 100. 1000/speed=100;speed=10.
+
+    ; Dependent variables. Doh!
+    ; radius = i/10
+    math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/10.0
+
+    ; Want this to be the radius value -----------------------v
+    math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_register_var2 the_ball_block+TheBall_y, 128.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+
+    wait_secs 20.0
+
+    math_unregister_var the_ball_block+TheBall_x
+    math_unregister_var the_ball_block+TheBall_y
+    math_unregister_var seq_ball_radius
+
+    call_2f the_ball_set_pos, 300.0, 128.0
+    wait_secs 2.0
+    math_unlink_vars particle_grid_collider_pos+0
+    math_unlink_vars particle_grid_collider_pos+4
+    end_script
+
+seq_ball_radius:
+    .long 0
+
+; Ball moves in a spiral through the particle grid.
+seq_part2:
+
+	; Setup layers of FX.
+    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+
+    ; Setup the ball.
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+    call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball
+    call_2f the_ball_set_vel  0.0, 0.0
+
+    ; Make the ball the particle grid collider.
+    ; particle_grid_collider_pos.x = the_ball.x
+    ; particle_grid_collider_pos.y = the_ball.y
+
+    ; Inverted (part2)
+    math_link_vars particle_grid_collider_pos+0, 0.0, -1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+4, 255.0, -1.0, the_ball_block+TheBall_y
+
+    math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/10.0
+
+    ; Want this to be the radius value -----------------------v
+    math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_register_var2 the_ball_block+TheBall_y, 128.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+
+    wait_secs 20.0
+
+    math_unregister_var the_ball_block+TheBall_x
+    math_unregister_var the_ball_block+TheBall_y
+    math_unregister_var seq_ball_radius
+
+    call_2f the_ball_set_pos, 300.0, 128.0
+    wait_secs 2.0
+    math_unlink_vars particle_grid_collider_pos+0
+    math_unlink_vars particle_grid_collider_pos+4
+    end_script
+
+; Ball moves in straight lines through the particle grid.
+seq_part3:
+
+	; Setup layers of FX.
+    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+
+    ; Setup the ball.
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+
+    ; TODO: Setup grid in script and/or reset positions.
+    ; X [-138, 138] step 12 (border 22)
+    ; Y [38, 218] step 12 (border 38)
+
+    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+
+    ; Start off right side of the screen and move left.
+    call_2f the_ball_set_pos, 300.0, 48.0
+    call_2f the_ball_set_vel  -4.0, 0.0
+    wait_secs 3.0
+
+    ; Top and move down.
+    call_2f the_ball_set_pos, -138.0, 428.0
+    call_2f the_ball_set_vel  0.0, -4.0
+    wait_secs 3.0
+
+    ; Bottom and move up.
+    call_2f the_ball_set_pos, 64.0, -172.0
+    call_2f the_ball_set_vel  0.0, 4.0
+    wait_secs 3.0
+
+    ; Right and move left again.
+    call_2f the_ball_set_pos, 300.0, 172.0
+    call_2f the_ball_set_vel  -4.0, 0.0
+    wait_secs 3.0
+
+    ; Left and move right again.
+    call_2f the_ball_set_pos, -300.0, 48.0
+    call_2f the_ball_set_vel  4.0, 0.0
+    wait_secs 3.0
+
+    ; Bottom and move up.
+    call_2f the_ball_set_pos, -48.0, -172.0
+    call_2f the_ball_set_vel  0.0, 4.0
+    wait_secs 3.0
+
+    ; Top and move down.
+    call_2f the_ball_set_pos, 64.0, 428.0
+    call_2f the_ball_set_vel  0.0, -4.0
+    wait_secs 3.0
+
+    ; Right and move left again.
+    call_2f the_ball_set_pos, 300.0, 96.0
+    call_2f the_ball_set_vel  -4.0, 0.0
+    wait_secs 3.0
+
+    ; Left and move right again.
+    call_2f the_ball_set_pos, -300.0, 138.0
+    call_2f the_ball_set_vel  4.0, 0.0
+    wait_secs 3.0
+
+    ; Right and move left again.
+    call_2f the_ball_set_pos, 300.0, 64.0
+    call_2f the_ball_set_vel  -4.0, 0.0
+    wait_secs 3.0
+
+    ; Top and move down.
+    call_2f the_ball_set_pos, -64.0, 428.0
+    call_2f the_ball_set_vel  0.0, -4.0
+    wait_secs 3.0
+
+    ; Settle.
+    call_2f the_ball_set_vel  0.0, 0.0
+    wait_secs 3.0
+    end_script
+
+
+; Particles examples!
+.if 0
 seq_loop:
     call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
 
@@ -69,6 +232,7 @@ seq_loop:
 
     ; THE END.
     end_script
+.endif
 
 ; ============================================================================
 ; Sequence tasks can be forked and self-terminate on completion.
@@ -81,6 +245,7 @@ seq_loop:
 ; (Yes I know this is starting to head into 'real language' territory.)
 ; ============================================================================
 
+.if 0
 seq_test_fade_down:
     call_3 palette_init_fade, 0, 1, seq_palette_red_additive
 
@@ -96,6 +261,7 @@ seq_test_fade_up_loop:
     call_0 palette_update_fade_from_black
     end_script_if_zero palette_interp
     yield seq_test_fade_up_loop
+.endif
 
 .if 0
     ; Balls!

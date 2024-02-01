@@ -16,7 +16,8 @@
 .equ MathVar_ParamC,    20
 .equ MathVar_ParamD,    24
 .equ MathVar_FuncPtr,   28
-.equ MathVar_SIZE,      32
+.equ MathVar_EvalFn,    32
+.equ MathVar_SIZE,      36
 
 ; ============================================================================
 
@@ -55,8 +56,13 @@ math_var_init:
 ; R2=param b
 ; R3=param c
 ; R4=param d
-; R5=func
+; R5=math_func ptr
 math_var_register:
+    adreq r6, math_evaluate_func
+; Fall through!
+
+; R6=eval_func ptr
+math_var_register_ex:
     ldr r10, math_var_first_free_p      ; this = first_free_p
 
     .if _DEBUG
@@ -77,8 +83,8 @@ math_var_register:
 
     .if _DEBUG
     ; Found matching var?
-    ldr r6, [r12, #MathVar_Addr]        ; curr_p->addr
-    cmp r6, r0
+    ldr r7, [r12, #MathVar_Addr]        ; curr_p->addr
+    cmp r7, r0
     adreq r0, error_dupmathvar
     swieq OS_GenerateError
     .endif
@@ -90,10 +96,10 @@ math_var_register:
 .2:
     str r10, [r12, #MathVar_Next]       ; curr_p->next=this
 
-    mov r6, #0
-    str r6, [r10], #4                   ; this->next=0
-    str r6, [r10], #4                   ; this->iter=0
-    stmia r10!, {r0-r5}                 ; store all params
+    mov r7, #0
+    str r7, [r10], #4                   ; this->next=0
+    str r7, [r10], #4                   ; this->iter=0
+    stmia r10!, {r0-r6}                 ; store all params
     mov pc, lr
 
 .if _DEBUG
@@ -158,8 +164,11 @@ math_var_tick:
     ; Evaluate the function.
     mov r0, r10
     add r10, r11, #MathVar_ParamA
-    bl math_evaluate_func
 
+    adr lr, .3
+    ldr pc, [r11, #MathVar_EvalFn]      ; bl math_evaluate_func
+    .3:
+    
     ; Store returned value to address.
     ldr r1, [r11, #MathVar_Addr]
     str r0, [r1]
@@ -190,6 +199,29 @@ math_evaluate_func:
     adr lr, .1
     mov pc, r5              ; f(c + d * i)
 .1:
+    mov r0, r0, asr #8
+    mov r2, r2, asr #8
+    mla r0, r2, r0, r1      ; a + b * f(c + d * i)  [16.16]
+    ldr pc, [sp], #4
+
+; Evaluate the linear function v = a + RAM[b] * f(c + d * i)
+; Params:
+;  R10=ptr to func parameters [a, b, c, d, f]
+;  R0=i [16.0]
+; Trashes: R1-R5, R9
+; Returns: R0=v, R10=ptr to next func.
+math_evaluate_func2:
+    str lr, [sp, #-4]!
+    ldmia r10!, {r1-r5}     ; [a, b, c, d, f]
+
+    mla r0, r4, r0, r3      ; c + d * i [16.16]
+
+    cmp r5, #0
+    beq .1
+    adr lr, .1
+    mov pc, r5              ; f(c + d * i)
+.1:
+    ldr r2, [r2]            ; b = RAM[b]
     mov r0, r0, asr #8
     mov r2, r2, asr #8
     mla r0, r2, r0, r1      ; a + b * f(c + d * i)  [16.16]
@@ -249,12 +281,26 @@ math_read_addr:
     math_func \a, 0.0, 0.0, 0.0, 0
 .endm
 
+.equ math_no_func, 0
+
 .macro math_register_var addr, a, b, f, c, d
     .long script_call_6, math_var_register, \addr, MATHS_CONST_1*\a, MATHS_CONST_1*\b, MATHS_CONST_1*\c, MATHS_CONST_1*\d, \f
 .endm
 
+.macro math_register_var2 addr, a, b, f, c, d
+    .long script_call_7, math_var_register_ex, \addr, MATHS_CONST_1*\a, \b, MATHS_CONST_1*\c, MATHS_CONST_1*\d, \f, math_evaluate_func2
+.endm
+
 .macro math_unregister_var addr
     .long script_call_1, math_var_unregister, \addr
+.endm
+
+.macro math_link_vars addr, a, b, c
+    .long script_call_6, math_var_register, \addr, MATHS_CONST_1*\a, MATHS_CONST_1*\b, \c, 0, math_read_addr
+.endm
+
+.macro math_unlink_vars addr, c
+    math_unregister_var \addr
 .endm
 
 ; ============================================================================

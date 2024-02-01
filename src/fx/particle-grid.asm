@@ -16,15 +16,15 @@
 .equ ParticleGrid_SIZE,     24
 ; TODO: Colour, sprite per particle etc.?
 
-.equ ParticleGrid_NumX,     16
+.equ ParticleGrid_NumX,     24
 .equ ParticleGrid_NumY,     16
 
 .equ ParticleGrid_Max,      (ParticleGrid_NumX*ParticleGrid_NumY)
 
-.equ ParticleGrid_YStart,       (48.0 * MATHS_CONST_1)
-.equ ParticleGrid_XStart,       (-128.0 * MATHS_CONST_1)
-.equ ParticleGrid_XStep,        (16.0 * MATHS_CONST_1)
-.equ ParticleGrid_YStep,        (10.0 * MATHS_CONST_1)
+.equ ParticleGrid_YStart,       (38.0 * MATHS_CONST_1)
+.equ ParticleGrid_XStart,       (-138.0 * MATHS_CONST_1)
+.equ ParticleGrid_XStep,        (12.0 * MATHS_CONST_1)
+.equ ParticleGrid_YStep,        (12.0 * MATHS_CONST_1)
 
 .equ ParticleGrid_CentreX,      (160.0 * MATHS_CONST_1)
 .equ ParticleGrid_CentreY,      (255.0 * MATHS_CONST_1)
@@ -53,6 +53,7 @@ particle_grid_init:
     mov r3, #0
     mov r4, #0
 
+    ; TODO: Configure the grid in sequence script?
     mov r2, #ParticleGrid_YStart    ; YPos
     mov r9, #ParticleGrid_NumY
 .1:
@@ -77,14 +78,19 @@ particle_grid_init:
 
 ; ============================================================================
 
-; TODO: Pass these in rather than peek the_ball module?
-; R6=object.x
-; R7=object.y
-; R10=object.radius
+particle_grid_collider_pos:
+    VECTOR2 0.0, 128.0
+
+particle_grid_collider_radius:
+    FLOAT_TO_FP 48.0    ;Particles_CircleCollider_Radius
+
 particles_grid_tick_all:
     str lr, [sp, #-4]!
 
-    mov r10, #Particles_CircleCollider_Radius*MATHS_CONST_1
+    ; R6=object.x
+    ; R7=object.y
+    ; R10=object.radius
+    ldr r10, particle_grid_collider_radius
 
     .if 0
     swi OS_Mouse
@@ -104,8 +110,8 @@ particles_grid_tick_all:
     mov r9, #1
     bl circles_add_to_plot_by_order
     .else
-    ldr r6, the_ball_block+4
-    ldr r7, the_ball_block+8
+    ldr r6, particle_grid_collider_pos+0
+    ldr r7, particle_grid_collider_pos+4
     .endif
 
     mov r10, r10, asr #8                ; [8.8]
@@ -330,9 +336,163 @@ particles_grid_tick_all:
     add r2, r2, r4
 
     ; Presume no collision detection?
+    ; TODO: Would it be faster to plot immediately here?
 
     ; Save particle state.
     stmia r11, {r1-r4}
+    add r11, r11, #ParticleGrid_SIZE
+
+    subs r12, r12, #1
+    bne .1
+
+    ldr pc, [sp], #4
+
+; ============================================================================
+
+particle_grid_dave_factor:
+    FLOAT_TO_FP 0.95
+
+particle_grid_dave_invradius:
+    FLOAT_TO_FP 1.0/48.0            ; should probably look this up?
+
+particle_grid_dave_maxpush:
+    FLOAT_TO_FP 1.21
+
+particles_grid_tick_all_dave_equation:
+    str lr, [sp, #-4]!
+
+    ; R6=object.x
+    ; R7=object.y
+    ; R10=object.radius
+    ldr r6, particle_grid_collider_pos+0
+    ldr r7, particle_grid_collider_pos+4
+    ldr r10, particle_grid_collider_radius
+
+;    mov r10, r10, asr #8                ; [8.8]
+;    mov r14, r10                        ; [8.8]
+;    mul r10, r14, r10                   ; [16.16]
+;    mov r10, r10, asr #18               ; sqradius/4 [14.0]
+
+    mov r12, #ParticleGrid_Max
+    ldr r11, particle_grid_array_p
+.1:
+    ldmia r11, {r1-r2}                  ; pos.x, pos.y
+
+    ; Particle dynamics as per Dave's Blender graph.
+
+    ; Compute delta_vec to object.
+    sub r8, r6, r1                      ; dx = obj.x - pos.x
+    sub r9, r7, r2                      ; dy = obj.y - pos.y
+
+    ; Calcluate dist^2=dx*dx + dy*dy
+    mov r4, r8, asr #10             ; [10.6]
+    mov r14, r4
+    mul r4, r14, r4                 ; dx*dx [20.12]
+
+    mov r5, r9, asr #10
+    mov r14, r5
+    mul r5, r14, r5                 ; dy*dy [20.12]
+
+    add r5, r4, r5                  ; distsq=dx*dx + dy*dy [20.12]
+
+    ; TODO: Can early out here if distsq > radiussq. See R10 above.
+
+    mov r5, r5, asr #14             ; distsq/4             [16.0]
+
+    ; Calculate dist=sqrt(dx*dx + dy*dy)
+
+    ; SQRT table goes from [1, 512*512) = [0x00001, 0x40000) (18 bits)
+    ; Contains 65536 = 0x10000 entries                       (16 bits)
+    ; Values are in 16.16 format.
+
+    ; Limited precision.
+    cmp r5, #LibSqrt_Entries    ; Test for numerator too large
+    movge r8, #0
+    movge r9, #0
+    bge .2
+
+    .if _DEBUG
+    adrge r0,sqrtrange           ; and flag an error
+    swige OS_GenerateError      ; when necessary
+    .endif
+
+    subs r5, r5, #1
+    movmi r14, #MATHS_CONST_1       ; should be 0 but avoid div by 0.
+    ldrpl r4, particle_grid_sqrt_p
+    ldrpl r14, [r4, r5, lsl #2]     ; dist=sqrt4(distsq) [16.16]
+
+    ; Clamp dist. [0.0, radius] => [-max_push, 0.0]
+
+    ; if dist > radius, cd = 0.0
+    cmp r14, r10                    ; dist > radius?
+    movge r14, #0
+    bge .2
+
+    ; if dist < 0.0 cd = -max_push (not possible anyway)
+
+    ; cd = -max_push + (dist/radius) * max_push
+    ; cd = max_push * dist * (1/radius) - max_push
+
+    ; TODO: Calculate this from radius and keep in reg.
+    ldr r5, particle_grid_dave_invradius ; 1/radius   [1.16]
+    mov r5, r5, asr #4              ; [1.12]
+
+    mov r14, r14, asr #4            ; dist [8.12]
+    mul r14, r5, r14                ; dist / radius [1.24]
+    mov r14, r14, asr #8            ; [1.16]
+
+    ; TODO: Keep in reg?
+    ldr r5, particle_grid_dave_maxpush  ; max_push   [8.16]
+    mov r5, r5, asr #8              ; [8.8]
+
+    mul r14, r5, r14                ; max_push * dist / radius [8.24]
+    mov r14, r14, asr #8
+
+    sub r14, r14, r5, asl #8        ; clamp_dist = (max_push * dist / radius) - max_push [8.16]
+
+.2:
+    ; Calculate offset vec = delta_vec * clamp_dist
+
+    mov r14, r14, asr #8            ; clamp_dist [8.8]
+    mov r8, r8, asr #8              ; dx [~9.8]
+    mov r9, r9, asr #8              ; dy [~9.8]
+
+    mul r8, r14, r8                 ; ox=cd*dx [16.16]
+    mul r9, r14, r9                 ; ox=cd*dy [16.16]
+
+    ; Calculate desired position = current_pos + offset_vec.
+
+    add r1, r1, r8                  ; desired.x = pos.x + ox [16.16]
+    add r2, r2, r9                  ; desired.y = pos.y + oy [16.16]
+
+    ; Original position.
+
+    ldr r8, [r11, #ParticleGrid_XOrigin]    ; orig.x
+    ldr r9, [r11, #ParticleGrid_YOrigin]    ; orig.y
+
+    ldr r14, particle_grid_dave_factor      ; factor [1.16]
+    rsb r5, r14, #MATHS_CONST_1             ; 1-factor [1.16]
+
+    mov r1, r1, asr #12             ; [~9.4]
+    mov r2, r2, asr #12             ; [~9.4]
+    mov r14, r14, asr #4            ; [1.12]
+    mul r1, r14, r1                 ; desired.x * factor [~9.16]
+    mul r2, r14, r2                 ; desired.y * factor [~9.16]
+    
+    mov r8, r8, asr #12             ; [~9.4]
+    mov r9, r9, asr #12             ; [~9.4]
+    mov r5, r5, asr #4              ; [1.12]
+    mul r8, r5, r8                  ; orig.x * (1-f) [~9.20]
+    mul r9, r5, r9                  ; orig.y * (1-f) [~9.20]
+
+    add r1, r1, r8              ; pos.x = orig.x * (1-f) + des.x * f
+    add r2, r2, r9              ; pos.y = orig.y * (1-f) + des.y * f
+
+    ; Presume no collision detection?
+    ; TODO: Would it be faster to plot immediately here?
+
+    ; Save particle state.
+    stmia r11, {r1-r2}              ; note just pos.x, pos.y - no velocity!
     add r11, r11, #ParticleGrid_SIZE
 
     subs r12, r12, #1
