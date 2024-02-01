@@ -129,10 +129,12 @@ main_loop:
 	; TICK
 	; ========================================================================
 
-    .if LibConfig_IncludeMathVar
-    bl math_var_tick                ; TODO: Here or app_tick or lib_tick?
-    .endif
 	bl script_tick_all
+    .if LibConfig_IncludeMathVar
+    ; Tick after script as this is where vars will be added/removed.
+    bl math_var_tick                ; TODO: Here or app_tick or lib_tick?
+    ; Tick before laters as this is where the vars will be used.
+    .endif
 	bl fx_tick_layers
 
     ; Update frame counter.

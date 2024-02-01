@@ -299,6 +299,14 @@ script_call_swi:
     .long script_call_5, \function, \param1, \param2, \param3, \param4, \param5
 .endm
 
+.macro call_6 function, param1, param2, param3, param4, param5, param6
+    .long script_call_6, \function, \param1, \param2, \param3, \param4, \param5, \param6
+.endm
+
+.macro call_7 function, param1, param2, param3, param4, param5, param6, param7
+    .long script_call_7, \function, \param1, \param2, \param3, \param4, \param5, \param6, \param7
+.endm
+
 .macro call_1f function, param1
     .long script_call_1, \function, MATHS_CONST_1*\param1
 .endm

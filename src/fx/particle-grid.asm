@@ -16,15 +16,7 @@
 .equ ParticleGrid_SIZE,     24
 ; TODO: Colour, sprite per particle etc.?
 
-.equ ParticleGrid_NumX,     24
-.equ ParticleGrid_NumY,     16
-
-.equ ParticleGrid_Max,      (ParticleGrid_NumX*ParticleGrid_NumY)
-
-.equ ParticleGrid_YStart,       (38.0 * MATHS_CONST_1)
-.equ ParticleGrid_XStart,       (-138.0 * MATHS_CONST_1)
-.equ ParticleGrid_XStep,        (12.0 * MATHS_CONST_1)
-.equ ParticleGrid_YStep,        (12.0 * MATHS_CONST_1)
+.equ ParticleGrid_Max,          (24*18)     ; runs at 50Hz with the Dave equation.
 
 .equ ParticleGrid_CentreX,      (160.0 * MATHS_CONST_1)
 .equ ParticleGrid_CentreY,      (255.0 * MATHS_CONST_1)
@@ -42,39 +34,8 @@ particle_grid_sqrt_p:
 particle_grid_recip_p:
     .long reciprocal_table_no_adr
 
-; ============================================================================
-
-particle_grid_init:
-    str lr, [sp, #-4]!
-
-    ldr r11, particle_grid_array_p
-
-    ; XVel, YVel.
-    mov r3, #0
-    mov r4, #0
-
-    ; TODO: Configure the grid in sequence script?
-    mov r2, #ParticleGrid_YStart    ; YPos
-    mov r9, #ParticleGrid_NumY
-.1:
-    mov r1, #ParticleGrid_XStart    ; XPos
-    mov r8, #ParticleGrid_NumX
-
-.2:
-    mov r5, r1
-    mov r6, r2                      ; Origin
-
-    stmia r11!, {r1-r6}
-
-    add r1, r1, #ParticleGrid_XStep
-    subs r8, r8, #1
-    bne .2
-
-    add r2, r2, #ParticleGrid_YStep
-    subs r9, r9, #1
-    bne .1
-
-    ldr pc, [sp], #4
+particle_grid_total:
+    .long 0
 
 ; ============================================================================
 
@@ -82,7 +43,79 @@ particle_grid_collider_pos:
     VECTOR2 0.0, 128.0
 
 particle_grid_collider_radius:
-    FLOAT_TO_FP 48.0    ;Particles_CircleCollider_Radius
+    FLOAT_TO_FP 48.0        ;Particles_CircleCollider_Radius
+
+particle_grid_dave_factor:
+    FLOAT_TO_FP 0.95
+
+particle_grid_dave_maxpush:
+    FLOAT_TO_FP 1.21
+
+; ============================================================================
+
+; R0=Num X
+; R1=Num Y
+; R2=X Start
+; R3=Y Start
+; R4=X Step
+; R5=Y Step
+particle_grid_make:
+    stmfd sp!, {r0-r5}
+
+    ; TODO: Compute total = NumX * NumY.
+    ;       Check against Max in _DEBUG.
+    ;       Store in particle_grid_total and use this!
+    mul r6, r0, r1
+    .if _DEBUG
+    cmp r6, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+    str r6, particle_grid_total
+
+    ldr r11, particle_grid_array_p
+
+    mov r9, r4                      ; XStep
+    mov r10, r5                     ; YStep
+
+    ; XVel, YVel.
+    mov r3, #0
+    mov r4, #0
+
+    ; Y loop.
+    ldr r2, [sp, #12]               ; YPos
+    ldr r8, [sp, #4]                ; NumY
+.1:
+    ldr r1, [sp, #8]                ; XPos
+    ldr r7, [sp, #0]                ; NumX
+
+    ; X loop.
+.2:
+    mov r5, r1
+    mov r6, r2                      ; Origin
+
+    stmia r11!, {r1-r6}
+
+    add r1, r1, r9
+    subs r7, r7, #1
+    bne .2
+
+    add r2, r2, r10
+    subs r8, r8, #1
+    bne .1
+
+    ldmfd sp!, {r0-r5}
+    mov pc, lr
+
+.if _DEBUG
+error_gridtoolarge:
+	.long 0
+	.byte "Particle grid too large!"
+	.p2align 2
+	.long 0
+.endif
+
+; ============================================================================
 
 particles_grid_tick_all:
     str lr, [sp, #-4]!
@@ -119,7 +152,7 @@ particles_grid_tick_all:
     mul r10, r14, r10                   ; [16.16]
     mov r10, r10, asr #18               ; sqradius/4 [14.0]
 
-    mov r12, #ParticleGrid_Max
+    ldr r12, particle_grid_total
     ldr r11, particle_grid_array_p
 .1:
     ldmia r11, {r1-r2}
@@ -349,15 +382,6 @@ particles_grid_tick_all:
 
 ; ============================================================================
 
-particle_grid_dave_factor:
-    FLOAT_TO_FP 0.95
-
-particle_grid_dave_invradius:
-    FLOAT_TO_FP 1.0/48.0            ; should probably look this up?
-
-particle_grid_dave_maxpush:
-    FLOAT_TO_FP 1.21
-
 particles_grid_tick_all_dave_equation:
     str lr, [sp, #-4]!
 
@@ -365,15 +389,43 @@ particles_grid_tick_all_dave_equation:
     ; R7=object.y
     ; R10=object.radius
     ldr r6, particle_grid_collider_pos+0
+
+    ; Clamp distance of collider.
+    cmp r6, #MATHS_CONST_1*255.0
+    movgt r6, #MATHS_CONST_1*255.0
+    cmp r6, #MATHS_CONST_1*-255.0
+    movlt r6, #MATHS_CONST_1*-255.0
+
     ldr r7, particle_grid_collider_pos+4
+
+    cmp r7, #MATHS_CONST_1*-255.0
+    movlt r7, #MATHS_CONST_1*-255.0
+    cmp r7, #MATHS_CONST_1*512.0
+    movgt r7, #MATHS_CONST_1*512.0
+
     ldr r10, particle_grid_collider_radius
 
-;    mov r10, r10, asr #8                ; [8.8]
-;    mov r14, r10                        ; [8.8]
-;    mul r10, r14, r10                   ; [16.16]
-;    mov r10, r10, asr #18               ; sqradius/4 [14.0]
+    ; Calculate 1/radius.
+    ldr r4, particle_grid_recip_p
 
-    mov r12, #ParticleGrid_Max
+    ; Put divisor in table range.
+    mov r14, r10, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (b<<s)
+
+    .if _DEBUG
+    cmp r14, #0
+    adrle r0,divbyzero          ; and flag an error
+    swile OS_GenerateError      ; when necessary
+
+    cmp r14, #1<<LibDivide_Reciprocal_t    ; Test for numerator too large
+    adrge r0,divrange           ; and flag an error
+    swige OS_GenerateError      ; when necessary
+    .endif
+
+    ; Lookup 1/radius.
+    ldr r0, [r4, r14, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
+
+    ldr r3, particle_grid_dave_factor      ; factor [1.16]
+    ldr r12, particle_grid_total
     ldr r11, particle_grid_array_p
 .1:
     ldmia r11, {r1-r2}                  ; pos.x, pos.y
@@ -433,15 +485,13 @@ particles_grid_tick_all_dave_equation:
     ; cd = -max_push + (dist/radius) * max_push
     ; cd = max_push * dist * (1/radius) - max_push
 
-    ; TODO: Calculate this from radius and keep in reg.
-    ldr r5, particle_grid_dave_invradius ; 1/radius   [1.16]
-    mov r5, r5, asr #4              ; [1.12]
+    mov r5, r0, asr #4              ; 1/radius [1.12]
 
     mov r14, r14, asr #4            ; dist [8.12]
     mul r14, r5, r14                ; dist / radius [1.24]
     mov r14, r14, asr #8            ; [1.16]
 
-    ; TODO: Keep in reg?
+    ; TODO: Keep in reg? Or might be const.
     ldr r5, particle_grid_dave_maxpush  ; max_push   [8.16]
     mov r5, r5, asr #8              ; [8.8]
 
@@ -470,7 +520,7 @@ particles_grid_tick_all_dave_equation:
     ldr r8, [r11, #ParticleGrid_XOrigin]    ; orig.x
     ldr r9, [r11, #ParticleGrid_YOrigin]    ; orig.y
 
-    ldr r14, particle_grid_dave_factor      ; factor [1.16]
+    mov r14, r3                             ; factor [1.16]
     rsb r5, r14, #MATHS_CONST_1             ; 1-factor [1.16]
 
     mov r1, r1, asr #12             ; [~9.4]
@@ -508,7 +558,7 @@ particle_grid_draw_all_as_points:
 
     mov r7, #15                         ; colour.
 
-    mov r9, #ParticleGrid_Max
+    ldr r9, particle_grid_total
     ldr r11, particle_grid_array_p
 .1:
     ldmia r11, {r1-r2}

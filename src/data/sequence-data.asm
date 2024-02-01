@@ -7,21 +7,16 @@
     call_0 particles_init
     call_0 balls_init
     call_0 sprite_utils_init
-    call_0 particle_grid_init
     call_0 the_ball_init
+
+    ; Make particle grid.
+    ; X [-138, 138] step 12 (border 22)
+    ; Y [26,   230] step 12 (border 26)
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
     ; Make sprites.
     call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
     call_1 sprite_utils_make_shifted_sheet, block_sprite_sheet_def_no_adr
-
-    ; Environment setup.
-    .if 0
-    make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
-    make_and_add_env_plane the_env_left_plane, -240.0, 0.0, 64.0        ; +90 degrees
-    make_and_add_env_plane the_env_left_slope, -80.0, 0.0, 32.0         ; +45 degrees
-    make_and_add_env_plane the_env_right_plane, 240.0, 0.0, -64.0       ; -90 degrees
-    make_and_add_env_plane the_env_right_slope, 80.0, 0.0, -32.0        ; -45 degrees
-    .endif
 
     ; Screen setup.
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
@@ -33,6 +28,7 @@
     call_3 fx_set_layer_fns, 3, 0,                          circles_plot_all_in_order
 
     ; Call each part in turn.
+    gosub seq_part4
     gosub seq_part1
     gosub seq_part2
     gosub seq_part3
@@ -56,17 +52,12 @@ seq_part1:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-    ; Inverted (part2)
-    ;math_link_vars particle_grid_collider_pos+0, 0.0, -1.0, the_ball_block+TheBall_x
-    ;math_link_vars particle_grid_collider_pos+4, 255.0, -1.0, the_ball_block+TheBall_y
-
     ; Equation of the ball.
     ; x=radius * sin(t/speed)
     ; y=128 + radius * cos(t/speed)
     ; Where radius = t/speed as well.
     ; ~20 seconds to get to max radius 100. 1000/speed=100;speed=10.
 
-    ; Dependent variables. Doh!
     ; radius = i/10
     math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/10.0
 
@@ -100,14 +91,15 @@ seq_part2:
     call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball
     call_2f the_ball_set_vel  0.0, 0.0
 
-    ; Make the ball the particle grid collider.
-    ; particle_grid_collider_pos.x = the_ball.x
-    ; particle_grid_collider_pos.y = the_ball.y
+    ; Make the ball the particle grid collider but inverted!
+    ; particle_grid_collider_pos.x = -the_ball.x
+    ; particle_grid_collider_pos.y = 255-the_ball.y
 
     ; Inverted (part2)
-    math_link_vars particle_grid_collider_pos+0, 0.0, -1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+0,   0.0, -1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 255.0, -1.0, the_ball_block+TheBall_y
 
+    ; radius = i/10
     math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/10.0
 
     ; Want this to be the radius value -----------------------v
@@ -135,10 +127,7 @@ seq_part3:
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
 
-    ; TODO: Setup grid in script and/or reset positions.
-    ; X [-138, 138] step 12 (border 22)
-    ; Y [38, 218] step 12 (border 38)
-
+    ; Connect the ball to the particle grid collider.
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
@@ -200,6 +189,49 @@ seq_part3:
     ; Settle.
     call_2f the_ball_set_vel  0.0, 0.0
     wait_secs 3.0
+    end_script
+
+; Ball drops under gravity etc.
+seq_part4:
+
+	; Setup layers of FX.
+    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+
+    ; Environment setup.
+    make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
+    make_and_add_env_plane the_env_left_plane, -240.0, 0.0, 64.0        ; +90 degrees
+    make_and_add_env_plane the_env_left_slope, -80.0, 0.0, 32.0         ; +45 degrees
+    make_and_add_env_plane the_env_right_plane, 240.0, 0.0, -64.0       ; -90 degrees
+    make_and_add_env_plane the_env_right_slope, 80.0, 0.0, -32.0        ; -45 degrees
+
+    ; Setup the ball.
+    call_2f the_env_set_constant_force  0.0, -(Ball_Gravity/50.0)
+    call_2f the_ball_set_pos, 80.0, 300.0            ; centre ball
+    call_2f the_ball_set_vel  0.0, 0.0
+
+    ; Make the ball the particle grid collider.
+    ; particle_grid_collider_pos.x = the_ball.x
+    ; particle_grid_collider_pos.y = the_ball.y
+    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+
+    wait_secs 20.0
+
+    call_1 the_env_remove_plane, the_env_floor_plane
+    call_1 the_env_remove_plane, the_env_left_plane
+    call_1 the_env_remove_plane, the_env_left_slope
+    call_1 the_env_remove_plane, the_env_right_plane
+    call_1 the_env_remove_plane, the_env_right_slope
+
+    ; Settle.
+    wait_secs 2.0
+
+    call_2f the_ball_set_pos, 200.0, 128.0
+    call_2f the_ball_set_vel  0.0, 0.0
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+
+    math_unlink_vars particle_grid_collider_pos+0
+    math_unlink_vars particle_grid_collider_pos+4
     end_script
 
 
