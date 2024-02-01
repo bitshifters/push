@@ -9,11 +9,6 @@
     call_0 sprite_utils_init
     call_0 the_ball_init
 
-    ; Make particle grid.
-    ; X [-138, 138] step 12 (border 22)
-    ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
-
     ; Make sprites.
     call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
     call_1 sprite_utils_make_shifted_sheet, block_sprite_sheet_def_no_adr
@@ -37,6 +32,11 @@
 
 ; Ball moves in a spiral through the particle grid.
 seq_part1:
+
+    ; Make particle grid.
+    ; X [-138, 138] step 12 (border 22)
+    ; Y [26,   230] step 12 (border 26)
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
@@ -194,8 +194,16 @@ seq_part3:
 ; Ball drops under gravity etc.
 seq_part4:
 
+    ; Make particle grid.
+    ; X [-138, 138] step 12 (border 22)
+    ; Y [26,   230] step 12 (border 26)
+    call_6 particle_grid_make, 18, 14, MATHS_CONST_1*-136.0, MATHS_CONST_1*24.0, MATHS_CONST_1*16.0, MATHS_CONST_1*16.0
+
+    ; Set sprite def.
+    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
+
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_8x8_tinted
 
     ; Environment setup.
     make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
@@ -208,6 +216,8 @@ seq_part4:
     call_2f the_env_set_constant_force  0.0, -(Ball_Gravity/50.0)
     call_2f the_ball_set_pos, 80.0, 300.0            ; centre ball
     call_2f the_ball_set_vel  0.0, 0.0
+
+    write_fp particle_grid_dave_factor 0.95
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x

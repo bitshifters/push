@@ -349,12 +349,12 @@ v'= (v-vn)-vn = v-2vn
 
 TODO
 ~~~
-- Move all configuration to sequence script.
+- Move all configuration to sequence script. - DONE
 - Emitter setup => adding / removing emitters.
 - Environment setup
     - Adding / removing planes - DONE
     - Constant force (gravity, wind) - DONE
-    - Seperate forces for The Ball and Particles (e.g. ball bounces but fire rises)
+    - Seperate forces for The Ball and Particles (e.g. ball bounces but fire rises) - DONE
 - Suport multiple emitters?
     - All emitters add to the same particle system.
       Can't mix particle rendering types at the moment.
@@ -367,9 +367,9 @@ TODO
 
 - Particle collisions against The Environment? (Expensive)
 - Reinstate hot reload of sequence script for faster iteration.
-- Remember Lua live link for particle system iteration.
+- Remember Lua live link for particle system iteration!
 
-- System to attach math functions to any variable?
+- System to attach math functions to any variable? - DONE
     - E.g. could set this up to make the ball colour or radius change over time.
     - Could this be used for colour fades etc. as well?
     - Move the ball in a pattern. Interesting...
@@ -378,6 +378,7 @@ TODO
     - Order of evaluation will matter here... should really just use C!!!
 
 math_var
+~~~
 - next pointer.
 - address of var to write
 - local iteration count
@@ -394,7 +395,7 @@ math_var
         - Can't think of an easy way to do this. No bits free!
     3. Make a math_func2 where v=a + b*f1(c1+d1*i)*f2(c2+d2*i)
         Or v=f1(i)+f2(i)*f3(i) polynomial...
-    4. Hacky version, multiple evaluation functions that interpret the params differently.
+    4. Hacky version, multiple evaluation functions that interpret the params differently. - DONE
         eval2: v = a + RAM[b] * f(c + d * i)
         This allows dependent variables more explicitly.
 
@@ -409,7 +410,7 @@ Mine have a much larger 'blast radius'.
 ==> could reduce CPU overhead by doing bounding-box check against particles before
     doing the gravity calculation.
 
-Q. What screen resolution do we want to use?
+Q. What screen resolution do we want to use? - DEFAULT FOR NOW
     5:4 (320x256) 4:3 (320x240) 16:9 (320x180) or Amiga overscan (320x288)
 
 Q. What particle equations are being used?
@@ -434,3 +435,30 @@ new_dot_pos = dot_orig_pos * (1.0-factor) + dot_desired_pos * factor
 Where factor = 0.95 to gently return to origin (move 5% back to origin per frame).
 factor = 1.0 ==> points stay where they are left.
 factor = 0.0 ==> points stay at orig_pos.
+
+Ideas to prototype
+~~~
+- Multiple balls in the particle grid.
+    - Snooker effect - stationary ball is struck by a ball arriving from offscreen.
+    - Model some energy transfer / friction?
+    - How to identify which ball to control in script?
+
+- Particle grid rendered as sprites?
+    - How many is feasible?
+
+- Particle grid rotation?
+    - This is likely expensive?
+
+- Return to free particles!
+    - Link circle collider to math_vars as per initial parts.
+    - Fire effect?
+    - Possible to use plane colliders with free particles?!
+
+- Particles in grid become free (fall under gravity).
+    - Drop, explode, etc.
+
+- Use the Dave equation for ball as collider with free particles.
+    - E.g. Fire / smoke effect, ball goes through them.
+    - Dynamics equation becomes desired pos.
+
+- Reconcile multiple balls w/ script control.

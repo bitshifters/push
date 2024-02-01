@@ -62,10 +62,7 @@ particle_grid_dave_maxpush:
 particle_grid_make:
     stmfd sp!, {r0-r5}
 
-    ; TODO: Compute total = NumX * NumY.
-    ;       Check against Max in _DEBUG.
-    ;       Store in particle_grid_total and use this!
-    mul r6, r0, r1
+    mul r6, r0, r1                  ; total = NumX * NumY
     .if _DEBUG
     cmp r6, #ParticleGrid_Max
     adrgt r0, error_gridtoolarge
@@ -567,13 +564,13 @@ particle_grid_draw_all_as_points:
     add r1, r1, #ParticleGrid_CentreX               ; [s15.16]
     rsb r2, r2, #ParticleGrid_CentreY               ; [s15.16]
 
-    mov r1, r1, lsr #16
+    mov r1, r1, asr #16
     cmp r1, #0
     blt .3                              ; clip left - TODO: destroy particle?
     cmp r1, #Screen_Width
     bge .3                              ; clip right - TODO: destroy particle?
 
-    mov r2, r2, lsr #16
+    mov r2, r2, asr #16
     cmp r2, #0
     blt .3                              ; clip top - TODO: destroy particle?
     cmp r2, #Screen_Height
@@ -599,3 +596,121 @@ particle_grid_draw_all_as_points:
     bne .1
 
     ldr pc, [sp], #4
+
+; ============================================================================
+
+particle_grid_sprite_def_p:
+    .long 0
+
+; R12=screen addr
+particle_grid_draw_all_as_8x8_tinted:
+    str lr, [sp, #-4]!
+
+    mov r14, #15                        ; colour tint.
+    orr r14, r14, r14, lsl #4
+    orr r14, r14, r14, lsl #8
+    orr r14, r14, r14, lsl #16          ; colour word.
+
+    ldr r9, particle_grid_total
+    ldr r11, particle_grid_array_p
+.1:
+    ldmia r11, {r1-r2}
+
+    ; For now just plot 2D particles.
+    add r1, r1, #ParticleGrid_CentreX               ; [s15.16]
+    rsb r2, r2, #ParticleGrid_CentreY               ; [s15.16]
+
+    mov r1, r1, asr #16
+    mov r2, r2, asr #16
+
+    ; Centre sprite.
+    sub r1, r1, #4
+    sub r2, r2, #4
+
+    ; Clipping.
+    cmp r1, #0
+    blt .3                              ; cull left
+    cmp r1, #Screen_Width-8
+    bge .3                              ; cull right
+
+    cmp r2, #0
+    blt .3                              ; cull top
+    cmp r2, #Screen_Height-8
+    bge .3                              ; cull bottom
+    ; TODO: Clip to sides of screen..?
+
+    ; Plot as 16x8 sprite.
+    ;  r1 = X centre
+    ;  r2 = Y centre
+    ;  r14 = tint
+    and r0, r1, #7                      ; x shift
+
+    ; Calculate screen ptr.
+    add r10, r12, r2, lsl #7
+    add r10, r10, r2, lsl #5            ; y*160
+    mov r1, r1, lsr #3                  ; xw=x div 8
+    add r10, r10, r1, lsl #2            ; xw*4
+
+    stmfd sp!, {r9,r11}                 ; TODO: Reg optimisation.
+
+    ; Calculate src ptr.
+    ldr r11, particle_grid_sprite_def_p
+
+    ; TODO: More versatile scheme for sprite_num. Radius? Currently (life DIV 32) MOD 7.
+    mov r7, #0                              ; sprite_num
+    SPRITE_UTILS_GETPTR r11, r7, r0, r11    ; def->table[sprite_num*8+shift]
+
+    ; Plot 2x8 words of tinted mask data to screen.
+    ldmia r11!, {r0-r7}                 ; read 8 src words.
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r0, r8, r14
+    mask_and_tint_pixels r1, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r2, r8, r14
+    mask_and_tint_pixels r3, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r4, r8, r14
+    mask_and_tint_pixels r5, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r6, r8, r14
+    mask_and_tint_pixels r7, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+
+    ldmia r11!, {r0-r7}                 ; read 8 src words.
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r0, r8, r14
+    mask_and_tint_pixels r1, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r2, r8, r14
+    mask_and_tint_pixels r3, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r4, r8, r14
+    mask_and_tint_pixels r5, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+    add r10, r10, #Screen_Stride
+    ldmia r10, {r8-r9}                  ; read 2 screen words.
+    mask_and_tint_pixels r6, r8, r14
+    mask_and_tint_pixels r7, r9, r14
+    stmia r10, {r8-r9}                  ; store 2 screen words.
+
+    ldmfd sp!, {r9,r11}
+
+.3:
+    add r11, r11, #ParticleGrid_SIZE
+    subs r9, r9, #1
+    bne .1
+
+    ldr pc, [sp], #4
+
+; ============================================================================
