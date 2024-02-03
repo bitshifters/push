@@ -14,7 +14,6 @@
     call_1 sprite_utils_make_shifted_sheet, block_sprite_sheet_def_no_adr
 
     ; Screen setup.
-    call_3 palette_set_block, 0, 0, seq_palette_red_additive
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 0, 0,                          screen_cls
@@ -22,14 +21,24 @@
     call_3 fx_set_layer_fns, 2, the_ball_tick,              the_ball_draw
     call_3 fx_set_layer_fns, 3, 0,                          circles_plot_all_in_order
 
-    write_fp particle_grid_dave_factor 0.99
+    write_fp particle_grid_gloop_factor,    0.99            ; 0.0=won't move, 1.0=won't return, higher is slower.
+    write_fp particle_grid_collider_radius, 48.0            ;
+    write_fp particle_grid_dave_maxpush,    1.21            ; displacement radius multiplier
 
     ; Call each part in turn.
+
+seq_loop:
+    call_3 palette_set_block, 0, 0, seq_palette_green_white_ramp
     gosub seq_part4
     gosub seq_part1
+
+    call_3 palette_set_block, 0, 0, seq_palette_black_on_white
     gosub seq_part2
+
+    call_3 palette_set_block, 0, 0, seq_palette_red_additive
     gosub seq_part3
-    
+
+    yield seq_loop
     end_script
 
 ; Ball moves in a spiral through the particle grid.
@@ -41,12 +50,12 @@ seq_part1:
     call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
     call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball
-    call_2f the_ball_set_vel  0.0, 0.0
+    call_2f the_ball_set_vel, 0.0, 0.0
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -61,13 +70,13 @@ seq_part1:
     ; ~20 seconds to get to max radius 100. 1000/speed=100;speed=10.
 
     ; radius = i/10
-    math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/10.0
+    math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
     ; Want this to be the radius value -----------------------v
     math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_register_var2 the_ball_block+TheBall_y, 128.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
-    wait_secs 20.0
+    wait_secs 30.0
 
     math_unregister_var the_ball_block+TheBall_x
     math_unregister_var the_ball_block+TheBall_y
@@ -91,12 +100,12 @@ seq_part2:
     call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
     call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball
-    call_2f the_ball_set_vel  0.0, 0.0
+    call_2f the_ball_set_vel, 0.0, 0.0
 
     ; Make the ball the particle grid collider but inverted!
     ; particle_grid_collider_pos.x = -the_ball.x
@@ -107,13 +116,13 @@ seq_part2:
     math_link_vars particle_grid_collider_pos+4, 255.0, -1.0, the_ball_block+TheBall_y
 
     ; radius = i/10
-    math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/10.0
+    math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
     ; Want this to be the radius value -----------------------v
     math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_register_var2 the_ball_block+TheBall_y, 128.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
-    wait_secs 20.0
+    wait_secs 30.0
 
     math_unregister_var the_ball_block+TheBall_x
     math_unregister_var the_ball_block+TheBall_y
@@ -134,7 +143,7 @@ seq_part3:
     call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
@@ -145,61 +154,61 @@ seq_part3:
 
     ; Start off right side of the screen and move left.
     call_2f the_ball_set_pos, 300.0, 48.0
-    call_2f the_ball_set_vel  -4.0, 0.0
+    call_2f the_ball_set_vel,  -4.0, 0.0
     wait_secs 3.0
 
     ; Top and move down.
     call_2f the_ball_set_pos, -138.0, 428.0
-    call_2f the_ball_set_vel  0.0, -4.0
+    call_2f the_ball_set_vel,  0.0, -4.0
     wait_secs 3.0
 
     ; Bottom and move up.
     call_2f the_ball_set_pos, 64.0, -172.0
-    call_2f the_ball_set_vel  0.0, 4.0
+    call_2f the_ball_set_vel,  0.0, 4.0
     wait_secs 3.0
 
     ; Right and move left again.
     call_2f the_ball_set_pos, 300.0, 172.0
-    call_2f the_ball_set_vel  -4.0, 0.0
+    call_2f the_ball_set_vel,  -4.0, 0.0
     wait_secs 3.0
 
     ; Left and move right again.
     call_2f the_ball_set_pos, -300.0, 48.0
-    call_2f the_ball_set_vel  4.0, 0.0
+    call_2f the_ball_set_vel,  4.0, 0.0
     wait_secs 3.0
 
     ; Bottom and move up.
     call_2f the_ball_set_pos, -48.0, -172.0
-    call_2f the_ball_set_vel  0.0, 4.0
+    call_2f the_ball_set_vel,  0.0, 4.0
     wait_secs 3.0
 
     ; Top and move down.
     call_2f the_ball_set_pos, 64.0, 428.0
-    call_2f the_ball_set_vel  0.0, -4.0
+    call_2f the_ball_set_vel,  0.0, -4.0
     wait_secs 3.0
 
     ; Right and move left again.
     call_2f the_ball_set_pos, 300.0, 96.0
-    call_2f the_ball_set_vel  -4.0, 0.0
+    call_2f the_ball_set_vel,  -4.0, 0.0
     wait_secs 3.0
 
     ; Left and move right again.
     call_2f the_ball_set_pos, -300.0, 138.0
-    call_2f the_ball_set_vel  4.0, 0.0
+    call_2f the_ball_set_vel,  4.0, 0.0
     wait_secs 3.0
 
     ; Right and move left again.
     call_2f the_ball_set_pos, 300.0, 64.0
-    call_2f the_ball_set_vel  -4.0, 0.0
+    call_2f the_ball_set_vel,  -4.0, 0.0
     wait_secs 3.0
 
     ; Top and move down.
     call_2f the_ball_set_pos, -64.0, 428.0
-    call_2f the_ball_set_vel  0.0, -4.0
+    call_2f the_ball_set_vel,  0.0, -4.0
     wait_secs 3.0
 
     ; Settle.
-    call_2f the_ball_set_vel  0.0, 0.0
+    call_2f the_ball_set_vel,  0.0, 0.0
     wait_secs 3.0
 
     math_unlink_vars particle_grid_collider_pos+0
@@ -216,11 +225,11 @@ seq_part4:
     call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
     ; Sprite version.
 ;    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
-;    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_8x8_tinted
+;    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_8x8_tinted
 
     ; Environment setup.
     make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
@@ -232,7 +241,7 @@ seq_part4:
     ; Setup the ball.
     call_2f the_env_set_constant_force  0.0, -(Ball_Gravity/50.0)
     call_2f the_ball_set_pos, 80.0, 300.0            ; centre ball
-    call_2f the_ball_set_vel  0.0, 0.0
+    call_2f the_ball_set_vel,  0.0, 0.0
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -252,7 +261,7 @@ seq_part4:
     wait_secs 2.0
 
     call_2f the_ball_set_pos, 200.0, 128.0
-    call_2f the_ball_set_vel  0.0, 0.0
+    call_2f the_ball_set_vel, 0.0, 0.0
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
 
     math_unlink_vars particle_grid_collider_pos+0
@@ -280,10 +289,10 @@ seq_loop:
 ;    wait_secs 5.0
 
 ;    call_1 the_env_remove_plane the_env_floor_plane
-    math_unregister_var                 the_ball_block+TheBall_x
-    call_2f the_ball_set_vel            0.0, 0.0
-    call_2f the_ball_add_impulse        1.0, 1.0
-    call_2f the_env_set_constant_force  0.0, -(Ball_Gravity/50.0)
+    math_unregister_var                  the_ball_block+TheBall_x
+    call_2f the_ball_set_vel,            0.0, 0.0
+    call_2f the_ball_add_impulse,        1.0, 1.0
+    call_2f the_env_set_constant_force,  0.0, -(Ball_Gravity/50.0)
 
     fork seq_loop
 
@@ -365,7 +374,7 @@ math_emitter_config_3:  ; attached to the_ball.
 
 seq_palette_red_additive:
     .long 0x00000000                    ; 00 = 0000 = black
-    .long 0x00f000f0                    ; 01 = 0001 =
+    .long 0x00000020                    ; 01 = 0001 =
     .long 0x00000040                    ; 02 = 0010 =
     .long 0x00000060                    ; 03 = 0011 =
     .long 0x00000080                    ; 04 = 0100 =
@@ -379,6 +388,42 @@ seq_palette_red_additive:
     .long 0x0000a0e0                    ; 12 = 1100 =
     .long 0x0000c0e0                    ; 13 = 1101 =
     .long 0x0000e0e0                    ; 14 = 1110 = oranges
+    .long 0x00e0e0e0                    ; 15 = 1111 = white
+
+seq_palette_green_white_ramp:
+    .long 0x00000000                    ; 00 = 0000 = black
+    .long 0x00008000                    ; 01 = 0001 =
+    .long 0x00108010                    ; 02 = 0010 =
+    .long 0x00208020                    ; 03 = 0011 =
+    .long 0x00308030                    ; 04 = 0100 =
+    .long 0x00408040                    ; 05 = 0101 =
+    .long 0x00509050                    ; 06 = 0110 =
+    .long 0x0060a060                    ; 07 = 0111 = reds
+    .long 0x0070b070                    ; 08 = 1000 =
+    .long 0x0080c080                    ; 09 = 1001 =
+    .long 0x0090d090                    ; 10 = 1010 =
+    .long 0x00a0e0a0                    ; 11 = 1011 =
+    .long 0x00b0e0b0                    ; 12 = 1100 =
+    .long 0x00c0e0c0                    ; 13 = 1101 =
+    .long 0x00d0e0d0                    ; 14 = 1110 = oranges
+    .long 0x00e0e0e0                    ; 15 = 1111 = white
+
+seq_palette_black_on_white:
+    .long 0x00f0f0f0                    ; 00 = 0000 = black
+    .long 0x00000000                    ; 01 = 0001 =
+    .long 0x00101010                    ; 02 = 0010 =
+    .long 0x00202020                    ; 03 = 0011 =
+    .long 0x00303030                    ; 04 = 0100 =
+    .long 0x00404040                    ; 05 = 0101 =
+    .long 0x00505050                    ; 06 = 0110 =
+    .long 0x00606060                    ; 07 = 0111 = reds
+    .long 0x00707070                    ; 08 = 1000 =
+    .long 0x00808080                    ; 09 = 1001 =
+    .long 0x00909090                    ; 10 = 1010 =
+    .long 0x00a0a0a0                    ; 11 = 1011 =
+    .long 0x00b0b0b0                    ; 12 = 1100 =
+    .long 0x00c0c0c0                    ; 13 = 1101 =
+    .long 0x00d0d0d0                    ; 14 = 1110 = oranges
     .long 0x00e0e0e0                    ; 15 = 1111 = white
 
 block_sprite_sheet_def_no_adr:

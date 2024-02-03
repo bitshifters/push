@@ -9,12 +9,12 @@
 ; Particle variables block:
 .equ ParticleGrid_XPos,     0       ; R1
 .equ ParticleGrid_YPos,     4       ; R2
+.equ ParticleGrid_Colour,   8
 .equ ParticleGrid_XVel,     8       ; R3
 .equ ParticleGrid_YVel,     12      ; R4
 .equ ParticleGrid_XOrigin,  16      ; R5
 .equ ParticleGrid_YOrigin,  20      ; R6
-.equ ParticleGrid_Colour,   24
-.equ ParticleGrid_SIZE,     28
+.equ ParticleGrid_SIZE,     24
 ; TODO: Colour, sprite per particle etc.?
 
 .equ ParticleGrid_Max,          (24*18)     ; runs at 50Hz with the Dave equation.
@@ -46,7 +46,7 @@ particle_grid_collider_pos:
 particle_grid_collider_radius:
     FLOAT_TO_FP 48.0        ;Particles_CircleCollider_Radius
 
-particle_grid_dave_factor:
+particle_grid_gloop_factor:
     FLOAT_TO_FP 0.95
 
 particle_grid_dave_maxpush:
@@ -93,7 +93,7 @@ particle_grid_make:
     mov r5, r1
     mov r6, r2                      ; Origin
 
-    stmia r11!, {r1-r6,r12}
+    stmia r11!, {r1-r6}
 
     add r1, r1, r9
     subs r7, r7, #1
@@ -116,7 +116,7 @@ error_gridtoolarge:
 
 ; ============================================================================
 
-particles_grid_tick_all:
+particle_grid_tick_all:
     str lr, [sp, #-4]!
 
     ; R6=object.x
@@ -381,7 +381,10 @@ particles_grid_tick_all:
 
 ; ============================================================================
 
-particles_grid_tick_all_dave_equation:
+particle_grid_inv_radius:
+    .long 0
+
+particle_grid_tick_all_dave_equation:
     str lr, [sp, #-4]!
 
     ; R6=object.x
@@ -422,8 +425,12 @@ particles_grid_tick_all_dave_equation:
 
     ; Lookup 1/radius.
     ldr r0, [r4, r14, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
+    mov r0, r0, asr #4
+    str r0, particle_grid_inv_radius        ; [1.12]
 
-    ldr r3, particle_grid_dave_factor      ; factor [1.16]
+    ldr r0, particle_grid_sqrt_p
+
+    ldr r3, particle_grid_gloop_factor       ; factor [1.16]
     ldr r12, particle_grid_total
     ldr r11, particle_grid_array_p
 .1:
@@ -467,8 +474,7 @@ particles_grid_tick_all_dave_equation:
 
     subs r5, r5, #1
     movmi r14, #MATHS_CONST_1       ; should be 0 but avoid div by 0.
-    ldrpl r4, particle_grid_sqrt_p
-    ldrpl r14, [r4, r5, lsl #2]     ; dist=sqrt4(distsq) [16.16]
+    ldrpl r14, [r0, r5, lsl #2]     ; dist=sqrt4(distsq) [16.16]
 
     ; Clamp dist. [0.0, radius] => [-max_push, 0.0]
 
@@ -482,8 +488,7 @@ particles_grid_tick_all_dave_equation:
     ; cd = -max_push + (dist/radius) * max_push
     ; cd = max_push * dist * (1/radius) - max_push
 
-    mov r5, r0, asr #4              ; 1/radius [1.12]
-
+    ldr r5, particle_grid_inv_radius    ; 1/radius [1.12]
     mov r14, r14, asr #4            ; dist [8.12]
     mul r14, r5, r14                ; dist / radius [1.24]
     mov r14, r14, asr #8            ; [1.16]
@@ -518,7 +523,7 @@ particles_grid_tick_all_dave_equation:
     sub r1, r1, r8                  ; desired.x - orig.x
     sub r2, r2, r9                  ; desired.y - orig.y
 
-    ; NB. Would like the length of this vector for colour!
+    ; Calculate the length of this vector for colour!
     .if 1
     ; Calcluate dist^2=dx*dx + dy*dy
     mov r4, r1, asr #10             ; [10.6]
@@ -545,10 +550,13 @@ particles_grid_tick_all_dave_equation:
     .endif
 
     subs r5, r5, #1
-    movmi r14, #MATHS_CONST_1       ; should be 0 but avoid div by 0.
-    ldrpl r4, particle_grid_sqrt_p
-    ldrpl r14, [r4, r5, lsl #2]     ; dist=sqrt4(distsq) [16.16]
-    str r14, [r11, #ParticleGrid_Colour]
+    movmi r5, #MATHS_CONST_1       ; should be 0 but avoid div by 0.
+    ldrpl r5, [r0, r5, lsl #2]     ; dist=sqrt4(distsq) [16.16]
+
+    ; Interesting experiement - store max distance - sort of like mixing paint.
+    ;ldr r14, [r11, #ParticleGrid_Colour]
+    ;cmp r5, r14
+    ;movlt r5, r14
     .endif
 
     ; TODO: factor might be const?
@@ -563,7 +571,7 @@ particles_grid_tick_all_dave_equation:
     ; TODO: Would it be faster to plot immediately here? A: Probably.
 
     ; Save particle state.
-    stmia r11, {r1-r2}              ; note just pos.x, pos.y - no velocity!
+    stmia r11, {r1-r2, r5}          ; note just pos.x, pos.y - no velocity!
     add r11, r11, #ParticleGrid_SIZE
 
     subs r12, r12, #1
@@ -582,9 +590,10 @@ particle_grid_draw_all_as_points:
     ldr r9, particle_grid_total
     ldr r11, particle_grid_array_p
 .1:
-    ldmia r11, {r1-r2}
-    ldr r7, [r11, #ParticleGrid_Colour]
-    mov r7, r7, asr #17
+    ldmia r11, {r1-r2,r7}
+
+    ; Clamp distance to calculate colour index.
+    mov r7, r7, asr #17                 ; ((int) dist) / 2 [0-30] -> [1.15]
     cmp r7, #14
     movgt r7, #14
     add r7, r7, #1
