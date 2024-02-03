@@ -451,8 +451,8 @@ Ideas to prototype
 - Particle grid rendered as sprites? - DONE
     - How many is feasible? - 250
 
-- Particle grid rotation? - MAYBE
-    - This is likely expensive?
+- Particle grid rotation? - DONE
+    - This is likely expensive? - MINSKY ROTATION FTW!
 
 - Return to free particles! - DAVE SEEMS LESS FUSSED, MAYBE KEEP FOR NOVA?
     - Link circle collider to math_vars as per initial parts.
@@ -461,6 +461,7 @@ Ideas to prototype
 
 - Particles in grid become free (fall under gravity).
     - Drop, explode, etc.
+    - THINK SLOOOOOOW! (What would Dave do? ;)
 
 - Use the Dave equation for ball as collider with free particles.
     - E.g. Fire / smoke effect, ball goes through them.
@@ -471,9 +472,9 @@ Ideas to prototype
 
 Direction from Dave:
 ~~~
-- Changing colour based on distance from orig point, close to the orb.
-    - Try green to white. Ramp.
-    - Can we do this without yet another sqrt?
+- Changing colour based on distance from orig point, close to the orb. - DONE
+    - Try green to white. Ramp. - DONE
+    - Can we do this without yet another sqrt? - NO :)
     - Another option as 4x4 sprite for a glow. (Or 3x3 and hand code?)
 - If two balls they could affect different particle systems.
     - Different colours for the balls / particles.

@@ -47,14 +47,14 @@ seq_part1:
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
-    call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball
+    call_2f the_ball_set_pos, 0.0, 0.0              ; centre ball
     call_2f the_ball_set_vel, 0.0, 0.0
 
     ; Make the ball the particle grid collider.
@@ -74,7 +74,7 @@ seq_part1:
 
     ; Want this to be the radius value -----------------------v
     math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_register_var2 the_ball_block+TheBall_y, 128.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_register_var2 the_ball_block+TheBall_y,   0.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     wait_secs 30.0
 
@@ -82,7 +82,7 @@ seq_part1:
     math_unregister_var the_ball_block+TheBall_y
     math_unregister_var seq_ball_radius
 
-    call_2f the_ball_set_pos, 300.0, 128.0
+    call_2f the_ball_set_pos, 300.0, 0.0
     wait_secs 2.0
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
@@ -97,30 +97,30 @@ seq_part2:
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
-    call_2f the_ball_set_pos, 0.0, 128.0            ; centre ball
+    call_2f the_ball_set_pos, 0.0, 0.0              ; centre ball
     call_2f the_ball_set_vel, 0.0, 0.0
 
     ; Make the ball the particle grid collider but inverted!
     ; particle_grid_collider_pos.x = -the_ball.x
-    ; particle_grid_collider_pos.y = 255-the_ball.y
+    ; particle_grid_collider_pos.y = -the_ball.y
 
     ; Inverted (part2)
     math_link_vars particle_grid_collider_pos+0,   0.0, -1.0, the_ball_block+TheBall_x
-    math_link_vars particle_grid_collider_pos+4, 255.0, -1.0, the_ball_block+TheBall_y
+    math_link_vars particle_grid_collider_pos+4,   0.0, -1.0, the_ball_block+TheBall_y
 
     ; radius = i/10
     math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
     ; Want this to be the radius value -----------------------v
     math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_register_var2 the_ball_block+TheBall_y, 128.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_register_var2 the_ball_block+TheBall_y,   0.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     wait_secs 30.0
 
@@ -128,7 +128,7 @@ seq_part2:
     math_unregister_var the_ball_block+TheBall_y
     math_unregister_var seq_ball_radius
 
-    call_2f the_ball_set_pos, 300.0, 128.0
+    call_2f the_ball_set_pos, 300.0, 0.0
     wait_secs 2.0
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
@@ -140,7 +140,7 @@ seq_part3:
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
@@ -153,58 +153,58 @@ seq_part3:
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
     ; Start off right side of the screen and move left.
-    call_2f the_ball_set_pos, 300.0, 48.0
-    call_2f the_ball_set_vel,  -4.0, 0.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, 200.0,-80.0
+    call_2f the_ball_set_vel,  -2.0, 0.0
+    wait_secs 5.0
 
     ; Top and move down.
-    call_2f the_ball_set_pos, -138.0, 428.0
-    call_2f the_ball_set_vel,  0.0, -4.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, -138.0, 160.0
+    call_2f the_ball_set_vel,  0.0, -2.0
+    wait_secs 5.0
 
     ; Bottom and move up.
-    call_2f the_ball_set_pos, 64.0, -172.0
-    call_2f the_ball_set_vel,  0.0, 4.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, 64.0, -160.0
+    call_2f the_ball_set_vel,  0.0, 2.0
+    wait_secs 5.0
 
     ; Right and move left again.
-    call_2f the_ball_set_pos, 300.0, 172.0
-    call_2f the_ball_set_vel,  -4.0, 0.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, 200.0, 44.0
+    call_2f the_ball_set_vel,  -2.0, 0.0
+    wait_secs 5.0
 
     ; Left and move right again.
-    call_2f the_ball_set_pos, -300.0, 48.0
-    call_2f the_ball_set_vel,  4.0, 0.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, -200.0, -80.0
+    call_2f the_ball_set_vel,  2.0, 0.0
+    wait_secs 5.0
 
     ; Bottom and move up.
-    call_2f the_ball_set_pos, -48.0, -172.0
-    call_2f the_ball_set_vel,  0.0, 4.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, -48.0, -160.0
+    call_2f the_ball_set_vel,  0.0, 2.0
+    wait_secs 5.0
 
     ; Top and move down.
-    call_2f the_ball_set_pos, 64.0, 428.0
-    call_2f the_ball_set_vel,  0.0, -4.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, 64.0, 160.0
+    call_2f the_ball_set_vel,  0.0, -2.0
+    wait_secs 5.0
 
     ; Right and move left again.
-    call_2f the_ball_set_pos, 300.0, 96.0
-    call_2f the_ball_set_vel,  -4.0, 0.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, 200.0, -32.0
+    call_2f the_ball_set_vel,  -2.0, 0.0
+    wait_secs 5.0
 
     ; Left and move right again.
-    call_2f the_ball_set_pos, -300.0, 138.0
-    call_2f the_ball_set_vel,  4.0, 0.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, -200.0, 10.0
+    call_2f the_ball_set_vel,  2.0, 0.0
+    wait_secs 5.0
 
     ; Right and move left again.
-    call_2f the_ball_set_pos, 300.0, 64.0
-    call_2f the_ball_set_vel,  -4.0, 0.0
-    wait_secs 3.0
+    call_2f the_ball_set_pos, 200.0, -64.0
+    call_2f the_ball_set_vel,  -2.0, 0.0
+    wait_secs 5.0
 
     ; Top and move down.
-    call_2f the_ball_set_pos, -64.0, 428.0
-    call_2f the_ball_set_vel,  0.0, -4.0
+    call_2f the_ball_set_pos, -64.0, 160.0
+    call_2f the_ball_set_vel,  0.0, -2.0
     wait_secs 3.0
 
     ; Settle.
@@ -222,7 +222,9 @@ seq_part4:
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
+     
+    ;call_6 particle_grid_make_spiral, 400, MATHS_CONST_1*5.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.5, MATHS_CONST_1*0.0, MATHS_CONST_1*128.0
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
@@ -232,15 +234,15 @@ seq_part4:
 ;    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_8x8_tinted
 
     ; Environment setup.
-    make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
-    make_and_add_env_plane the_env_left_plane, -240.0, 0.0, 64.0        ; +90 degrees
-    make_and_add_env_plane the_env_left_slope, -80.0, 0.0, 32.0         ; +45 degrees
-    make_and_add_env_plane the_env_right_plane, 240.0, 0.0, -64.0       ; -90 degrees
-    make_and_add_env_plane the_env_right_slope, 80.0, 0.0, -32.0        ; -45 degrees
+    ;make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
+    make_and_add_env_plane the_env_left_plane, -240.0, -128.0, 64.0        ; +90 degrees
+    make_and_add_env_plane the_env_left_slope, -80.0, -128.0, 32.0         ; +45 degrees
+    make_and_add_env_plane the_env_right_plane, 200.0, -128.0, -64.0       ; -90 degrees
+    make_and_add_env_plane the_env_right_slope, 80.0, -128.0, -32.0        ; -45 degrees
 
     ; Setup the ball.
-    call_2f the_env_set_constant_force  0.0, -(Ball_Gravity/50.0)
-    call_2f the_ball_set_pos, 80.0, 300.0            ; centre ball
+    call_2f the_env_set_constant_force  0.0, -(0.2/50.0)
+    call_2f the_ball_set_pos, 80.0, 128.0            ; centre ball
     call_2f the_ball_set_vel,  0.0, 0.0
 
     ; Make the ball the particle grid collider.
@@ -249,9 +251,9 @@ seq_part4:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-    wait_secs 20.0
+    wait_secs 30.0
 
-    call_1 the_env_remove_plane, the_env_floor_plane
+    ;call_1 the_env_remove_plane, the_env_floor_plane
     call_1 the_env_remove_plane, the_env_left_plane
     call_1 the_env_remove_plane, the_env_left_slope
     call_1 the_env_remove_plane, the_env_right_plane
@@ -260,7 +262,7 @@ seq_part4:
     ; Settle.
     wait_secs 2.0
 
-    call_2f the_ball_set_pos, 200.0, 128.0
+    call_2f the_ball_set_pos, 200.0, 0.0
     call_2f the_ball_set_vel, 0.0, 0.0
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
 

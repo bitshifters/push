@@ -19,7 +19,7 @@
                                 ; TODO: Drive with math_func?
 
 .equ Particles_CentreX,         (160.0 * MATHS_CONST_1)
-.equ Particles_CentreY,         (255.0 * MATHS_CONST_1)
+.equ Particles_CentreY,         (128.0 * MATHS_CONST_1)
 
 .equ Particles_CollideLeft,     (-160.0 * MATHS_CONST_1)
 .equ Particles_CollideRight,    (160.0 * MATHS_CONST_1)

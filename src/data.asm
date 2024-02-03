@@ -146,7 +146,7 @@ QtmEmbedded_Base:
 .if !AppConfig_LoadModFromFile
 .p2align 2
 music_mod_no_adr:
-.incbin "data/music/maze-funky-delicious.mod"
+.incbin "build/music.mod"
 .endif
 
 ; ============================================================================

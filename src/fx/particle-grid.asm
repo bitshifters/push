@@ -15,13 +15,14 @@
 .equ ParticleGrid_XOrigin,  16      ; R5
 .equ ParticleGrid_YOrigin,  20      ; R6
 .equ ParticleGrid_SIZE,     24
-; TODO: Colour, sprite per particle etc.?
+; TODO: Sprite per particle etc.?
 
 .equ ParticleGrid_Max,          (24*18)     ; runs at 50Hz with the Dave equation.
 
 .equ ParticleGrid_CentreX,      (160.0 * MATHS_CONST_1)
-.equ ParticleGrid_CentreY,      (255.0 * MATHS_CONST_1)
-.equ Particles_CentreY,         (255.0 * MATHS_CONST_1)
+.equ ParticleGrid_CentreY,      (128.0 * MATHS_CONST_1)
+
+.equ ParticleGrid_Minksy_Rotation, 12       ; 12=slow, 0=none
 
 ; ============================================================================
 
@@ -113,6 +114,56 @@ error_gridtoolarge:
 	.p2align 2
 	.long 0
 .endif
+
+; R0=total particles
+; R1=angle increment [brads]
+; R2=start radius
+; R3=radius increment
+; R4=centre X
+; R5=centre Y
+particle_grid_make_spiral:
+    str lr, [sp, #-4]!
+
+   .if _DEBUG
+    cmp r0, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+    str r0, particle_grid_total
+
+    mov r2, r2, asr #8
+    mov r3, r3, asr #8
+
+    ldr r11, particle_grid_array_p
+    mov r12, r0
+    mov r10, r1
+    mov r8, #0
+.1:
+    mov r0, r8          ; angle
+    bl sin_cos
+    ; R0=sin(angle)
+    ; R1=cos(angle)
+
+    mov r0, r0, asr #8
+    mov r1, r1, asr #8
+
+    mla r6, r0, r2, r4  ; x = cx + r * sin(a)
+    mla r7, r1, r2, r5  ; y = cy + r * cos(a)
+
+    ; Write particle block.
+    stmia r11!, {r6-r7}
+    mov r0, #0
+    mov r1, #0
+    stmia r11!, {r0-r1}
+    stmia r11!, {r6-r7}
+
+    add r8, r8, r10     ; a+=inc_a
+    add r2, r2, r3      ; r+=inc_r
+
+    subs r12, r12, #1
+    bne .1
+    
+    ldr pc, [sp], #4
 
 ; ============================================================================
 
@@ -519,6 +570,14 @@ particle_grid_tick_all_dave_equation:
     ldr r8, [r11, #ParticleGrid_XOrigin]    ; orig.x
     ldr r9, [r11, #ParticleGrid_YOrigin]    ; orig.y
 
+    ; Minksy rotation.
+    ; xnew = xold - (yold >> k)
+    ; ynew = yold + (xnew >> k)
+    .if ParticleGrid_Minksy_Rotation > 0
+    sub r8, r8, r9, asr #ParticleGrid_Minksy_Rotation
+    add r9, r9, r8, asr #ParticleGrid_Minksy_Rotation
+    .endif
+
     ; Calculate desired position - original position:
     sub r1, r1, r8                  ; desired.x - orig.x
     sub r2, r2, r9                  ; desired.y - orig.y
@@ -571,8 +630,7 @@ particle_grid_tick_all_dave_equation:
     ; TODO: Would it be faster to plot immediately here? A: Probably.
 
     ; Save particle state.
-    stmia r11, {r1-r2, r5}          ; note just pos.x, pos.y - no velocity!
-    add r11, r11, #ParticleGrid_SIZE
+    stmia r11!, {r1-r2, r5-r6, r8-r9}       ; note just pos.x, pos.y - no velocity!
 
     subs r12, r12, #1
     bne .1

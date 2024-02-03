@@ -16,7 +16,7 @@
 ; Sequence config.
 ; ============================================================================
 
-.equ SeqConfig_EnableLoop, 0
+.equ SeqConfig_EnableLoop, 1
 .equ SeqConfig_MaxPatterns, 39
 
 .equ SeqConfig_ProTracker_Tempo,        108
