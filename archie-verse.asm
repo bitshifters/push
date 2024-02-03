@@ -20,12 +20,12 @@
 ; Includes.
 ; ============================================================================
 
+.include "src/app_config.h.asm"
 .include "lib/swis.h.asm"
 .include "lib/lib_config.h.asm"
 .include "lib/maths.h.asm"
 .include "lib/macros.h.asm"
 .include "lib/debug.h.asm"
-.include "src/app_config.h.asm"
 
 ; ============================================================================
 ; Code Start

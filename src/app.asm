@@ -339,7 +339,6 @@ app_vsync_code:
 ; FX code modules.
 ; ============================================================================
 
-.include "src/fx/scene-3d.asm"
 .include "src/fx/particles.asm"
 .include "src/fx/math-emitter.asm"
 .include "src/fx/balls.asm"

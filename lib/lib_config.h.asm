@@ -6,10 +6,10 @@
 
 .equ LibConfig_IncludeSqrt,     1
 .equ LibConfig_IncludeLine,     0
-.equ LibConfig_IncludeTriangle, 1
+.equ LibConfig_IncludeTriangle, 0
 .equ LibConfig_IncludePolygon,  0
 .equ LibConfig_IncludeDivide,   1
-.equ LibConfig_IncludeVector,   1
+.equ LibConfig_IncludeVector,   0
 .equ LibConfig_IncludeMatrix,   0
 .equ LibConfig_IncludeCircles,  1
 .equ LibConfig_IncludeSprites,  1
@@ -30,9 +30,9 @@
 .equ LibCircles_DataWords,      4                                       ; {X centre, colour word, ptr to size table, line count}
 
 .equ LibSqrt_IncludeRsqrt,      (LibConfig_IncludeSqrt && 0)
-.equ LibSqrt_MakeSqrtTable,     (LibConfig_IncludeSqrt && 0)            ; TODO: Configure from Makefile define.
 
-.equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && 0)
+.equ LibSqrt_MakeSqrtTable,     (LibConfig_IncludeSqrt && AppConfig_MakeSmallExe)            ; TODO: Configure from Makefile define.
+.equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && AppConfig_MakeSmallExe)
 
 .equ LibDivide_Reciprocal_t, 16           ; Table entries = 1<<t
 .equ LibDivide_Reciprocal_m, 9            ; Max value = 1<<m

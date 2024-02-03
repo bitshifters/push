@@ -90,7 +90,7 @@ credits_pal_no_adr:
 
 ; ============================================================================
 
-.if 1   ; fx/scene-3d.asm
+.if 0   ; fx/scene-3d.asm
 .include "src/data/3d-meshes.asm"
 .endif
 
@@ -120,16 +120,6 @@ bits_draw_file_no_adr:
 bits_draw_file_end_no_adr:
 
 ; ============================================================================
-; Sequence data (RODATA Segment - ironically).
-; ============================================================================
-
-.p2align 2
-.rodata
-seq_main_program:
-.include "src/data/sequence-data.asm"
-.p2align 12     ; 4K
-
-; ============================================================================
 ; QTM Embedded.
 ; ============================================================================
 
@@ -148,5 +138,15 @@ QtmEmbedded_Base:
 music_mod_no_adr:
 .incbin "build/music.mod"
 .endif
+
+; ============================================================================
+; Sequence data (RODATA Segment - ironically).
+; ============================================================================
+
+.p2align 2
+.rodata
+seq_main_program:
+.include "src/data/sequence-data.asm"
+.p2align 12     ; 4K
 
 ; ============================================================================
