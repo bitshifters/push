@@ -22,12 +22,14 @@
     call_3 fx_set_layer_fns, 2, the_ball_tick,              the_ball_draw
     call_3 fx_set_layer_fns, 3, 0,                          circles_plot_all_in_order
 
+    write_fp particle_grid_dave_factor 0.99
+
     ; Call each part in turn.
     gosub seq_part4
     gosub seq_part1
     gosub seq_part2
     gosub seq_part3
-
+    
     end_script
 
 ; Ball moves in a spiral through the particle grid.
@@ -83,6 +85,11 @@ seq_ball_radius:
 ; Ball moves in a spiral through the particle grid.
 seq_part2:
 
+    ; Make particle grid.
+    ; X [-138, 138] step 12 (border 22)
+    ; Y [26,   230] step 12 (border 26)
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
+
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
@@ -120,6 +127,11 @@ seq_part2:
 
 ; Ball moves in straight lines through the particle grid.
 seq_part3:
+
+    ; Make particle grid.
+    ; X [-138, 138] step 12 (border 22)
+    ; Y [26,   230] step 12 (border 26)
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
@@ -189,6 +201,10 @@ seq_part3:
     ; Settle.
     call_2f the_ball_set_vel  0.0, 0.0
     wait_secs 3.0
+
+    math_unlink_vars particle_grid_collider_pos+0
+    math_unlink_vars particle_grid_collider_pos+4
+
     end_script
 
 ; Ball drops under gravity etc.
@@ -197,13 +213,14 @@ seq_part4:
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 18, 14, MATHS_CONST_1*-136.0, MATHS_CONST_1*24.0, MATHS_CONST_1*16.0, MATHS_CONST_1*16.0
-
-    ; Set sprite def.
-    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
+    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*26.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_8x8_tinted
+    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+
+    ; Sprite version.
+;    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
+;    call_3 fx_set_layer_fns, 1, particles_grid_tick_all_dave_equation,    particle_grid_draw_all_as_8x8_tinted
 
     ; Environment setup.
     make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
@@ -216,8 +233,6 @@ seq_part4:
     call_2f the_env_set_constant_force  0.0, -(Ball_Gravity/50.0)
     call_2f the_ball_set_pos, 80.0, 300.0            ; centre ball
     call_2f the_ball_set_vel  0.0, 0.0
-
-    write_fp particle_grid_dave_factor 0.95
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -350,7 +365,7 @@ math_emitter_config_3:  ; attached to the_ball.
 
 seq_palette_red_additive:
     .long 0x00000000                    ; 00 = 0000 = black
-    .long 0x00000020                    ; 01 = 0001 =
+    .long 0x00f000f0                    ; 01 = 0001 =
     .long 0x00000040                    ; 02 = 0010 =
     .long 0x00000060                    ; 03 = 0011 =
     .long 0x00000080                    ; 04 = 0100 =

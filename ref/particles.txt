@@ -432,6 +432,11 @@ offset_vec = delta_vec * clamp_dist * 0.610     ; the 0.610 doesn't seem to have
 dot_desired_pos = dot_pos + offset_vec
 new_dot_pos = dot_orig_pos * (1.0-factor) + dot_desired_pos * factor
 
+n = o * (1-f) + d * f
+  = o - o * f + d * f
+  = o + f * (d - o)
+
+
 Where factor = 0.95 to gently return to origin (move 5% back to origin per frame).
 factor = 1.0 ==> points stay where they are left.
 factor = 0.0 ==> points stay at orig_pos.
@@ -443,13 +448,13 @@ Ideas to prototype
     - Model some energy transfer / friction?
     - How to identify which ball to control in script?
 
-- Particle grid rendered as sprites?
-    - How many is feasible?
+- Particle grid rendered as sprites? - DONE
+    - How many is feasible? - 250
 
-- Particle grid rotation?
+- Particle grid rotation? - MAYBE
     - This is likely expensive?
 
-- Return to free particles!
+- Return to free particles! - DAVE SEEMS LESS FUSSED, MAYBE KEEP FOR NOVA?
     - Link circle collider to math_vars as per initial parts.
     - Fire effect?
     - Possible to use plane colliders with free particles?!
@@ -462,3 +467,24 @@ Ideas to prototype
     - Dynamics equation becomes desired pos.
 
 - Reconcile multiple balls w/ script control.
+
+
+Direction from Dave:
+~~~
+- Changing colour based on distance from orig point, close to the orb.
+    - Try green to white. Ramp.
+    - Can we do this without yet another sqrt?
+    - Another option as 4x4 sprite for a glow. (Or 3x3 and hand code?)
+- If two balls they could affect different particle systems.
+    - Different colours for the balls / particles.
+    - Wouldn't necessarily have to collide.
+    - What happens to the colours when they overlap? Hmmm.
+- Not grid based.
+    - Circle, spiral etc.
+- Particle to move of their own accord.
+    - Use small angle rotation formula for speed?
+- Possibly size of sprites? Stick with pixels for now.
+
+- How to start?
+    - Orb grows to size.
+    - Eminates the particles that form the grid. Free particles for a while then lerp.

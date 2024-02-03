@@ -13,7 +13,8 @@
 .equ ParticleGrid_YVel,     12      ; R4
 .equ ParticleGrid_XOrigin,  16      ; R5
 .equ ParticleGrid_YOrigin,  20      ; R6
-.equ ParticleGrid_SIZE,     24
+.equ ParticleGrid_Colour,   24
+.equ ParticleGrid_SIZE,     28
 ; TODO: Colour, sprite per particle etc.?
 
 .equ ParticleGrid_Max,          (24*18)     ; runs at 50Hz with the Dave equation.
@@ -78,6 +79,7 @@ particle_grid_make:
     ; XVel, YVel.
     mov r3, #0
     mov r4, #0
+    mov r12, #0                     ; Colour
 
     ; Y loop.
     ldr r2, [sp, #12]               ; YPos
@@ -91,7 +93,7 @@ particle_grid_make:
     mov r5, r1
     mov r6, r2                      ; Origin
 
-    stmia r11!, {r1-r6}
+    stmia r11!, {r1-r6,r12}
 
     add r1, r1, r9
     subs r7, r7, #1
@@ -387,7 +389,7 @@ particles_grid_tick_all_dave_equation:
     ; R10=object.radius
     ldr r6, particle_grid_collider_pos+0
 
-    ; Clamp distance of collider.
+    ; Clamp distance of collider to avoid overflows.
     cmp r6, #MATHS_CONST_1*255.0
     movgt r6, #MATHS_CONST_1*255.0
     cmp r6, #MATHS_CONST_1*-255.0
@@ -440,9 +442,7 @@ particles_grid_tick_all_dave_equation:
 
     mov r5, r9, asr #10
     mov r14, r5
-    mul r5, r14, r5                 ; dy*dy [20.12]
-
-    add r5, r4, r5                  ; distsq=dx*dx + dy*dy [20.12]
+    mla r5, r14, r5, r4             ; distsq=dx*dx + dy*dy [20.12]
 
     ; TODO: Can early out here if distsq > radiussq. See R10 above.
 
@@ -504,39 +504,63 @@ particles_grid_tick_all_dave_equation:
     mov r8, r8, asr #8              ; dx [~9.8]
     mov r9, r9, asr #8              ; dy [~9.8]
 
-    mul r8, r14, r8                 ; ox=cd*dx [16.16]
-    mul r9, r14, r9                 ; ox=cd*dy [16.16]
-
     ; Calculate desired position = current_pos + offset_vec.
 
-    add r1, r1, r8                  ; desired.x = pos.x + ox [16.16]
-    add r2, r2, r9                  ; desired.y = pos.y + oy [16.16]
+    mla r1, r14, r8, r1             ; desired.x = pos.x + off.x [16.16]
+    mla r2, r14, r9, r2             ; desired.y = pos.y + off.y [16.16]
 
     ; Original position.
 
     ldr r8, [r11, #ParticleGrid_XOrigin]    ; orig.x
     ldr r9, [r11, #ParticleGrid_YOrigin]    ; orig.y
 
-    mov r14, r3                             ; factor [1.16]
-    rsb r5, r14, #MATHS_CONST_1             ; 1-factor [1.16]
+    ; Calculate desired position - original position:
+    sub r1, r1, r8                  ; desired.x - orig.x
+    sub r2, r2, r9                  ; desired.y - orig.y
 
-    mov r1, r1, asr #12             ; [~9.4]
-    mov r2, r2, asr #12             ; [~9.4]
-    mov r14, r14, asr #4            ; [1.12]
-    mul r1, r14, r1                 ; desired.x * factor [~9.16]
-    mul r2, r14, r2                 ; desired.y * factor [~9.16]
-    
-    mov r8, r8, asr #12             ; [~9.4]
-    mov r9, r9, asr #12             ; [~9.4]
-    mov r5, r5, asr #4              ; [1.12]
-    mul r8, r5, r8                  ; orig.x * (1-f) [~9.20]
-    mul r9, r5, r9                  ; orig.y * (1-f) [~9.20]
+    ; NB. Would like the length of this vector for colour!
+    .if 1
+    ; Calcluate dist^2=dx*dx + dy*dy
+    mov r4, r1, asr #10             ; [10.6]
+    mov r14, r4
+    mul r4, r14, r4                 ; dx*dx [20.12]
 
-    add r1, r1, r8              ; pos.x = orig.x * (1-f) + des.x * f
-    add r2, r2, r9              ; pos.y = orig.y * (1-f) + des.y * f
+    mov r5, r2, asr #10
+    mov r14, r5
+    mla r5, r14, r5, r4             ; distsq=dx*dx + dy*dy [20.12]
+
+    mov r5, r5, asr #14             ; distsq/4             [16.0]
+
+    ; Calculate dist=sqrt(dx*dx + dy*dy)
+
+    ; SQRT table goes from [1, 512*512) = [0x00001, 0x40000) (18 bits)
+    ; Contains 65536 = 0x10000 entries                       (16 bits)
+    ; Values are in 16.16 format.
+
+    ; Limited precision.
+    .if _DEBUG
+    cmp r5, #LibSqrt_Entries    ; Test for numerator too large
+    adrge r0,sqrtrange           ; and flag an error
+    swige OS_GenerateError      ; when necessary
+    .endif
+
+    subs r5, r5, #1
+    movmi r14, #MATHS_CONST_1       ; should be 0 but avoid div by 0.
+    ldrpl r4, particle_grid_sqrt_p
+    ldrpl r14, [r4, r5, lsl #2]     ; dist=sqrt4(distsq) [16.16]
+    str r14, [r11, #ParticleGrid_Colour]
+    .endif
+
+    ; TODO: factor might be const?
+    mov r14, r3, asr #8             ; factor [1.8]
+    mov r1, r1, asr #8              ; [~9.8]
+    mov r2, r2, asr #8              ; [~9.8]
+
+    mla r1, r14, r1, r8             ; pos.x = orig.x - f * (desired.x - orig.x) [16.16]
+    mla r2, r14, r2, r9             ; pos.x = orig.x - f * (desired.x - orig.x) [16.16]
 
     ; Presume no collision detection?
-    ; TODO: Would it be faster to plot immediately here?
+    ; TODO: Would it be faster to plot immediately here? A: Probably.
 
     ; Save particle state.
     stmia r11, {r1-r2}              ; note just pos.x, pos.y - no velocity!
@@ -559,6 +583,11 @@ particle_grid_draw_all_as_points:
     ldr r11, particle_grid_array_p
 .1:
     ldmia r11, {r1-r2}
+    ldr r7, [r11, #ParticleGrid_Colour]
+    mov r7, r7, asr #17
+    cmp r7, #14
+    movgt r7, #14
+    add r7, r7, #1
 
     ; For now just plot 2D particles.
     add r1, r1, #ParticleGrid_CentreX               ; [s15.16]
