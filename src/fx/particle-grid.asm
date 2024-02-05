@@ -817,6 +817,7 @@ particle_grid_draw_all_as_8x8_tinted:
 particle_grid_draw_all_as_2x2_tinted:
     str lr, [sp, #-4]!
 
+    mov r8, #Screen_Width-1
     ldr r9, particle_grid_total
     ldr r11, particle_grid_array_p
 .1:
@@ -828,8 +829,6 @@ particle_grid_draw_all_as_2x2_tinted:
     movgt r14, #14
     add r14, r14, #1
     orr r14, r14, r14, lsl #4
-    orr r14, r14, r14, lsl #8
-    orr r14, r14, r14, lsl #16          ; colour word.
 
     ; For now just plot 2D particles.
     add r1, r1, #ParticleGrid_CentreX               ; [s15.16]
@@ -838,54 +837,71 @@ particle_grid_draw_all_as_2x2_tinted:
     mov r1, r1, asr #16
     mov r2, r2, asr #16
 
-    ; Centre sprite.
-    sub r1, r1, #4
-    sub r2, r2, #4
-
     ; Clipping.
     cmp r1, #0
     blt .3                              ; cull left
-    cmp r1, #Screen_Width-8
+    cmp r1, r8  ;#Screen_Width-1
     bge .3                              ; cull right
 
     cmp r2, #0
     blt .3                              ; cull top
-    cmp r2, #Screen_Height-8
+    cmp r2, #Screen_Height-1
     bge .3                              ; cull bottom
     ; TODO: Clip to sides of screen..?
 
-    ; Plot as 16x8 sprite.
     ;  r1 = X centre
     ;  r2 = Y centre
     ;  r14 = tint
-    and r0, r1, #7                      ; x shift
 
     ; Calculate screen ptr.
     add r10, r12, r2, lsl #7
     add r10, r10, r2, lsl #5            ; y*160
-    mov r1, r1, lsr #3                  ; xw=x div 8
-    add r10, r10, r1, lsl #2            ; xw*4
+    add r10, r10, r1, lsr #1
 
-    ; Calculate src ptr.
-    ldr r6, particle_grid_sprite_def_p
+    and r0, r1, #7                      ; x shift
+    tst r0, #1
 
-    ; Hack for now!
-    mov r7, #7                            ; sprite_num
-    SPRITE_UTILS_GETPTR r6, r7, r0, r6    ; def->table[sprite_num*8+shift]
+    ; [0, 2, 4, 6]
+    streqb r14, [r10]                   ;
+    streqb r14, [r10, #Screen_Stride]   ;
+    beq .3
 
-    add r6, r6, #24
-    ldmia r6!, {r0-r1}                 ; read 8 src words.
-    mov r2, r0
-    mov r3, r1
-    ldmia r10, {r4-r5}                  ; read 2 screen words.
-    mask_and_tint_pixels r0, r4, r14
-    mask_and_tint_pixels r1, r5, r14
-    stmia r10, {r4-r5}                  ; store 2 screen words.
-    add r10, r10, #Screen_Stride
-    ldmia r10, {r4-r5}                  ; read 2 screen words.
-    mask_and_tint_pixels r2, r4, r14
-    mask_and_tint_pixels r3, r5, r14
-    stmia r10, {r4-r5}                  ; store 2 screen words.
+    ; [1, 3, 5, 7]
+    cmp r0, #7
+    bne .4
+
+    ; [7] - worst case!
+    ldrb r3, [r10]
+    bic r3, r3, #0xf0
+    orr r3, r3, r14, lsl #4
+    strb r3, [r10]
+    ldrb r3, [r10, #Screen_Stride]
+    bic r3, r3, #0xf0
+    orr r3, r3, r14, lsl #4
+    strb r3, [r10, #Screen_Stride]
+    ldrb r3, [r10, #1]
+    bic r3, r3, #0x0f
+    orr r3, r3, r14, lsr #4
+    strb r3, [r10, #1]
+    ldrb r3, [r10, #Screen_Stride+1]
+    bic r3, r3, #0x0f
+    orr r3, r3, r14, lsr #4
+    strb r3, [r10, #Screen_Stride+1]
+    b .3
+
+.4:
+    ; [1, 3, 5]
+    bic r10, r10, #3                ; word
+    mov r0, r0, lsl #2              ; shift*4
+    mov r4, #0xff
+    ldr r3, [r10]
+    bic r3, r3, r4, lsl r0
+    orr r3, r3, r14, lsl r0
+    str r3, [r10]
+    ldr r3, [r10, #Screen_Stride]
+    bic r3, r3, r4, lsl r0
+    orr r3, r3, r14, lsl r0
+    str r3, [r10, #Screen_Stride]
 
 .3:
     add r11, r11, #ParticleGrid_SIZE
