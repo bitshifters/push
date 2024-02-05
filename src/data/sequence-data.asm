@@ -44,6 +44,7 @@ seq_loop:
 ; Ball moves in a spiral through the particle grid.
 seq_part1:
 
+.if 0
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
@@ -51,6 +52,11 @@ seq_part1:
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+.else
+    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
+.endif
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
@@ -94,6 +100,7 @@ seq_ball_radius:
 ; Ball moves in a spiral through the particle grid.
 seq_part2:
 
+.if 0
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
@@ -101,6 +108,11 @@ seq_part2:
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+.else
+    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
+.endif
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
@@ -137,6 +149,7 @@ seq_part2:
 ; Ball moves in straight lines through the particle grid.
 seq_part3:
 
+.if 0
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
@@ -144,6 +157,11 @@ seq_part3:
 
 	; Setup layers of FX.
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+.else
+    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
+.endif
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
@@ -222,16 +240,16 @@ seq_part4:
     ; Make particle grid.
     ; X [-138, 138] step 12 (border 22)
     ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
+    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
      
     ;call_6 particle_grid_make_spiral, 400, MATHS_CONST_1*5.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.5, MATHS_CONST_1*0.0, MATHS_CONST_1*128.0
 
 	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
+;    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
 
     ; Sprite version.
-;    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
-;    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_8x8_tinted
+    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     ; Environment setup.
     ;make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0

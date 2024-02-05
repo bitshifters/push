@@ -481,10 +481,11 @@ Direction from Dave:
     - Wouldn't necessarily have to collide.
     - What happens to the colours when they overlap? Hmmm.
 - Not grid based.
-    - Circle, spiral etc.
+    - Circle, spiral etc. - STARTED
 - Particle to move of their own accord.
-    - Use small angle rotation formula for speed?
+    - Use small angle rotation formula for speed? - DONE
 - Possibly size of sprites? Stick with pixels for now.
+    - Try fat pixels!
 
 - How to start?
     - Orb grows to size.
