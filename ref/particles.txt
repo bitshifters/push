@@ -490,3 +490,8 @@ Direction from Dave:
 - How to start?
     - Orb grows to size.
     - Eminates the particles that form the grid. Free particles for a while then lerp.
+
+MODE 13?
+~~~
+- Pixel plotting is faster than MODE 9
+- But the CLS time dominates this as have to clear 80K. :(((
