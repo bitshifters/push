@@ -44,19 +44,11 @@ seq_loop:
 ; Ball moves in a spiral through the particle grid.
 seq_part1:
 
-.if 0
     ; Make particle grid.
-    ; X [-138, 138] step 12 (border 22)
-    ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
-
-	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
-.else
+    ; X [-147, 147] step 14 = 22 total (border 13)
+    ; Y [-105, 105] step 14 = 16 total (border 23)
     call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
-    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
-.endif
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
@@ -82,6 +74,27 @@ seq_part1:
     math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_register_var2 the_ball_block+TheBall_y,   0.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
+    call_1 particle_grid_set_dave_rotation, 12
+    call_1 particle_grid_set_dave_expansion, 12
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, -6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, 6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, 0
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, -6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, 6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, 0
+
     wait_secs 30.0
 
     math_unregister_var the_ball_block+TheBall_x
@@ -100,19 +113,11 @@ seq_ball_radius:
 ; Ball moves in a spiral through the particle grid.
 seq_part2:
 
-.if 0
     ; Make particle grid.
-    ; X [-138, 138] step 12 (border 22)
-    ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
-
-	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
-.else
+    ; X [-147, 147] step 14 = 22 total (border 13)
+    ; Y [-105, 105] step 14 = 16 total (border 23)
     call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
-    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
-.endif
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
@@ -149,19 +154,11 @@ seq_part2:
 ; Ball moves in straight lines through the particle grid.
 seq_part3:
 
-.if 0
     ; Make particle grid.
-    ; X [-138, 138] step 12 (border 22)
-    ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 24, 18, MATHS_CONST_1*-138.0, MATHS_CONST_1*-102.0, MATHS_CONST_1*12.0, MATHS_CONST_1*12.0
-
-	; Setup layers of FX.
-    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
-.else
+    ; X [-147, 147] step 14 = 22 total (border 13)
+    ; Y [-105, 105] step 14 = 16 total (border 23)
     call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
-    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
-.endif
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
@@ -238,30 +235,24 @@ seq_part3:
 seq_part4:
 
     ; Make particle grid.
-    ; X [-138, 138] step 12 (border 22)
-    ; Y [26,   230] step 12 (border 26)
-    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
-     
-    ;call_6 particle_grid_make_spiral, 400, MATHS_CONST_1*5.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.5, MATHS_CONST_1*0.0, MATHS_CONST_1*128.0
+    ; X [-147, 147] step 14 = 22 total (border 13)
+    ; Y [-105, 105] step 14 = 16 total (border 23)
+;   call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+    call_6 particle_grid_make_spiral, 400, MATHS_CONST_1*5.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.5, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0
 
-	; Setup layers of FX.
-;    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_points
-
-    ; Sprite version.
-    write_addr particle_grid_sprite_def_p, block_sprite_sheet_def_no_adr
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     ; Environment setup.
-    ;make_and_add_env_plane the_env_floor_plane, 0.0, 0.0, 0.0
-    make_and_add_env_plane the_env_left_plane, -240.0, -128.0, 64.0        ; +90 degrees
-    make_and_add_env_plane the_env_left_slope, -80.0, -128.0, 32.0         ; +45 degrees
-    make_and_add_env_plane the_env_right_plane, 200.0, -128.0, -64.0       ; -90 degrees
-    make_and_add_env_plane the_env_right_slope, 80.0, -128.0, -32.0        ; -45 degrees
+    make_and_add_env_plane the_env_floor_plane, 0.0, -128.0, 0.0
+    make_and_add_env_plane the_env_left_plane, -160.0, -128.0, 64.0        ; +90 degrees
+;    make_and_add_env_plane the_env_left_slope, -80.0, -128.0, 32.0         ; +45 degrees
+    make_and_add_env_plane the_env_right_plane, 160.0, -128.0, -64.0       ; -90 degrees
+;    make_and_add_env_plane the_env_right_slope, 80.0, -128.0, -32.0        ; -45 degrees
 
     ; Setup the ball.
     call_2f the_env_set_constant_force  0.0, -(0.2/50.0)
-    call_2f the_ball_set_pos, 80.0, 128.0            ; centre ball
-    call_2f the_ball_set_vel,  0.0, 0.0
+    call_2f the_ball_set_pos, 80.0, 80.0            ; centre ball
+    call_2f the_ball_set_vel,  0.5, 0.0
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -269,13 +260,31 @@ seq_part4:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-    wait_secs 30.0
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, -6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, 6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, 0
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, -6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, 6
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, 0
+
+    wait_secs 5.0
 
     ;call_1 the_env_remove_plane, the_env_floor_plane
     call_1 the_env_remove_plane, the_env_left_plane
     call_1 the_env_remove_plane, the_env_left_slope
-    call_1 the_env_remove_plane, the_env_right_plane
-    call_1 the_env_remove_plane, the_env_right_slope
+    ;call_1 the_env_remove_plane, the_env_right_plane
+    ;call_1 the_env_remove_plane, the_env_right_slope
 
     ; Settle.
     wait_secs 2.0
