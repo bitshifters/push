@@ -116,6 +116,101 @@ error_gridtoolarge:
 	.long 0
 .endif
 
+; Fill a line.
+; R0=Count
+; R1=X Pos
+; R2=Y Pos
+; R7=X Inc.
+; R8=Y Inc.
+; R11=array ptr
+; R12=count
+particle_gridlines_fill:
+    mov r3, #0      ; X Vel
+    mov r4, #0      ; Y Vel
+.1:
+    mov r5, r1      ; X Origin
+    mov r6, r2      ; Y Origin
+
+    stmia r11!, {r1-r6}
+
+    add r1, r1, r7
+    add r2, r2, r8
+
+    add r12, r12, #1
+    .if _DEBUG
+    cmp r12, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+
+    subs r0, r0, #1
+    bne .1
+    mov pc, lr
+
+; R0=Num X          #0
+; R1=Num Y          #4
+; R2=X Start        #8
+; R3=Y Start        #12
+; R4=Minor Step     #16
+; R5=Minors per Major    #20
+particle_gridlines_make:
+    stmfd sp!, {r0-r5, lr}
+
+    ldr r11, particle_grid_array_p
+    mov r12, #0
+
+    ; Y loop.
+    ldr r2, [sp, #12]               ; YPos
+    ldr r10, [sp, #4]               ; NumY
+    sub r10, r10, #1
+.1:
+    ldr r8, [sp, #16]               ; YInc
+    ldr r0, [sp, #20]               ; Minors per major
+    mul r0, r8, r0                  ; YInc*MpM
+    add r2, r2, r0                  ; YPos+=YInc*MpM
+
+    ldr r1, [sp, #8]                ; XPos
+    ldr r7, [sp, #16]               ; XInc
+    mov r8, #0                      ; YInc
+
+    ldr r9, [sp, #0]                ; NumX
+    ldr r0, [sp, #20]               ; Minors per major
+    mul r0, r9, r0                  ; NumX*MpM
+    add r0, r0, #1
+
+    bl particle_gridlines_fill
+
+    subs r10, r10, #1
+    bne .1
+
+    ; X loop.
+    ldr r1, [sp, #8]                ; XPos
+    ldr r9, [sp, #0]                ; NumX
+    sub r9, r9, #1
+.2:
+    ldr r7, [sp, #16]               ; XInc
+    ldr r0, [sp, #20]               ; Minors per major
+    mul r0, r7, r0                  ; YInc*MpM
+    add r1, r1, r0                  ; XPos+=XInc*MpM
+
+    ldr r2, [sp, #12]               ; YPos
+    mov r7, #0                      ; XInc
+    ldr r8, [sp, #16]               ; YInc
+
+    ldr r10, [sp, #4]               ; NumY
+    ldr r0, [sp, #20]               ; Minors per major
+    mul r0, r10, r0                  ; NumY*MpM
+    add r0, r0, #1
+
+    bl particle_gridlines_fill
+
+    subs r9, r9, #1
+    bne .2
+
+    str r12, particle_grid_total
+
+    ldmfd sp!, {r0-r5, pc}
+
 ; R0=total particles
 ; R1=angle increment [brads]
 ; R2=start radius

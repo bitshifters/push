@@ -32,10 +32,9 @@ seq_loop:
     gosub seq_part4
     gosub seq_part1
 
-    call_3 palette_set_block, 0, 0, seq_palette_black_on_white
-    gosub seq_part2
-
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
+;    call_3 palette_set_block, 0, 0, seq_palette_black_on_white
+    gosub seq_part2
     gosub seq_part3
 
     yield seq_loop
@@ -47,7 +46,9 @@ seq_part1:
     ; Make particle grid.
     ; X [-147, 147] step 14 = 22 total (border 13)
     ; Y [-105, 105] step 14 = 16 total (border 23)
-    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+;    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+    call_6 particle_gridlines_make, 8, 6, MATHS_CONST_1*-128.0, MATHS_CONST_1*-96.0, MATHS_CONST_1*8.0, 4
+
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     ; Setup the ball.
@@ -77,25 +78,29 @@ seq_part1:
     call_1 particle_grid_set_dave_rotation, 12
     call_1 particle_grid_set_dave_expansion, 12
 
+.if 0
     wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, -6
+    call_1 particle_grid_set_dave_rotation, -8
 
     wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 6
+    call_1 particle_grid_set_dave_rotation, 8
 
     wait_secs 5.0
     call_1 particle_grid_set_dave_rotation, 0
 
     wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, -6
+    call_1 particle_grid_set_dave_expansion, -8
 
     wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 6
+    call_1 particle_grid_set_dave_expansion, 8
 
     wait_secs 5.0
     call_1 particle_grid_set_dave_expansion, 0
 
+    wait_secs 5.0
+.else
     wait_secs 30.0
+.endif
 
     math_unregister_var the_ball_block+TheBall_x
     math_unregister_var the_ball_block+TheBall_y
@@ -116,7 +121,8 @@ seq_part2:
     ; Make particle grid.
     ; X [-147, 147] step 14 = 22 total (border 13)
     ; Y [-105, 105] step 14 = 16 total (border 23)
-    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+;    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+    call_6 particle_grid_make_spiral, 400, MATHS_CONST_1*5.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.5, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     ; Setup the ball.
@@ -139,7 +145,32 @@ seq_part2:
     math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_register_var2 the_ball_block+TheBall_y,   0.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
+    call_1 particle_grid_set_dave_rotation, 12
+    call_1 particle_grid_set_dave_expansion, 12
+
+.if 0
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, -8
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, 8
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_rotation, 0
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, -8
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, 8
+
+    wait_secs 5.0
+    call_1 particle_grid_set_dave_expansion, 0
+
+    wait_secs 5.0
+.else
     wait_secs 30.0
+.endif
 
     math_unregister_var the_ball_block+TheBall_x
     math_unregister_var the_ball_block+TheBall_y
@@ -166,6 +197,9 @@ seq_part3:
     ; Connect the ball to the particle grid collider.
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+
+    call_1 particle_grid_set_dave_rotation, 12
+    call_1 particle_grid_set_dave_expansion, 12
 
     ; Start off right side of the screen and move left.
     call_2f the_ball_set_pos, 200.0,-80.0
@@ -238,7 +272,7 @@ seq_part4:
     ; X [-147, 147] step 14 = 22 total (border 13)
     ; Y [-105, 105] step 14 = 16 total (border 23)
 ;   call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
-    call_6 particle_grid_make_spiral, 400, MATHS_CONST_1*5.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.5, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0
+    call_6 particle_gridlines_make, 8, 6, MATHS_CONST_1*-128.0, MATHS_CONST_1*-96.0, MATHS_CONST_1*8.0, 4
 
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
@@ -260,30 +294,33 @@ seq_part4:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
+.if 0
     wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, -6
+    call_1 particle_grid_set_dave_rotation, -8
 
     wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 6
+    call_1 particle_grid_set_dave_rotation, 8
 
     wait_secs 5.0
     call_1 particle_grid_set_dave_rotation, 0
 
     wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, -6
+    call_1 particle_grid_set_dave_expansion, -8
 
     wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 6
+    call_1 particle_grid_set_dave_expansion, 8
 
     wait_secs 5.0
     call_1 particle_grid_set_dave_expansion, 0
 
     wait_secs 5.0
+.else
+    wait_secs 30.0
+.endif
 
-    ;call_1 the_env_remove_plane, the_env_floor_plane
     call_1 the_env_remove_plane, the_env_left_plane
-    call_1 the_env_remove_plane, the_env_left_slope
-    ;call_1 the_env_remove_plane, the_env_right_plane
+    ;call_1 the_env_remove_plane, the_env_left_slope
+    call_1 the_env_remove_plane, the_env_right_plane
     ;call_1 the_env_remove_plane, the_env_right_slope
 
     ; Settle.
@@ -292,6 +329,8 @@ seq_part4:
     call_2f the_ball_set_pos, 200.0, 0.0
     call_2f the_ball_set_vel, 0.0, 0.0
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+
+    call_1 the_env_remove_plane, the_env_floor_plane
 
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4

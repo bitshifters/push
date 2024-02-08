@@ -501,7 +501,7 @@ Direction from Dave:
 - Particle to move of their own accord.
     - Use small angle rotation formula for speed? - DONE
     - Particles move slowly in a constant direction.
-    - Move apart from centre by adding a small fraction of X,Y.
+    - Move apart from centre by adding a small fraction of X,Y. - DONE
     - Possible to use the velocity vector? Or self-mod into code for speed?
 
 - Ball motions?
@@ -509,7 +509,7 @@ Direction from Dave:
     - Around an attractor (in the centre)
 
 - Ball collisions?
-    - Edges of the grid whilst it is rotating.
+    - Edges of the grid whilst it is rotating (i.e. rotate the planes)
 
 - Possibly size of sprites? Stick with pixels for now.
     - Try fat pixels! - DONE
