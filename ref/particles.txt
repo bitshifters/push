@@ -486,7 +486,7 @@ Direction from Dave:
 
 - Not grid based. <== NEXT
     - Circle, spiral etc. - STARTED
-    - Grid lines (like Geometry Wars.)
+    - Grid lines (like Geometry Wars.) - DONE
     - Concentric circles.
     - Concentric squares.
     - Word outlines - use OBJs from Mikroreise?
@@ -531,3 +531,8 @@ MODE 13?
     so 320x180, which is ~56K.
     ==> Could be interesting for a future MODE 13 demo?
         Perhaps a free particle system demo for NOVA or Deadline?
+
+For now the decision is:
+- MODE 9 (16 colours)
+- Full screen (320x256)
+- Fat pixels (2x2)

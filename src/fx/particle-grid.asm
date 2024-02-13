@@ -590,6 +590,8 @@ particle_grid_tick_all_dave_loop:
     sub r8, r6, r1                      ; dx = obj.x - pos.x
     sub r9, r7, r2                      ; dy = obj.y - pos.y
 
+    
+
     ; Calcluate dist^2=dx*dx + dy*dy
     mov r4, r8, asr #10             ; [10.6]
     mov r14, r4
@@ -978,7 +980,8 @@ particle_grid_draw_all_as_8x8_tinted:
 particle_grid_draw_all_as_2x2_tinted:
     str lr, [sp, #-4]!
 
-    mov r8, #Screen_Width-1
+    mov r4, #0xff                       ; const
+    mov r8, #Screen_Width-1             ; const
     ldr r9, particle_grid_total
     ldr r11, particle_grid_array_p
 .1:
@@ -1014,24 +1017,20 @@ particle_grid_draw_all_as_2x2_tinted:
     ;  r2 = Y centre
     ;  r14 = tint
 
-    ; Calculate screen ptr.
+    ; Calculate screen ptr to the byte.
     add r10, r12, r2, lsl #7
     add r10, r10, r2, lsl #5            ; y*160
     add r10, r10, r1, lsr #1
 
-    and r0, r1, #7                      ; x shift
-    tst r0, #1
-
-    ; [0, 2, 4, 6]
-    streqb r14, [r10]                   ;
-    streqb r14, [r10, #Screen_Stride]   ;
-    beq .3
+    ; Odd or even?
+    tst r1, #1
+    beq .5
 
     ; [1, 3, 5, 7]
-    cmp r0, #7
-    bne .4
+    teq r1, #7
+    beq .4
 
-    ; [7] - worst case!
+    ; [7] => worst case! 2x2 across 2 words.
     ldrb r3, [r10]
     bic r3, r3, #0xf0
     orr r3, r3, r14, lsl #4
@@ -1048,13 +1047,18 @@ particle_grid_draw_all_as_2x2_tinted:
     bic r3, r3, #0x0f
     orr r3, r3, r14, lsr #4
     strb r3, [r10, #Screen_Stride+1]
-    b .3
+
+    add r11, r11, #ParticleGrid_SIZE
+    subs r9, r9, #1
+    bne .1
+    ldr pc, [sp], #4
 
 .4:
-    ; [1, 3, 5]
-    bic r10, r10, #3                ; word
+    ; [1, 3, 5] => 2x2 in same word.
+    and r0, r1, #7                  ; x shift
     mov r0, r0, lsl #2              ; shift*4
-    mov r4, #0xff
+    bic r10, r10, #3                ; word
+
     ldr r3, [r10]
     bic r3, r3, r4, lsl r0
     orr r3, r3, r14, lsl r0
@@ -1064,7 +1068,18 @@ particle_grid_draw_all_as_2x2_tinted:
     orr r3, r3, r14, lsl r0
     str r3, [r10, #Screen_Stride]
 
+    add r11, r11, #ParticleGrid_SIZE
+    subs r9, r9, #1
+    bne .1
+    ldr pc, [sp], #4
+
+.5:
+    ; [0, 2, 4, 6] => best case! 2x2 in same byte.
+    strb r14, [r10]                   ; 4c
+    strb r14, [r10, #Screen_Stride]   ; 4c
+
 .3:
+    ; NB. This code is duplicated twice above!!
     add r11, r11, #ParticleGrid_SIZE
     subs r9, r9, #1
     bne .1
