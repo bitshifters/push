@@ -17,7 +17,7 @@
 .equ ParticleGrid_SIZE,     24
 ; TODO: Sprite per particle etc.?
 
-.equ ParticleGrid_Max,          (24*18)     ; runs at 50Hz with the Dave equation.
+.equ ParticleGrid_Max,          (26*20)     ; runs at 50Hz with the Dave equation.
 
 .equ ParticleGrid_CentreX,      (160.0 * MATHS_CONST_1)
 .equ ParticleGrid_CentreY,      (128.0 * MATHS_CONST_1)
@@ -587,10 +587,20 @@ particle_grid_tick_all_dave_loop:
     ; Particle dynamics as per Dave's Blender graph.
 
     ; Compute delta_vec to object.
-    sub r8, r6, r1                      ; dx = obj.x - pos.x
+    subs r8, r6, r1                      ; dx = obj.x - pos.x
+
+    ; Early out if abs(dx) > radius or abs(dy) > radius.
+    rsbmi r4, r8, #0
+    movpl r4, r8                        ; abs(dx)
+    cmp r4, r10                         ; abs(dx)>radius?
+    bgt .2                              ; clamp_dist=0.0
+
     sub r9, r7, r2                      ; dy = obj.y - pos.y
 
-    
+    rsbmi r4, r9, #0
+    movpl r4, r9                        ; abs(dy)
+    cmp r4, r10                         ; abs(dy)>radius?
+    bgt .2                              ; clamp_dist=0.0
 
     ; Calcluate dist^2=dx*dx + dy*dy
     mov r4, r8, asr #10             ; [10.6]
@@ -612,14 +622,11 @@ particle_grid_tick_all_dave_loop:
     ; Values are in 16.16 format.
 
     ; Limited precision.
-    cmp r5, #LibSqrt_Entries    ; Test for numerator too large
-    movge r8, #0
-    movge r9, #0
-    bge .2
-
     .if _DEBUG
+    cmp r5, #LibSqrt_Entries    ; Test for numerator too large
     adrge r0,sqrtrange           ; and flag an error
     swige OS_GenerateError      ; when necessary
+    bge .2
     .endif
 
     subs r5, r5, #1
@@ -630,8 +637,7 @@ particle_grid_tick_all_dave_loop:
 
     ; if dist > radius, cd = 0.0
     cmp r14, r10                    ; dist > radius?
-    movge r14, #0
-    bge .2
+    bge .2                          ; clamp_dist = 0.0
 
     ; if dist < 0.0 cd = -max_push (not possible anyway)
 
@@ -652,9 +658,9 @@ particle_grid_tick_all_dave_loop:
 
     sub r14, r14, r5, asl #8        ; clamp_dist = (max_push * dist / radius) - max_push [8.16]
 
-.2:
-    ; Calculate offset vec = delta_vec * clamp_dist
+    ; NB. Skip this bit if clamp_dist == 0.0
 
+    ; Calculate offset vec = delta_vec * clamp_dist
     mov r14, r14, asr #8            ; clamp_dist [8.8]
     mov r8, r8, asr #8              ; dx [~9.8]
     mov r9, r9, asr #8              ; dy [~9.8]
@@ -664,6 +670,7 @@ particle_grid_tick_all_dave_loop:
     mla r1, r14, r8, r1             ; desired.x = pos.x + off.x [16.16]
     mla r2, r14, r9, r2             ; desired.y = pos.y + off.y [16.16]
 
+.2:
     ; Original position.
 
     ldr r8, [r11, #ParticleGrid_XOrigin]    ; orig.x
@@ -1027,8 +1034,9 @@ particle_grid_draw_all_as_2x2_tinted:
     beq .5
 
     ; [1, 3, 5, 7]
-    teq r1, #7
-    beq .4
+    and r0, r1, #7                  ; x shift
+    cmp r0, #7
+    bne .4
 
     ; [7] => worst case! 2x2 across 2 words.
     ldrb r3, [r10]
@@ -1055,7 +1063,6 @@ particle_grid_draw_all_as_2x2_tinted:
 
 .4:
     ; [1, 3, 5] => 2x2 in same word.
-    and r0, r1, #7                  ; x shift
     mov r0, r0, lsl #2              ; shift*4
     bic r10, r10, #3                ; word
 
