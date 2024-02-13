@@ -275,19 +275,12 @@ particle_grid_make_spiral:
     ; Write particle block.
     mov r9, #0
 
-    .if 1
     subs r6, r6, #1
     addpl r11, r11, #16
     stmmiia r11!, {r0-r1}   ; pos
     strmi r9, [r11], #4
     strmi r9, [r11], #4     ; vel
     stmia r11!, {r0-r1}     ; origin
-    .else
-    stmia r11!, {r0-r1}     ; origin
-    str r9, [r11], #4
-    str r9, [r11], #4     ; vel
-    stmia r11!, {r0-r1}     ; origin
-    .endif
 
     add r8, r8, r10     ; a+=inc_a
     add r2, r2, r3      ; r+=inc_r
@@ -296,6 +289,43 @@ particle_grid_make_spiral:
     bne .1
 
     ldr pc, [sp], #4
+
+; R0=Num verts
+; R1=Ptr to vert data.
+; R2=0 always reset positions, otherwise just origin (morph)
+particle_grid_add_verts:
+    .if _DEBUG
+    cmp r0, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+
+    cmp r2, #0
+    beq .2
+
+    mov r2, r0
+    ldr r3, particle_grid_total
+    cmp r2, r3
+    movgt r3, r3
+.2:
+
+    str r0, particle_grid_total
+    mov r5, #0
+    mov r6, #0              ; vel
+
+    ldr r11, particle_grid_array_p
+.1:
+    ldmia r1!, {r3-r4}      ; pos
+
+    subs r2, r2, #1
+    addpl r11, r11, #16     ; skip pos & vel
+    stmmiia r11!, {r3-r6}   ; pos & vel
+    stmia r11!, {r3-r4}     ; origin
+
+    subs r0, r0, #1
+    bne .1
+
+    mov pc, lr
 
 ; ============================================================================
 

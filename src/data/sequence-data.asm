@@ -45,7 +45,9 @@ seq_loop:
 seq_part1:
 
     ; Make particle grid.
-    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
+;    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
+
+    call_3 particle_grid_add_verts, 520, bits_verts_no_adr, 0
 
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
@@ -97,7 +99,11 @@ seq_part1:
 
     wait_secs 5.0
 .else
-    wait_secs 30.0
+    wait_secs 15.0
+
+    call_3 particle_grid_add_verts, 520, circ_verts_no_adr, 1
+
+    wait_secs 15.0
 .endif
 
     math_unregister_var the_ball_block+TheBall_x

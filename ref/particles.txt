@@ -504,7 +504,7 @@ Direction from Dave:
     - Particles move slowly in a constant direction.
     - Move apart from centre by adding a small fraction of X,Y. - DONE
     - Possible to use the velocity vector? Or self-mod into code for speed?
-    - We get particle grid morphing for free!!
+    - We get particle grid morphing for free!! - DONE
 
 - Ball motions?
     - Lissajous
