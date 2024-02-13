@@ -485,11 +485,12 @@ Direction from Dave:
     - What happens to the colours when they overlap? Hmmm.
 
 - Not grid based. <== NEXT
-    - Circle, spiral etc. - STARTED
+    - Spiral. - DONE
     - Grid lines (like Geometry Wars.) - DONE
     - Concentric circles.
     - Concentric squares.
-    - Word outlines - use OBJs from Mikroreise?
+    - Cylindrical view - draw horizontal line for each y=sin(a)
+    - Word outlines - use OBJs from Mikroreise? => Dave will make them!
 
     - What if all the particles formed a solid circle?
         - At ~360 max particles, can have a 18*18 box, which is 36*36 pixels.
@@ -503,6 +504,7 @@ Direction from Dave:
     - Particles move slowly in a constant direction.
     - Move apart from centre by adding a small fraction of X,Y. - DONE
     - Possible to use the velocity vector? Or self-mod into code for speed?
+    - We get particle grid morphing for free!!
 
 - Ball motions?
     - Lissajous

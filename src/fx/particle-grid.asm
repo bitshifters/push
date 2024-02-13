@@ -62,17 +62,11 @@ particle_grid_dave_maxpush:
 ; R3=Y Start
 ; R4=X Step
 ; R5=Y Step
+; R6=0 always reset positions, otherwise just origin (morph)
 particle_grid_make:
     stmfd sp!, {r0-r5}
 
-    mul r6, r0, r1                  ; total = NumX * NumY
-    .if _DEBUG
-    cmp r6, #ParticleGrid_Max
-    adrgt r0, error_gridtoolarge
-    swigt OS_GenerateError
-    .endif
-    str r6, particle_grid_total
-
+    ldr r0, particle_grid_total
     ldr r11, particle_grid_array_p
 
     mov r9, r4                      ; XStep
@@ -81,7 +75,7 @@ particle_grid_make:
     ; XVel, YVel.
     mov r3, #0
     mov r4, #0
-    mov r12, #0                     ; Colour
+    mov r12, #0                     ; count
 
     ; Y loop.
     ldr r2, [sp, #12]               ; YPos
@@ -92,10 +86,21 @@ particle_grid_make:
 
     ; X loop.
 .2:
-    mov r5, r1
-    mov r6, r2                      ; Origin
+    cmp r12, r0                     ; count > total?
+    movge r6, #0                    ; reset positions once count > total
 
-    stmia r11!, {r1-r6}
+    cmp r6, #0                      ; reset positions?
+    addne r11, r11, #16
+    stmeqia r11!, {r1-r2}           ; pos
+    stmeqia r11!, {r3-r4}           ; vel
+    stmia r11!, {r1-r2}             ; origin
+
+    add r12, r12, #1                ; count
+    .if _DEBUG
+    cmp r12, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
 
     add r1, r1, r9
     subs r7, r7, #1
@@ -104,6 +109,8 @@ particle_grid_make:
     add r2, r2, r10
     subs r8, r8, #1
     bne .1
+
+    str r12, particle_grid_total
 
     ldmfd sp!, {r0-r5}
     mov pc, lr
@@ -120,6 +127,8 @@ error_gridtoolarge:
 ; R0=Count
 ; R1=X Pos
 ; R2=Y Pos
+; R5=prev total
+; R6=0 always reset positions, otherwise just origin (morph)
 ; R7=X Inc.
 ; R8=Y Inc.
 ; R11=array ptr
@@ -128,10 +137,14 @@ particle_gridlines_fill:
     mov r3, #0      ; X Vel
     mov r4, #0      ; Y Vel
 .1:
-    mov r5, r1      ; X Origin
-    mov r6, r2      ; Y Origin
+    cmp r12, r5             ; count > prev total?
+    movge r6, #0            ; always reset positions once count > total
 
-    stmia r11!, {r1-r6}
+    cmp r6, #0
+    addne r11, r11, #16
+    stmeqia r11!, {r1-r2}   ; pos
+    stmeqia r11!, {r3-r4}   ; vel
+    stmia r11!, {r1-r2}     ; origin
 
     add r1, r1, r7
     add r2, r2, r8
@@ -147,15 +160,17 @@ particle_gridlines_fill:
     bne .1
     mov pc, lr
 
-; R0=Num X          #0
-; R1=Num Y          #4
-; R2=X Start        #8
-; R3=Y Start        #12
-; R4=Minor Step     #16
-; R5=Minors per Major    #20
+; R0=Num X              #0
+; R1=Num Y              #4
+; R2=X Start            #8
+; R3=Y Start            #12
+; R4=Minor Step         #16
+; R5=Minors per Major   #20
+; R6=0 always reset positions, otherwise just origin (morph)
 particle_gridlines_make:
     stmfd sp!, {r0-r5, lr}
 
+    ldr r5, particle_grid_total     ; existing total
     ldr r11, particle_grid_array_p
     mov r12, #0
 
@@ -217,48 +232,69 @@ particle_gridlines_make:
 ; R3=radius increment
 ; R4=centre X
 ; R5=centre Y
+; R6=0 always reset positions, otherwise just origin (morph)
 particle_grid_make_spiral:
     str lr, [sp, #-4]!
 
-   .if _DEBUG
-    cmp r0, #ParticleGrid_Max
+    mov r2, r2, asr #8  ; radius
+    mov r3, r3, asr #8  ; inc_r
+
+    cmp r6, #0
+    beq .10
+
+    mov r6, r0
+    ldr r7, particle_grid_total
+    cmp r6, r7          ; total to make > current total?
+    movgt r6, r7        ; limit to current total.
+
+.10:
+    ldr r11, particle_grid_array_p
+
+    mov r12, r0         ; count
+    str r12, particle_grid_total
+    .if _DEBUG
+    cmp r12, #ParticleGrid_Max
     adrgt r0, error_gridtoolarge
     swigt OS_GenerateError
     .endif
-    str r0, particle_grid_total
 
-    mov r2, r2, asr #8
-    mov r3, r3, asr #8
-
-    ldr r11, particle_grid_array_p
-    mov r12, r0
-    mov r10, r1
-    mov r8, #0
+    mov r10, r1         ; inc_a
+    mov r8, #0          ; angle
 .1:
     mov r0, r8          ; angle
-    bl sin_cos
+    bl sin_cos          ; trashes R9
     ; R0=sin(angle)
     ; R1=cos(angle)
 
     mov r0, r0, asr #8
     mov r1, r1, asr #8
 
-    mla r6, r0, r2, r4  ; x = cx + r * sin(a)
-    mla r7, r1, r2, r5  ; y = cy + r * cos(a)
+    mla r0, r2, r0, r4  ; x = cx + r * sin(a)
+    mla r1, r2, r1, r5  ; y = cy + r * cos(a)
 
     ; Write particle block.
-    stmia r11!, {r6-r7}
-    mov r0, #0
-    mov r1, #0
-    stmia r11!, {r0-r1}
-    stmia r11!, {r6-r7}
+    mov r9, #0
+
+    .if 1
+    subs r6, r6, #1
+    addpl r11, r11, #16
+    stmmiia r11!, {r0-r1}   ; pos
+    strmi r9, [r11], #4
+    strmi r9, [r11], #4     ; vel
+    stmia r11!, {r0-r1}     ; origin
+    .else
+    stmia r11!, {r0-r1}     ; origin
+    str r9, [r11], #4
+    str r9, [r11], #4     ; vel
+    stmia r11!, {r0-r1}     ; origin
+    .endif
 
     add r8, r8, r10     ; a+=inc_a
     add r2, r2, r3      ; r+=inc_r
 
-    subs r12, r12, #1
+    subs r12, r12, #1   ; count--
     bne .1
-    
+
     ldr pc, [sp], #4
 
 ; ============================================================================
