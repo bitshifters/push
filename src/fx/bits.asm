@@ -63,14 +63,10 @@ bits_logo_init:
     ldr r0, bits_width
     ldr r1, bits_height
     ldr r2, bits_logo_p
-    bl bits_logo_make_outline
+    mov r3, #520
+    bl bits_logo_select_random
 
-    ldr r0, bits_width
-    ldr r1, bits_height
-    ldr r2, bits_logo_p
-    bl bits_logo_decimate_outline
-
-    bl bits_logo_make_verts
+;    bl bits_logo_make_verts
 
     ldr pc, [sp], #4
 
@@ -83,12 +79,14 @@ bits_logo_init:
 ; Trashes: R5,R8
 bits_get_pixel:
     cmp r1, r3
-    moveq r9, #0
-    moveq pc, lr
+    blt .1
 
     cmp r6, r0, lsl #3
-    movge r9, #0
-    movge pc, lr
+    blt .1
+
+    mov r9, #0
+    mov pc, lr
+.1:
 
     and r8, r6, #7          ; pixel no.
     mov r8, r8, lsl #2      ; pixel shift.
@@ -109,6 +107,18 @@ bits_get_pixel:
 ; R6=column
 ; Trashes: R5,R8,R9,R12
 bits_mark_pixel:
+    .if _DEBUG
+    cmp r1, r3
+    blt .1
+
+    cmp r6, r0, lsl #3
+    blt .1
+
+    mov r9, #0
+    mov pc, lr
+.1:
+    .endif
+
     mul r8, r0, r1          ; row*stride
     add r8, r2, r8, lsl #2  ; base+(row*stride)*4
     mov r5, r6, lsr #3      ; word no.
@@ -125,6 +135,7 @@ bits_mark_pixel:
 
     mov pc, lr
 
+.if 0
 ; Removes a pixel from the image.
 ; R0=width in words (stride)
 ; R1=row
@@ -356,6 +367,85 @@ bits_logo_decimate_outline:
 .endif
 
     ldr pc, [sp], #4
+.endif
+
+; Rejection sampling of pixels inside an image.
+; Mark N pixels top bit to indicate these should become verts.
+; R0=width in words
+; R1=height in rows
+; R2=ptr to image data
+; R3=number of pixels to select.
+bits_logo_select_random:
+    str lr, [sp, #-4]!
+
+    .if _DEBUG
+    cmp r0, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r1, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r2, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+    .endif
+
+    mov r4, #0             ; tries
+    mov r11, r3             ; count
+    mov r3, r1              ; height in pixels.
+    mov r10, r0, lsl #3     ; width in pixels.
+.1:
+    add r4, r4, #1
+    cmp r4, #0x10000
+    bge .2
+
+    ; Generate a new random position.
+    ldr r8, bits_rnd_seed
+    ldr r5, bits_rnd_bit
+    RND r8, r5, r6
+    str r8, bits_rnd_seed
+    str r5, bits_rnd_bit
+
+    mov r6, r8, lsr #16     ; top 16 bits       [0.16]
+    mov r1, r8, lsl #16
+    mov r1, r1, lsr #16     ; bottom 16 bits    [0.16]
+
+    ; R6=column
+    mul r6, r10, r6         ; width*rand [16.16]
+    mov r6, r6, lsr #16
+
+    ; R1=row
+    mul r1, r3, r1          ; height*rand [16.16]
+    mov r1, r1, lsr #16
+
+    bl bits_get_pixel
+    ; R9=pixel
+
+    ; Reject if zero pixel.
+    cmp r9, #0
+    beq .1
+
+    ; Reject if already marked.
+    ands r9, r9, #8
+    bne .1
+
+    ; Mark this pixel.
+    bl bits_mark_pixel
+
+    ; NB. Could be an infinite loop! TODO: Fail after N tries?
+    subs r11, r11, #1
+    bne .1
+.2:
+
+    ldr pc, [sp], #4
+
+bits_rnd_seed:
+    .long 0xdeadbeef
+
+bits_rnd_bit:
+    .long 0x11111111
 
 ; Scan convert the bitshifters logo image to particle verts.
 bits_logo_make_verts:
@@ -364,7 +454,7 @@ bits_logo_make_verts:
     ldr r0, bits_width
     ldr r1, bits_height
     ldr r2, bits_logo_p
-    mov r3, #0
+    mov r3, #1
     bl particle_grid_image_to_verts
 
     ldr pc, [sp], #4

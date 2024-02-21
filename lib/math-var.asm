@@ -242,6 +242,7 @@ math_rand:
     ldr r3, rnd_bit
     RND r0, r3, r4
     str r0, rnd_seed
+    str r3, rnd_bit
     mov r0, r0, lsr #16 ; [0.16]
     mov pc, lr
 

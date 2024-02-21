@@ -341,7 +341,7 @@ particle_grid_add_verts:
 ; R0=width in words
 ; R1=height in rows
 ; R2=ptr to image data
-; R?=0 always reset positions, otherwise just origin (morph)
+; R3=0 always reset positions, otherwise just origin (morph)
 particle_grid_image_to_verts:
     str lr, [sp, #-4]!
 
@@ -364,11 +364,12 @@ particle_grid_image_to_verts:
     ldr r11, particle_grid_array_p
     mov r12, #0             ; count
 
+    movs r7, r3
+    ldrne r7, particle_grid_total
+
 .if 1
     ; Row loop
 .1:
-    mov r7, #0              ; last pixel.
-
     ; Pixel loop.
     mov r6, #0              ; pixel count.
 .2:
@@ -377,27 +378,27 @@ particle_grid_image_to_verts:
     and r8, r6, #7          ; pixel no.
     mov r8, r8, lsl #2      ; pixel shift.
     mov r9, r9, lsr r8      ; shift pixel down lsb
-    and r9, r9, #0x8        ; mask pixel
 
-    ; Has pixel changed?
-    ;cmp r9, r7
-    cmp r9, #0
+    ; Is this an edge pixel?
+    ands r9, r9, #0x8        ; mask pixel
     beq .3
 
-.4:
     ; If yes then plop a vert down.
-    mov r7, r9
 
     ; Make vert position.
     sub r8, r6, r0, lsl #2  ; x pos = pixel_x - pixel_w/2
     mov r8, r8, asl #16     ; x pos = pixel count [16.16]
     mov r9, r1, asl #17     ; y pos = row * 4 [16.16]
 
-    ; Store vert.
-    stmia r11!, {r8-r9}     ; pos
     mov r10, #0
-    str r10, [r11], #4
-    str r10, [r11], #4      ; vel
+
+    ; Store vert.
+    subs r7, r7, #1         ; morph?
+
+    addpl r11, r11, #16
+    stmmiia r11!, {r8-r9}     ; pos
+    strmi r10, [r11], #4
+    strmi r10, [r11], #4      ; vel
     stmia r11!, {r8-r9}     ; origin
 
     add r12, r12, #1

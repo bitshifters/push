@@ -30,8 +30,6 @@
 
 seq_loop:
     call_3 palette_set_block, 0, 0, seq_palette_green_white_ramp
-    gosub seq_part3
-
     gosub seq_part1
 
     call_3 palette_set_block, 0, 0, seq_palette_black_on_white
@@ -40,6 +38,9 @@ seq_loop:
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
     gosub seq_part2
 
+    call_3 palette_set_block, 0, 0, seq_palette_blue_cyan_ramp
+    gosub seq_part3
+
     yield seq_loop
     end_script
 
@@ -47,8 +48,8 @@ seq_loop:
 seq_part1:
 
     ; Make particle grid.
-;    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
-    call_3 particle_grid_add_verts, 520, bits_verts_no_adr, 0
+    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
+;    call_3 particle_grid_add_verts, 520, bits_verts_no_adr, 0
 
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
@@ -218,6 +219,8 @@ seq_part3:
     call_2f the_ball_set_vel,  0.0, -2.0
     wait_secs 5.0
 
+    call_3 particle_grid_add_verts, 520, bits_verts_no_adr, 1
+
     ; Bottom and move up.
     call_2f the_ball_set_pos, 64.0, -160.0
     call_2f the_ball_set_vel,  0.0, 2.0
@@ -227,6 +230,8 @@ seq_part3:
     call_2f the_ball_set_pos, 200.0, 44.0
     call_2f the_ball_set_vel,  -2.0, 0.0
     wait_secs 5.0
+
+    call_0 bits_logo_make_verts
 
     ; Left and move right again.
     call_2f the_ball_set_pos, -200.0, -80.0
@@ -499,6 +504,24 @@ seq_palette_black_on_white:
     .long 0x00b0b0b0                    ; 12 = 1100 =
     .long 0x00c0c0c0                    ; 13 = 1101 =
     .long 0x00d0d0d0                    ; 14 = 1110 = oranges
+    .long 0x00e0e0e0                    ; 15 = 1111 = white
+
+seq_palette_blue_cyan_ramp:
+    .long 0x00000000                    ; 00 = 0000 = black
+    .long 0x00800000                    ; 01 = 0001 =
+    .long 0x00801000                    ; 02 = 0010 =
+    .long 0x00802000                    ; 03 = 0011 =
+    .long 0x00803000                    ; 04 = 0100 =
+    .long 0x00804000                    ; 05 = 0101 =
+    .long 0x00905000                    ; 06 = 0110 =
+    .long 0x00a06000                    ; 07 = 0111 = reds
+    .long 0x00b07000                    ; 08 = 1000 =
+    .long 0x00c08020                    ; 09 = 1001 =
+    .long 0x00d09040                    ; 10 = 1010 =
+    .long 0x00e0a060                    ; 11 = 1011 =
+    .long 0x00e0b080                    ; 12 = 1100 =
+    .long 0x00e0c0a0                    ; 13 = 1101 =
+    .long 0x00e0d0c0                    ; 14 = 1110 = oranges
     .long 0x00e0e0e0                    ; 15 = 1111 = white
 
 block_sprite_sheet_def_no_adr:
