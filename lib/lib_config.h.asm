@@ -31,8 +31,8 @@
 
 .equ LibSqrt_IncludeRsqrt,      (LibConfig_IncludeSqrt && 0)
 
-.equ LibSqrt_MakeSqrtTable,     (LibConfig_IncludeSqrt && AppConfig_MakeSmallExe)            ; TODO: Configure from Makefile define.
-.equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && AppConfig_MakeSmallExe)
+.equ LibSqrt_MakeSqrtTable,     (LibConfig_IncludeSqrt && _SMALL_EXE)
+.equ LibSine_MakeSinusTable,    (LibConfig_IncludeSine && _SMALL_EXE)
 
 .equ LibDivide_Reciprocal_t, 16           ; Table entries = 1<<t
 .equ LibDivide_Reciprocal_m, 9            ; Max value = 1<<m

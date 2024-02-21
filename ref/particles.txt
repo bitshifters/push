@@ -491,6 +491,18 @@ Direction from Dave:
     - Concentric squares.
     - Cylindrical view - draw horizontal line for each y=sin(a)
     - Word outlines - use OBJs from Mikroreise? => Dave will make them!
+        - TESTED!
+        - These are large 520 verts x 8 bytes = 4160 bytes
+          and don't seem to compress super-well with Shrinkler.
+          Did Dave use a rand function to fill the shapes?
+        - Perhaps use RISCOS outline font and either fill the shape
+          with random points (rejection sample) or scan across each
+          scanline and find the start & end points of lines.
+        - Create an outline in image space by sampling pixels and marking
+          where they change, biasing to non-zero pixels.
+        - Need to reduce the outline horizontal and vertical runs.
+          Try: where a run is >1 keep every Nth pixel.
+          
 
     - What if all the particles formed a solid circle?
         - At ~360 max particles, can have a 18*18 box, which is 36*36 pixels.
@@ -519,6 +531,9 @@ Direction from Dave:
 - Colours
     - Orb colour pulse
     - Grid colours?
+    - Dave asked for particles in 2 colours with separate ramp of 7 colours for each.
+    - Need palette lerping to blend between palettes over time.
+    - 
 
 - How to start? <== NEXT
     - Orb grows to size.

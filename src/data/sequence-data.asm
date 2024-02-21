@@ -8,6 +8,7 @@
     call_0 balls_init
     call_0 sprite_utils_init
     call_0 the_ball_init
+    call_0 particle_grid_init
 
     ; Make sprites.
     call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
@@ -29,6 +30,8 @@
 
 seq_loop:
     call_3 palette_set_block, 0, 0, seq_palette_green_white_ramp
+    gosub seq_part3
+
     gosub seq_part1
 
     call_3 palette_set_block, 0, 0, seq_palette_black_on_white
@@ -36,7 +39,6 @@ seq_loop:
 
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
     gosub seq_part2
-    gosub seq_part3
 
     yield seq_loop
     end_script
@@ -46,7 +48,6 @@ seq_part1:
 
     ; Make particle grid.
 ;    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
-
     call_3 particle_grid_add_verts, 520, bits_verts_no_adr, 0
 
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted

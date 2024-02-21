@@ -7,6 +7,7 @@
 ; ============================================================================
 
 .equ _DEBUG,                    1
+.equ _SMALL_EXE,                0               ; TODO: Configure from Makefile?
 .equ _DEBUG_RASTERS,            (_DEBUG && 1)
 .equ _DEBUG_SHOW,               (_DEBUG && 1)
 .equ _CHECK_FRAME_DROP,         (!_DEBUG && 1)
@@ -78,6 +79,7 @@ main:
     bl app_init_audio
 
 	; Bootstrap the main sequence.
+    ; Does one tick of the script!
     bl sequence_init
 
 	; LATE INITALISATION HERE!

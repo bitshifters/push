@@ -17,7 +17,7 @@
 .equ ParticleGrid_SIZE,     24
 ; TODO: Sprite per particle etc.?
 
-.equ ParticleGrid_Max,          (26*20)     ; runs at 50Hz with the Dave equation.
+.equ ParticleGrid_Max,          520     ; runs at 50Hz with the Dave equation.
 
 .equ ParticleGrid_CentreX,      (160.0 * MATHS_CONST_1)
 .equ ParticleGrid_CentreY,      (128.0 * MATHS_CONST_1)
@@ -55,6 +55,11 @@ particle_grid_dave_maxpush:
     FLOAT_TO_FP 1.21
 
 ; ============================================================================
+
+particle_grid_init:
+    str lr, [sp, #-4]!
+    DEBUG_REGISTER_VAR particle_grid_total    ; TODO: Make this not a bl call!
+    ldr pc, [sp], #4
 
 ; R0=Num X
 ; R1=Num Y
@@ -119,6 +124,12 @@ particle_grid_make:
 error_gridtoolarge:
 	.long 0
 	.byte "Particle grid too large!"
+	.p2align 2
+	.long 0
+
+error_invalidparams:
+	.long 0
+	.byte "Particle grid invalid parameters!"
 	.p2align 2
 	.long 0
 .endif
@@ -326,6 +337,157 @@ particle_grid_add_verts:
     bne .1
 
     mov pc, lr
+
+; R0=width in words
+; R1=height in rows
+; R2=ptr to image data
+; R?=0 always reset positions, otherwise just origin (morph)
+particle_grid_image_to_verts:
+    str lr, [sp, #-4]!
+
+    stmfd sp!, {r1,r2}
+
+    .if _DEBUG
+    cmp r0, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r1, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r2, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+    .endif
+
+    ldr r11, particle_grid_array_p
+    mov r12, #0             ; count
+
+.if 1
+    ; Row loop
+.1:
+    mov r7, #0              ; last pixel.
+
+    ; Pixel loop.
+    mov r6, #0              ; pixel count.
+.2:
+    mov r8, r6, lsr #3      ; word no.
+    ldr r9, [r2, r8, lsl #2]; get word
+    and r8, r6, #7          ; pixel no.
+    mov r8, r8, lsl #2      ; pixel shift.
+    mov r9, r9, lsr r8      ; shift pixel down lsb
+    and r9, r9, #0x8        ; mask pixel
+
+    ; Has pixel changed?
+    ;cmp r9, r7
+    cmp r9, #0
+    beq .3
+
+.4:
+    ; If yes then plop a vert down.
+    mov r7, r9
+
+    ; Make vert position.
+    sub r8, r6, r0, lsl #2  ; x pos = pixel_x - pixel_w/2
+    mov r8, r8, asl #16     ; x pos = pixel count [16.16]
+    mov r9, r1, asl #17     ; y pos = row * 4 [16.16]
+
+    ; Store vert.
+    stmia r11!, {r8-r9}     ; pos
+    mov r10, #0
+    str r10, [r11], #4
+    str r10, [r11], #4      ; vel
+    stmia r11!, {r8-r9}     ; origin
+
+    add r12, r12, #1
+    .if _DEBUG
+    cmp r12, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+
+.3:
+    ; Next pixel.
+    add r6, r6, #1
+    cmp r6, r0, lsl #3      ; total pixels=words*8
+    blt .2
+
+    ; Next row x 2.
+    add r2, r2, r0, lsl #2  ; image_ptr += words*4*2
+    subs r1, r1, #1
+    bgt .1
+.endif
+
+    ldmfd sp!, {r1,r2}
+
+.if 0
+    mov r3, r1              ; height in rows.
+
+    ; Column loop.
+    mov r6, #0              ; pixel count.
+.10:
+    mov r7, #0              ; last pixel.
+
+    ; Row loop.
+    mov r1, #0              ; row count
+.20:
+    mov r8, r6, lsr #3      ; word no.
+
+    mul r9, r0, r1          ; row_count * words_per_row
+    add r9, r2, r9, lsl #2  ; address of row.
+
+    ldr r9, [r9, r8, lsl #2]; get word
+    and r8, r6, #7          ; pixel no.
+    mov r8, r8, lsl #2      ; pixel shift.
+    mov r9, r9, lsr r8      ; shift pixel down lsb
+    and r9, r9, #0x8        ; mask pixel
+
+    ; Has pixel changed?
+    ;cmp r9, r7
+    cmp r9, #0
+    beq .30
+
+.40:
+    ; If yes then plop a vert down.
+    mov r7, r9
+
+    ; Make vert position.
+    sub r8, r6, r0, lsl #2  ; x pos = pixel_x - pixel_w/2
+    mov r8, r8, asl #16     ; x pos = pixel count [16.16]
+    sub r9, r3, r1          ; y pos = total - row_count
+    mov r9, r9, asl #18     ; y pos = row * 4 [16.16]
+
+    ; Store vert.
+    stmia r11!, {r8-r9}     ; pos
+    mov r10, #0
+    str r10, [r11], #4
+    str r10, [r11], #4      ; vel
+    stmia r11!, {r8-r9}     ; origin
+
+    add r12, r12, #1
+    .if _DEBUG
+    cmp r12, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+
+.30:
+    ; Next row.
+    add r1, r1, #1
+    cmp r1, r3
+    blt .20
+
+    ; Next column.
+    add r6, r6, #1
+    cmp r6, r0, lsl #3      ; total pixels=words*8
+    blt .10
+.endif
+
+    str r12, particle_grid_total
+
+    ldr pc, [sp], #4
+
 
 ; ============================================================================
 

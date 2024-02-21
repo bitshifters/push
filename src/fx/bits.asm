@@ -18,7 +18,7 @@ bits_font_handle:
     .long 0
 
 bits_font_def:
-    .byte "Homerton.Bold.Oblique"
+    .byte "Homerton.Bold"
     .byte 0
 .p2align 2
 
@@ -40,7 +40,7 @@ bits_logo_init:
     ; Set colours for this logo.
     mov r0, #0                              ; font handle.
     mov r1, #0                              ; background logical colour
-    mov r2, #15                             ; foreground logical colour
+    mov r2, #7                             ; foreground logical colour
     mov r3, #0                              ; how many colours
     swi Font_SetColours
 
@@ -60,7 +60,315 @@ bits_logo_init:
     swigt OS_GenerateError
     .endif
 
+    ldr r0, bits_width
+    ldr r1, bits_height
+    ldr r2, bits_logo_p
+    bl bits_logo_make_outline
+
+    ldr r0, bits_width
+    ldr r1, bits_height
+    ldr r2, bits_logo_p
+    bl bits_logo_decimate_outline
+
+    bl bits_logo_make_verts
+
     ldr pc, [sp], #4
+
+; Get a pixel from the image.
+; R0=width in words (stride)
+; R1=row
+; R2=base ptr
+; R6=column
+; Returns R9=pixel value [0-15]
+; Trashes: R5,R8
+bits_get_pixel:
+    cmp r1, r3
+    moveq r9, #0
+    moveq pc, lr
+
+    cmp r6, r0, lsl #3
+    movge r9, #0
+    movge pc, lr
+
+    and r8, r6, #7          ; pixel no.
+    mov r8, r8, lsl #2      ; pixel shift.
+    mov r5, r6, lsr #3      ; word no.
+
+    mul r9, r0, r1          ; row*stride
+    add r9, r2, r9, lsl #2  ; base+(row*stride)*4
+    ldr r9, [r9, r5, lsl #2]; get word
+
+    mov r9, r9, lsr r8     ; shift pixel down lsb
+    and r9, r9, #0xf
+    mov pc, lr
+
+; Marks a pixel in the image.
+; R0=width in words (stride)
+; R1=row
+; R2=base ptr
+; R6=column
+; Trashes: R5,R8,R9,R12
+bits_mark_pixel:
+    mul r8, r0, r1          ; row*stride
+    add r8, r2, r8, lsl #2  ; base+(row*stride)*4
+    mov r5, r6, lsr #3      ; word no.
+    add r5, r8, r5, lsl #2  ; word address
+
+    ldr r12, [r5]           ; get word
+
+    and r8, r6, #7          ; pixel no.
+    mov r8, r8, lsl #2      ; pixel shift.
+
+    mov r9, #0x8
+    orr r12, r12, r9, lsl r8    ; mask in edge bit
+    str r12, [r5]           ; store word
+
+    mov pc, lr
+
+; Removes a pixel from the image.
+; R0=width in words (stride)
+; R1=row
+; R2=base ptr
+; R6=column
+; Trashes: R5,R8,R9,R12
+bits_remove_pixel:
+    mul r8, r0, r1          ; row*stride
+    add r8, r2, r8, lsl #2  ; base+(row*stride)*4
+    mov r5, r6, lsr #3      ; word no.
+    add r5, r8, r5, lsl #2  ; word address
+
+    ldr r12, [r5]           ; get word
+
+    and r8, r6, #7          ; pixel no.
+    mov r8, r8, lsl #2      ; pixel shift.
+
+    mov r9, #0xf
+    bic r12, r12, r9, lsl r8    ; mask out pixel
+    str r12, [r5]           ; store word
+
+    mov pc, lr
+
+; Convert a filled text image into an outline.
+; Marks the top bit of each pixel considered on the edge of the image.
+; R0=width in words
+; R1=height in rows
+; R2=ptr to image data
+bits_logo_make_outline:
+    str lr, [sp, #-4]!
+
+    .if _DEBUG
+    cmp r0, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r1, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r2, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+    .endif
+
+    mov r3, r1              ; height in rows.
+
+    ; Row loop.
+    mov r1, #0              ; row
+.1:
+    mov r7, #0              ; last pixel.
+
+    ; Pixel loop.
+    mov r6, #0              ; column
+.2:
+    bl bits_get_pixel
+    and r9, r9, #7          ; mask out edge bit
+
+    ; Has pixel changed?
+    cmp r9, r7
+    beq .3
+
+    ; If yes then mark top bit as edge.
+    movs r7, r9
+
+    ; Is the new pixel black?
+    ; If so mark pixel to the left.
+    subeq r6, r6, #1
+    bl bits_mark_pixel
+    addeq r6, r6, #1
+
+.3:
+    ; Next pixel.
+    add r6, r6, #1
+    cmp r6, r0, lsl #3      ; total pixels=words*8
+    blt .2
+
+    ; Next row.
+    add r1, r1, #1
+    cmp r1, r3
+    blt .1
+
+    ; Column loop.
+    mov r6, #0              ; pixel count.
+.10:
+
+    ; Row loop.
+    mov r7, #0              ; last pixel.
+    mov r1, #0              ; row count
+.20:
+    bl bits_get_pixel
+    and r9, r9, #7          ; mask out edge bit
+
+    ; Has pixel changed?
+    cmp r9, r7
+    beq .30
+
+    ; If yes then mark top bit as edge.
+    movs r7, r9
+
+    ; Is the new pixel black?
+    ; If so mark pixel on previous row.
+    subeq r1, r1, #1
+    bl bits_mark_pixel
+    addeq r1, r1, #1
+
+.30:
+    ; Next row.
+    add r1, r1, #1
+    cmp r1, r3
+    ble .20
+
+    ; Next column.
+    add r6, r6, #1
+    cmp r6, r0, lsl #3      ; total pixels=words*8
+    blt .10
+
+    ldr pc, [sp], #4
+
+; Convert a filled text image into an outline.
+; Marks the top bit of each pixel considered on the edge of the image.
+; R0=width in words
+; R1=height in rows
+; R2=ptr to image data
+bits_logo_decimate_outline:
+    str lr, [sp, #-4]!
+
+    .if _DEBUG
+    cmp r0, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r1, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+
+    cmp r2, #0
+    adreq r0, error_invalidparams
+    swieq OS_GenerateError
+    .endif
+
+    mov r3, r1              ; height in rows.
+
+.if 1
+    ; Row loop.
+    mov r1, #0              ; row
+.1:
+    mov r7, #0              ; last pixel.
+    mov r4, #0              ; run count.
+
+    ; Pixel loop.
+    mov r6, #0              ; column
+.2:
+    bl bits_get_pixel
+    and r9, r9, #8          ; mask only edge bit
+
+    ; Has pixel changed?
+    cmp r9, r7
+    movne r4, #0            ; reset count.
+
+    ; Is this pixel black?
+    movs r7, r9
+    beq .3
+
+    ; Only keep every 8th pixel.
+    ands r5, r4, #7
+    blne bits_remove_pixel
+
+.3:
+    add r4, r4, #1          ; count++
+
+    ; Next pixel.
+    add r6, r6, #1
+    cmp r6, r0, lsl #3      ; total pixels=words*8
+    blt .2
+
+    ; Next row.
+    add r1, r1, #1
+    cmp r1, r3
+    blt .1
+.endif
+
+.if 1
+    ; Column loop.
+    mov r6, #0              ; pixel count.
+.10:
+
+    mov r4, #0              ; run count.
+
+    ; Row loop.
+    mov r7, #0              ; last pixel.
+    mov r1, #0              ; row count
+.20:
+    bl bits_get_pixel
+    and r9, r9, #8          ; mask only edge bit
+
+    ; Has pixel changed?
+    cmp r9, r7
+    movne r4, #0            ; reset count.
+
+    .23:
+    ; Is this pixel black?
+    movs r7, r9
+    beq .30
+
+    ; Only keep every 3rd pixel...
+    movs r5, r4
+    beq .22
+    .21:
+    subs r5, r5, #3
+    bgt .21
+    .22:
+
+    ; Remove if not zero.
+    blne bits_remove_pixel
+
+.30:
+    add r4, r4, #1          ; count++
+
+    ; Next row.
+    add r1, r1, #1
+    cmp r1, r3
+    ble .20
+
+    ; Next column.
+    add r6, r6, #1
+    cmp r6, r0, lsl #3      ; total pixels=words*8
+    blt .10
+.endif
+
+    ldr pc, [sp], #4
+
+; Scan convert the bitshifters logo image to particle verts.
+bits_logo_make_verts:
+    str lr, [sp, #-4]!
+
+    ldr r0, bits_width
+    ldr r1, bits_height
+    ldr r2, bits_logo_p
+    mov r3, #0
+    bl particle_grid_image_to_verts
+
+    ldr pc, [sp], #4
+
 
 ; R12=screen addr.
 bits_logo_draw:
