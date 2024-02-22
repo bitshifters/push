@@ -1247,7 +1247,6 @@ particle_grid_draw_all_as_2x2_tinted:
     blt .3                              ; cull top
     cmp r2, #Screen_Height-1
     bge .3                              ; cull bottom
-    ; TODO: Clip to sides of screen..?
 
     ;  r1 = X centre
     ;  r2 = Y centre

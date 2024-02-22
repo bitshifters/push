@@ -19,6 +19,8 @@
 .equ MathVar_EvalFn,    32
 .equ MathVar_SIZE,      36
 
+.equ _MATH_VAR_REPLACE, 1
+
 ; ============================================================================
 
 math_var_base_p:
@@ -81,12 +83,20 @@ math_var_register_ex:
     cmp r11, #0                         ; curr_p->next=0?
     beq .2
 
+    .if _MATH_VAR_REPLACE
+    ; Found matching var?
+    ldr r7, [r12, #MathVar_Addr]        ; curr_p->addr
+    cmp r7, r0
+    addeq r10, r12, #MathVar_Addr       ; reset iter?
+    beq .3 
+    .else
     .if _DEBUG
     ; Found matching var?
     ldr r7, [r12, #MathVar_Addr]        ; curr_p->addr
     cmp r7, r0
     adreq r0, error_dupmathvar
     swieq OS_GenerateError
+    .endif
     .endif
 
     mov r12, r11                        ; curr_p=next_p
@@ -99,6 +109,8 @@ math_var_register_ex:
     mov r7, #0
     str r7, [r10], #4                   ; this->next=0
     str r7, [r10], #4                   ; this->iter=0
+
+.3:
     stmia r10!, {r0-r6}                 ; store all params
     mov pc, lr
 

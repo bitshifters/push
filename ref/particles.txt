@@ -494,16 +494,18 @@ Direction from Dave:
         - TESTED!
         - These are large 520 verts x 8 bytes = 4160 bytes
           and don't seem to compress super-well with Shrinkler.
-          Did Dave use a rand function to fill the shapes?
+          Did Dave use a rand function to fill the shapes? YES!
         - Perhaps use RISCOS outline font and either fill the shape
           with random points (rejection sample) or scan across each
           scanline and find the start & end points of lines.
         - Create an outline in image space by sampling pixels and marking
           where they change, biasing to non-zero pixels.
         - Need to reduce the outline horizontal and vertical runs.
-          Try: where a run is >1 keep every Nth pixel.
+          Try: where a run is >1 keep every Nth pixel. - DONE
+          Looks 'OK' but a bit uniform and quite faffy.
+    - Word with random filled points - DONE
+        - Looks better? But not that many points available ~520.
           
-
     - What if all the particles formed a solid circle?
         - At ~360 max particles, can have a 18*18 box, which is 36*36 pixels.
         - This is larger than the The Orb currently...
@@ -533,12 +535,20 @@ Direction from Dave:
     - Grid colours?
     - Dave asked for particles in 2 colours with separate ramp of 7 colours for each.
     - Need palette lerping to blend between palettes over time.
-    - 
+    - Implement math_lerp fn.
+    - Implement rgb_lerp fn but decide on RGB format => VIDC or OSWORD?
+    - Might need to implement colour updates on vsync (again).
 
 - How to start? <== NEXT
     - Orb grows to size.
+        - Should just be a math fn attached to ball radius?
     - Eminates the particles that form the grid. Free particles for a while then lerp.
-
+    - Free particles becoming grid particles?
+        - Either copy free particle list to particle grid array at hand over.
+        - Or create an emitter that generates into particle grid array (no life).
+        - What to do about overloaded velocity / distance field?
+        - Dynamic motion with some drag to bring particles to a stop?
+        - Then morph to target as needed?
 
 MODE 13?
 ~~~
@@ -553,3 +563,23 @@ For now the decision is:
 - MODE 9 (16 colours)
 - Full screen (320x256)
 - Fat pixels (2x2)
+
+From Dave:
+Just thinking of other effects we can do. Like black hole (particles
+getting suck in, maybe for the final scene) or a white hole (the
+reverse, possibly for the opening scene).
+Also maybe something like rain, where they cascade down and then if
+they reach the bottom, a new particle can spawn at the top.
+^--- DO THIS NEXT!!
+
+Pondering
+~~~
+- Iterating on particle parameters is super slow - go back to Lua??
+- Always Be Lerping? Perhaps the ball is always lerping to a desired
+  position, rather than driving the actual position. This would make
+  it easier to transition between different ball motions...
+- Merge the two particle systems somehow...
+  The particles are always lerping to their desired position, what if
+  the dynamics system only updates the desired pos?
+  Still need independent velocity...
+- Ability to update linked math_vars without having to unlink first. - DONE

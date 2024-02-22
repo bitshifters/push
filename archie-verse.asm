@@ -8,6 +8,8 @@
 
 .equ _DEBUG,                    1
 .equ _SMALL_EXE,                0               ; TODO: Configure from Makefile?
+; TODO: DON'T FORGET TO REMOVE UNUSED CODE!!!! OR ADD A DEFINE FOR THIS????
+
 .equ _DEBUG_RASTERS,            (_DEBUG && 1)
 .equ _DEBUG_SHOW,               (_DEBUG && 1)
 .equ _CHECK_FRAME_DROP,         (!_DEBUG && 1)
@@ -15,7 +17,7 @@
 
 .equ DebugDefault_PlayPause,    1		; play
 .equ DebugDefault_ShowRasters,  0
-.equ DebugDefault_ShowVars,     1		; slow so off by default.
+.equ DebugDefault_ShowVars,     1		; slow
 
 ; ============================================================================
 ; Includes.
@@ -135,7 +137,7 @@ main_loop:
     .if LibConfig_IncludeMathVar
     ; Tick after script as this is where vars will be added/removed.
     bl math_var_tick                ; TODO: Here or app_tick or lib_tick?
-    ; Tick before laters as this is where the vars will be used.
+    ; Tick before layers as this is where the vars will be used.
     .endif
 	bl fx_tick_layers
 

@@ -4,30 +4,29 @@
 ; ============================================================================
 
 ; Particle variables block:
-.equ Particle_Next,     0       ; R0 = pointer to next active/free.
-.equ Particle_XPos,     4       ; R1
-.equ Particle_YPos,     8       ; R2
-.equ Particle_Life,     12      ; R3
-.equ Particle_Colour,   14      ; R3
-.equ Particle_Radius,   15      ; R3
-.equ Particle_XVel,     16      ; R4
-.equ Particle_YVel,     20      ; R5
-.equ Particle_SIZE,     24
+.equ Particle_Next,             0       ; R0 = pointer to next active/free.
+.equ Particle_XPos,             4       ; R1
+.equ Particle_YPos,             8       ; R2
+.equ Particle_Life,             12      ; R3
+.equ Particle_Colour,           14      ; R3
+.equ Particle_Radius,           15      ; R3
+.equ Particle_XVel,             16      ; R4
+.equ Particle_YVel,             20      ; R5
+.equ Particle_SIZE,             24
 
-.equ Particles_Max,     680     ; ARM2 ~= 680. ARM250 ~= 1024.
-.equ Particle_Gravity, -2.0     ; Or some sort of particle force fn.
-                                ; TODO: Drive with math_func?
+.equ Particles_Max,             680     ; ARM2 ~= 680. ARM250 ~= 1024.
+.equ Particles_DefaultG,        -2.0
 
 .equ Particles_CentreX,         (160.0 * MATHS_CONST_1)
 .equ Particles_CentreY,         (128.0 * MATHS_CONST_1)
 
 .equ Particles_CollideLeft,     (-160.0 * MATHS_CONST_1)
 .equ Particles_CollideRight,    (160.0 * MATHS_CONST_1)
-.equ Particles_CollideTop,      (512.0 * MATHS_CONST_1)
-.equ Particles_CollideBottom,   (-64.0 * MATHS_CONST_1)
+.equ Particles_CollideTop,      (128.0 * MATHS_CONST_1)
+.equ Particles_CollideBottom,   (-128.0 * MATHS_CONST_1)
 
-.equ _PARTICLES_PLOT_CHUNKY,    0  ; only works in MODE 12/13.
 .equ _PARTICLES_ASSERT_SPAWN,   (_DEBUG && 0)
+.equ _PARTICLES_ADD_DRAG,       1
 
 ; ============================================================================
 
@@ -50,11 +49,11 @@ particles_alive_count:
     .long 0
 .endif
 
-particle_constant_force:
+particles_constant_force:
     FLOAT_TO_FP 0.0                             ; f.x
 ; Fall through!
-particle_gravity:    
-    FLOAT_TO_FP (Particle_Gravity / 50.0)       ; f.y (pixels/frame not pixels/sec) 
+particles_gravity:    
+    FLOAT_TO_FP (Particles_DefaultG / 50.0)       ; f.y (pixels/frame not pixels/sec) 
 
 ; ============================================================================
 
@@ -87,8 +86,8 @@ particles_tick_all_under_constant_force:
 
     ; R8 = acceleration.x
     ; R9 = acceleration.y
-    ldr r8, particle_constant_force+0   ; acc.x
-    ldr r9, particle_constant_force+4   ; acc.y
+    ldr r8, particles_constant_force+0   ; acc.x
+    ldr r9, particles_constant_force+4   ; acc.y
 
     adr r12, particles_first_active     ; R12=current_p
     ldr r0, [r12, #0]                   ; R0=next_p
@@ -112,6 +111,14 @@ particles_tick_all_under_constant_force:
 
     ; TODO: Make the particle dynamics a function call to remove duplicated code?
     ;       How much of an overhead is the bl per particle vs the maths involved?
+
+.if _PARTICLES_ADD_DRAG
+    ; Apply drag to acceleration. F = -kv
+    ldr r8, particles_constant_force+0   ; acc.x
+    ldr r9, particles_constant_force+4   ; acc.y
+    sub r8, r8, r4, asr #9               ; k = 1/512
+    sub r9, r9, r5, asr #9
+.endif
 
     ; vel += acceleration
     add r4, r4, r8
@@ -329,7 +336,7 @@ particles_tick_all_with_circle_collider:
 
     ; [R8,R9] = force from object
 
-    ldr r14, particle_gravity
+    ldr r14, particles_gravity
     add r9, r9, r14                ; acc.y += gravity
 
     ; vel += acceleration (is in units per frame so *50)
@@ -534,7 +541,7 @@ particles_tick_all_with_attractor:
 
     ; [R8,R9] = force from object
 
-    ldr r14, particle_gravity
+    ldr r14, particles_gravity
     add r9, r9, r14                ; acc.y += gravity
 
     ; vel += acceleration (is in units per frame so *50)
@@ -610,7 +617,7 @@ particles_draw_all_as_points:
     ldr r0, [r11, #0]                   ; next_p
 .1:
     movs r11, r0                        ; curr=next
-    beq .2
+    ldreq pc, [sp], #4
 
     ldmia r11, {r0-r3}                  ; load particle context for draw
 
@@ -620,15 +627,15 @@ particles_draw_all_as_points:
 
     mov r1, r1, asr #16
     cmp r1, #0
-    blt .3                              ; clip left - TODO: destroy particle?
+    blt .1                              ; clip left - TODO: destroy particle?
     cmp r1, #Screen_Width
-    bge .3                              ; clip right - TODO: destroy particle?
+    bge .1                              ; clip right - TODO: destroy particle?
 
     mov r2, r2, asr #16
     cmp r2, #0
-    blt .3                              ; clip top - TODO: destroy particle?
+    blt .1                              ; clip top - TODO: destroy particle?
     cmp r2, #Screen_Height
-    bge .3                              ; clip bottom - TODO: destroy particle?
+    bge .1                              ; clip bottom - TODO: destroy particle?
 
     ; TODO: If eroniously replace R2 with R1 above then Arculator exists without warning!
     ;       Debug this for Sarah and test on Arculator v2.2.
@@ -647,18 +654,98 @@ particles_draw_all_as_points:
 	orrne r8, r8, r7, lsl #4	; mask in colour as right hand pixel
 
     strb r8, [r10, r1, lsr #1]!         ; screen_y[screen_x]=colour index.
-
-    .if _PARTICLES_PLOT_CHUNKY
-    strb r7, [r10, #1]                  ; screen_y[screen_x+1]=colour index.
-    strb r7, [r10, #Screen_Stride]      ; (screen_y+1)[screen_x]=colour index.
-    strb r7, [r10, #Screen_Stride+1]    ; (screen_y+1)[screen_x+1]=colour index.
-    .endif
-
-.3:
     b .1
 
-.2:
-    ldr pc, [sp], #4
+
+; R12=screen addr
+particles_draw_all_as_2x2:
+    str lr, [sp, #-4]!
+
+    mov r8, #Screen_Width-1             ; const
+
+    adr r11, particles_first_active     ; curr_p
+    ldr r0, [r11, #0]                   ; next_p
+.1:
+    movs r11, r0                        ; curr=next
+    ldreq pc, [sp], #4                  ; return
+
+    ldmia r11, {r0-r3}                  ; load particle context for draw
+
+    ; For now just plot 2D particles.
+    add r1, r1, #Particles_CentreX               ; [s15.16]
+    rsb r2, r2, #Particles_CentreY               ; [s15.16]
+
+    mov r1, r1, asr #16
+    mov r2, r2, asr #16
+
+    cmp r1, #0
+    blt .1                              ; clip left
+    cmp r1, r8  ;#Screen_Width-1
+    bge .1                              ; clip right
+
+    cmp r2, #0
+    blt .1                              ; clip top
+    cmp r2, #Screen_Height-1
+    bge .1                              ; clip bottom
+
+    ; Get tint.
+    mov r14, r3, lsr #16                ; colour is upper 16 bits.
+    and r14, r14, #0xf
+    orr r14, r14, r14, lsl #4
+
+    ; Calculate screen ptr to the byte.
+    add r10, r12, r2, lsl #7
+    add r10, r10, r2, lsl #5            ; y*160
+    add r10, r10, r1, lsr #1
+
+    ; Odd or even?
+    tst r1, #1
+    beq .5
+
+    ; [1, 3, 5, 7]
+    and r4, r1, #7                  ; x shift
+    cmp r4, #7
+    bne .4
+
+    ; [7] => worst case! 2x2 across 2 words.
+    ldrb r3, [r10]
+    bic r3, r3, #0xf0
+    orr r3, r3, r14, lsl #4
+    strb r3, [r10]
+    ldrb r3, [r10, #Screen_Stride]
+    bic r3, r3, #0xf0
+    orr r3, r3, r14, lsl #4
+    strb r3, [r10, #Screen_Stride]
+    ldrb r3, [r10, #1]
+    bic r3, r3, #0x0f
+    orr r3, r3, r14, lsr #4
+    strb r3, [r10, #1]
+    ldrb r3, [r10, #Screen_Stride+1]
+    bic r3, r3, #0x0f
+    orr r3, r3, r14, lsr #4
+    strb r3, [r10, #Screen_Stride+1]
+    b .1
+
+.4:
+    ; [1, 3, 5] => 2x2 in same word.
+    mov r4, r4, lsl #2              ; shift*4
+    bic r10, r10, #3                ; word
+
+    ldr r3, [r10]
+    bic r3, r3, r4, lsl r4
+    orr r3, r3, r14, lsl r4
+    str r3, [r10]
+    ldr r3, [r10, #Screen_Stride]
+    bic r3, r3, r4, lsl r4
+    orr r3, r3, r14, lsl r4
+    str r3, [r10, #Screen_Stride]
+    b .1
+
+.5:
+    ; [0, 2, 4, 6] => best case! 2x2 in same byte.
+    strb r14, [r10]                   ; 4c
+    strb r14, [r10, #Screen_Stride]   ; 4c
+    b .1
 
 
 ; R12=screen addr
@@ -1018,3 +1105,42 @@ emiterror: ;The error block
 .endif
 
 ; ============================================================================
+; Script helpers.
+; ============================================================================
+
+; R0=force x
+; R1=force y
+particles_set_constant_force:
+    str r0, particles_constant_force + 0
+    str r1, particles_constant_force + 4
+    mov pc, lr
+
+; R0=0 always reset positions, otherwise just origin (morph)
+particles_transfer_to_grid:
+    movs r10, r0
+    ldrne r10, particle_grid_total      ; morph?
+    mov r9, #0                          ; count
+    ldr r12, particle_grid_array_p
+
+    mov r3, #0
+    mov r4, #0                          ; vel
+
+    adr r11, particles_first_active     ; curr_p
+    ldr r0, [r11, #0]                   ; next_p
+.1:
+    movs r11, r0                        ; curr=next
+    beq .2
+
+    ldmia r11, {r0-r2}                  ; load particle context
+
+    subs r10, r10, #1
+    addpl r12, r12, #16
+    stmmiia r12!, {r1-r4}   ; pos, vel
+    stmia r12!, {r1-r2}     ; origin
+
+    add r9, r9, #1
+    b .1
+
+.2:
+    str r9, particle_grid_total
+    mov pc, lr
