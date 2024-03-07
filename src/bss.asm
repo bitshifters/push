@@ -82,6 +82,12 @@ particle_grid_array_no_adr:
 
 ; ============================================================================
 
+; src/particle-dave.asm
+particle_dave_array_no_adr:
+    .skip ParticleDave_SIZE * ParticleDave_Max
+
+; ============================================================================
+
 ; src/balls.asm
 balls_array_no_adr:
     .skip Ball_SIZE * Balls_Max

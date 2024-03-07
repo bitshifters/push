@@ -49,12 +49,6 @@ particles_alive_count:
     .long 0
 .endif
 
-particles_constant_force:
-    FLOAT_TO_FP 0.0                             ; f.x
-; Fall through!
-particles_gravity:    
-    FLOAT_TO_FP (Particles_DefaultG / 50.0)       ; f.y (pixels/frame not pixels/sec) 
-
 ; ============================================================================
 
 ; Initialise all particles in the free list.
@@ -90,7 +84,7 @@ particles_tick_all_under_constant_force:
     ldr r9, particles_constant_force+4   ; acc.y
 
     adr r12, particles_first_active     ; R12=current_p
-    ldr r0, [r12, #0]                   ; R0=next_p
+    ldr r0, [r12, #Particle_Next]       ; R0=next_p
 
 .1:
     mov r11, r12                        ; r11 = prev_p = current_p
@@ -116,6 +110,7 @@ particles_tick_all_under_constant_force:
     ; Apply drag to acceleration. F = -kv
     ldr r8, particles_constant_force+0   ; acc.x
     ldr r9, particles_constant_force+4   ; acc.y
+    ; TOOD: Can't this just be sub r4, r4, r4, asr #9 etc.?
     sub r8, r8, r4, asr #9               ; k = 1/512
     sub r9, r9, r5, asr #9
 .endif
@@ -1144,3 +1139,13 @@ particles_transfer_to_grid:
 .2:
     str r9, particle_grid_total
     mov pc, lr
+
+; ============================================================================
+
+particles_constant_force:
+    FLOAT_TO_FP 0.0                             ; f.x
+; Fall through!
+particles_gravity:    
+    FLOAT_TO_FP (Particles_DefaultG / 50.0)       ; f.y (pixels/frame not pixels/sec) 
+
+; ============================================================================

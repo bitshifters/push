@@ -1,5 +1,5 @@
 ; ============================================================================
-; Particle grid.
+; Particle grid. Should really be called a particle array.
 ; 2D particles only.
 ; Fixed number of particles (not created/destroyed).
 ; Not necessarily in a grid arrangement but typically.
@@ -9,7 +9,7 @@
 ; Particle variables block:
 .equ ParticleGrid_XPos,     0       ; R1
 .equ ParticleGrid_YPos,     4       ; R2
-.equ ParticleGrid_Colour,   8
+.equ ParticleGrid_Colour,   8       ; NB. Not really colour but distance to orb.
 .equ ParticleGrid_XVel,     8       ; R3
 .equ ParticleGrid_YVel,     12      ; R4
 .equ ParticleGrid_XOrigin,  16      ; R5
@@ -43,7 +43,7 @@ particle_grid_total:
 ; ============================================================================
 
 particle_grid_collider_pos:
-    VECTOR2 0.0, 128.0
+    VECTOR2 0.0, 0.0
 
 particle_grid_collider_radius:
     FLOAT_TO_FP 48.0        ;Particles_CircleCollider_Radius
@@ -916,7 +916,7 @@ particle_grid_tick_all_dave_loop:
     sub r2, r2, r9                  ; desired.y - orig.y
 
     ; Calculate the length of this vector for colour!
-    .if 1
+
     ; Calcluate dist^2=dx*dx + dy*dy
     mov r4, r1, asr #10             ; [10.6]
     mov r14, r4
@@ -949,12 +949,8 @@ particle_grid_tick_all_dave_loop:
     ;ldr r14, [r11, #ParticleGrid_Colour]
     ;cmp r5, r14
     ;movlt r5, r14
-    .endif
 
-    ; TODO: factor might be const?
-    mov r14, r3, asr #8             ; factor [1.8]
-    mov r1, r1, asr #8              ; [~9.8]
-    mov r2, r2, asr #8              ; [~9.8]
+    ; Update original position here!
 
     ; Minksy rotation.
     ; xnew = xold - (yold >> k)
@@ -971,14 +967,20 @@ particle_grid_tick_all_dave_expansion_code:
     add r9, r9, r9, asr #ParticleGrid_Minksy_Expansion
 
     ; Lerp between desired and original position.
+
+    ; TODO: factor might be const?
+    mov r14, r3, asr #8             ; factor [1.8]
+    mov r1, r1, asr #8              ; [~9.8]
+    mov r2, r2, asr #8              ; [~9.8]
+
     mla r1, r14, r1, r8             ; pos.x = orig.x - f * (desired.x - orig.x) [16.16]
     mla r2, r14, r2, r9             ; pos.x = orig.x - f * (desired.x - orig.x) [16.16]
 
     ; Presume no collision detection?
     ; TODO: Would it be faster to plot immediately here? A: Probably.
 
-    ; Save particle state.
-    stmia r11!, {r1-r2, r5-r6, r8-r9}       ; note just pos.x, pos.y - no velocity!
+    ; Save particle state. NB. R6 redundant.
+    stmia r11!, {r1-r2, r5-r6, r8-r9}
 
     subs r12, r12, #1
     bne particle_grid_tick_all_dave_loop

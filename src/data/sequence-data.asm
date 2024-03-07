@@ -9,6 +9,7 @@
     call_0 sprite_utils_init
     call_0 the_ball_init
     call_0 particle_grid_init
+    call_0 particle_dave_init
 
     ; Make sprites.
     call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
@@ -29,9 +30,11 @@
     ; Call each part in turn.
 
 seq_loop:
+    call_3 palette_set_block, 0, 0, seq_palette_blue_cyan_ramp
+    gosub seq_part6
+
     call_3 palette_set_block, 0, 0, seq_palette_green_white_ramp
     gosub seq_part5
-
     gosub seq_part1
 
     call_3 palette_set_block, 0, 0, seq_palette_black_on_white
@@ -40,7 +43,7 @@ seq_loop:
     call_3 palette_set_block, 0, 0, seq_palette_red_additive
     gosub seq_part2
 
-    call_3 palette_set_block, 0, 0, seq_palette_blue_cyan_ramp
+    call_3 palette_set_block, 0, 0, seq_palette_green_white_ramp
     gosub seq_part3
 
     yield seq_loop
@@ -358,6 +361,7 @@ seq_part5:
     
     ; Setup emitter.
     write_addr math_emitter_p, math_emitter_config_3
+    write_addr math_emitter_spawn_fn, particle_spawn
 
     ; Setup the ball.
     call_2f particles_set_constant_force  0.0, 0.0
@@ -395,6 +399,56 @@ seq_part5:
     math_unlink_vars the_ball_block+TheBall_y
 
     ; TODO: Separate tick & draw layers - I shouldn't have to know about CLS here!
+    call_3 fx_set_layer_fns, 0, 0               screen_cls
+    end_script
+
+
+seq_part6:
+    ; Set layers.
+    call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
+    call_3 fx_set_layer_fns, 1, particle_dave_tick_all,            particle_dave_draw_all_as_2x2
+    
+    ; Setup emitter.
+    write_addr math_emitter_p, math_emitter_config_4
+    write_addr math_emitter_spawn_fn, particle_dave_spawn
+
+    ; Setup the ball.
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+    call_2f the_ball_set_pos, 0.0, 0.0              ; centre ball
+    call_2f the_ball_set_vel, 0.0, 0.0
+
+    ; Make the ball the particle grid collider.
+    ; particle_grid_collider_pos.x = the_ball.x
+    ; particle_grid_collider_pos.y = the_ball.y
+    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+
+    ; Equation of the ball.
+    ; x=radius * sin(t/speed)
+    ; y=128 + radius * cos(t/speed)
+    ; Where radius = t/speed as well.
+    ; ~20 seconds to get to max radius 100. 1000/speed=100;speed=10.
+
+    ; radius = i/10
+    math_register_var seq_ball_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+
+    ; Want this to be the radius value -----------------------v
+    math_register_var2 the_ball_block+TheBall_x,   0.0, seq_ball_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_register_var2 the_ball_block+TheBall_y,   0.0, seq_ball_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+
+    call_2f particles_set_constant_force 0.0, -1.0/50.0
+
+    wait_secs 15.0
+
+    call_2f particles_set_constant_force 0.0, 0.0
+    write_addr math_emitter_p, math_emitter_config_5
+
+    wait_secs 15.0
+
+    math_unregister_var the_ball_block+TheBall_x
+    math_unregister_var the_ball_block+TheBall_y
+    math_unregister_var seq_ball_radius
+
     call_3 fx_set_layer_fns, 0, 0               screen_cls
     end_script
 
@@ -494,11 +548,31 @@ math_emitter_config_3:  ; attached to the_ball.
     math_const 50.0/10                                                  ; emission rate=80 particles per second fixed.
     math_func_read_addr 0.0, 1.0, the_ball_block+TheBall_x              ; emitter.x = 0.0 + 1.0 * the_ball_block.x
     math_func_read_addr 0.0, 1.0, the_ball_block+TheBall_y              ; emitter.y = 0.0 + 1.0 * the_ball_block.y
-    math_func  0.0,    0.25,    math_sin,  0.0,   1.0/(MATHS_2PI*10.0)   ; emitter.dir.x = 2.0 * math.sin(f/100)
-    math_func  0.0,    0.25,    math_cos,  0.0,   1.0/(MATHS_2PI*10.0)   ; emitter.dir.y = 2.0 * math.cos(f/100)
+    math_func  0.0,    0.25,    math_sin,  0.0,   1.0/(MATHS_2PI*10.0)  ; emitter.dir.x = 2.0 * math.sin(f/100)
+    math_func  0.0,    0.25,    math_cos,  0.0,   1.0/(MATHS_2PI*10.0)  ; emitter.dir.y = 2.0 * math.cos(f/100)
     math_const 32768                                                    ; emitter.life
     math_func  0.0,    1.0,    math_and15, 0.0,  1.0                    ; emitter.colour = (emitter.colour + 1) & 15    [0.0+1.0*(0.0+1.0*i)]
     math_func  8.0,    6.0,    math_sin,   0.0,  1.0/(MATHS_2PI*10.0)   ; emitter.radius = 8.0 + 6 * math.sin(f/10)
+
+math_emitter_config_4:
+    math_const 50.0/120                                                 ; emission rate=120 particles per second fixed.
+    math_func  -160.0,  320.0,    math_rand,  0.0,  0.0                 ; emitter.pos.x = 160.0 * math.random()
+    math_func  128.0,   32.0,     math_rand,  0.0,  0.0                 ; emitter.pos.y = 128.0 + 32.0 * math.random()
+    math_const 0.0                                                      ; emitter.vel.x = 0.0
+    math_const 0.0                                                      ; emitter.vel.y = 0.0
+    math_const 512                                                      ; emitter.life
+    math_const 15                                                       ; emitter.colour
+    math_const 8.0                                                      ; emitter.radius = 8.0
+
+math_emitter_config_5:
+    math_const 50.0/50                                                  ; emission rate=50 particles per second fixed.
+    math_func  -160.0,  320.0,    math_rand,  0.0,  0.0                 ; emitter.pos.x = 160.0 * math.random()
+    math_func  128.0,   32.0,     math_rand,  0.0,  0.0                 ; emitter.pos.y = 128.0 + 32.0 * math.random()
+    math_const 0.0                                                      ; emitter.vel.x = 0.0
+    math_func  0.0,     -0.5,     math_rand,  0.0,  0.0                 ; emitter.vel.y = - 4.0 * math.random()
+    math_const 512                                                      ; emitter.life
+    math_const 15                                                       ; emitter.colour
+    math_const 8.0                                                      ; emitter.radius = 8.0
 
 ; ============================================================================
 
@@ -558,21 +632,21 @@ seq_palette_black_on_white:
 
 seq_palette_blue_cyan_ramp:
     .long 0x00000000                    ; 00 = 0000 = black
-    .long 0x00800000                    ; 01 = 0001 =
-    .long 0x00801000                    ; 02 = 0010 =
-    .long 0x00802000                    ; 03 = 0011 =
-    .long 0x00803000                    ; 04 = 0100 =
-    .long 0x00804000                    ; 05 = 0101 =
-    .long 0x00905000                    ; 06 = 0110 =
-    .long 0x00a06000                    ; 07 = 0111 = reds
-    .long 0x00b07000                    ; 08 = 1000 =
-    .long 0x00c08020                    ; 09 = 1001 =
-    .long 0x00d09040                    ; 10 = 1010 =
-    .long 0x00e0a060                    ; 11 = 1011 =
-    .long 0x00e0b080                    ; 12 = 1100 =
-    .long 0x00e0c0a0                    ; 13 = 1101 =
-    .long 0x00e0d0c0                    ; 14 = 1110 = oranges
-    .long 0x00e0e0e0                    ; 15 = 1111 = white
+    .long 0x00a03000                    ; 01 = 0001 =
+    .long 0x00a04000                    ; 02 = 0010 =
+    .long 0x00a05000                    ; 03 = 0011 =
+    .long 0x00a06000                    ; 04 = 0100 =
+    .long 0x00b07000                    ; 05 = 0101 =
+    .long 0x00b08000                    ; 06 = 0110 =
+    .long 0x00c09000                    ; 07 = 0111 = reds
+    .long 0x00c0a000                    ; 08 = 1000 =
+    .long 0x00d0b020                    ; 09 = 1001 =
+    .long 0x00d0c040                    ; 10 = 1010 =
+    .long 0x00e0d060                    ; 11 = 1011 =
+    .long 0x00e0e080                    ; 12 = 1100 =
+    .long 0x00f0f0a0                    ; 13 = 1101 =
+    .long 0x00f0f0c0                    ; 14 = 1110 = oranges
+    .long 0x00f0f0e0                    ; 15 = 1111 = white
 
 block_sprite_sheet_def_no_adr:
     ; 8 sprites at 2 words (8 pixels) x 8 rows.

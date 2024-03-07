@@ -25,6 +25,9 @@
 math_emitter_p:
     .long math_emitter_config_3
 
+math_emitter_spawn_fn:
+    .long particle_spawn
+
 ; ============================================================================
 
 math_emitter_init:
@@ -54,7 +57,6 @@ math_emitter_tick_all:
     ldr r10, math_emitter_p
     cmp r10, #0
     blne math_emitter_tick
-    bl math_emitter_tick
 
     ldr pc, [sp], #4
 
@@ -94,8 +96,10 @@ math_emitter_tick:
     adds r11, r11, r0               ; timer += frames between emissions.
     .endif
 
-    ; Spawn!
-    bl particle_spawn               ; trashes r0,r8-r9
+    ; Call the spawn fn!
+    adr lr, .1
+    ldr pc, math_emitter_spawn_fn   ; trashes r0,r8-r9
+    .1:
 
     ; Check the emissions timer - might have > 1 particle per frame!
     cmp r11, #0
