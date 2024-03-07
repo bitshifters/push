@@ -13,6 +13,9 @@
 .equ TheBall_colour,   30      ; R7
 .equ TheBall_SIZE,     32
 
+.equ TheBall_DefaultRadius, 16
+.equ TheBall_DefaultColour, 15
+
 the_ball_p:
     .long the_ball_block
 
@@ -21,8 +24,8 @@ the_ball_block:
     VECTOR2 80.0, 280.0         ; position
     VECTOR2 0.5, 0.0            ; velocity
     VECTOR2 0.0, 0.0            ; accumulated force
-    .short 16                   ; radius
-    .short 15                   ; colour
+    .short TheBall_DefaultRadius                   ; radius
+    .short TheBall_DefaultColour                   ; colour
 
 ; ============================================================================
 
@@ -302,20 +305,21 @@ the_ball_set_vel:
     mov pc, lr
 
 ; R0=radius
-the_ball_set_radius:
+the_ball_set_radiusf:
     ldr r1, the_ball_block + TheBall_radius
     bic r1, r1, #0x00ff
     bic r1, r1, #0xff00
-    orr r1, r1, r0
+    orr r1, r1, r0, asr #16
     str r1, the_ball_block + TheBall_radius
     mov pc, lr
+; TODO: Just make TheBall_radius a word so can be driven with a math_var.
 
 ; R0=colour
 the_ball_set_colour:
     ldr r1, the_ball_block + TheBall_radius
     bic r1, r1, #0x00ff0000
     bic r1, r1, #0xff000000
-    orr r1, r1, r0, lsr #16
+    orr r1, r1, r0, lsl #16
     str r1, the_ball_block + TheBall_radius
     mov pc, lr
 
