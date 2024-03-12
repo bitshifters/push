@@ -84,6 +84,11 @@ app_init_video:
 	cmp r1, #VideoConfig_ScreenBanks
 	ble .1
 
+    ; No flashing colours (FFS).
+    mov r0, #9
+    mov r1, #0
+    swi OS_Byte
+
 .if AppConfig_UseQtmEmbedded
     ldr pc, QtmEmbedded_Init
 .else
@@ -312,9 +317,6 @@ vsync_bodge:
 ; ============================================================================
 
 app_vsync_code:
-    ; TODO: Palette pending.
-	; WRITE VIDC REGS HERE!
-
 	; Update the vsync counter.
 	ldr r0, vsync_count
 	add r0, r0, #1
@@ -329,6 +331,20 @@ app_vsync_code:
 	beq exitVs
 
 	str r1, displayed_bank
+
+    ; Set palette for pending bank.
+	mov r11, #VIDC_Write
+    ldr r12, vidc_buffers_p
+    add r12, r12, r1, lsl #6        ; 64 bytes per bank.
+    mov r1, #16
+.1:
+    ldr r0, [r12], #4
+    cmp r0, #-1
+    beq .2
+    str r0, [r11]                   ; VIDC_Write
+    subs r1, r1, #1
+    bne .1
+.2:
 
 	; Clear pending bank.
 	mov r0, #0
@@ -351,7 +367,9 @@ app_vsync_code:
 ; Support library code modules used by the FX sequence.
 ; ============================================================================
 
-.include "lib/mode9-screen.asm"
+.if _DEBUG || _CHECK_FRAME_DROP
 .include "lib/palette.asm"
+.endif
+.include "lib/mode9-screen.asm"
 .include "lib/outline-font.asm"
 .include "lib/draw-file.asm"

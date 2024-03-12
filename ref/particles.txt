@@ -541,14 +541,14 @@ Direction from Dave:
 
 - How to start? <== NEXT
     - Orb grows to size.
-        - Should just be a math fn attached to ball radius?
+        - Should just be a math fn attached to ball radius? - TODO
     - Eminates the particles that form the grid. Free particles for a while then lerp.
     - Free particles becoming grid particles?
-        - Either copy free particle list to particle grid array at hand over.
-        - Or create an emitter that generates into particle grid array (no life).
-        - What to do about overloaded velocity / distance field?
-        - Dynamic motion with some drag to bring particles to a stop?
-        - Then morph to target as needed?
+        - Either copy free particle list to particle grid array at hand over. - DONE
+        - Or create an emitter that generates into particle grid array (no life). - DONE
+        - What to do about overloaded velocity / distance field? - DONE
+        - Dynamic motion with some drag to bring particles to a stop? - DONE
+        - Then morph to target as needed? - DONE
 
 MODE 13?
 ~~~
@@ -569,8 +569,8 @@ Just thinking of other effects we can do. Like black hole (particles
 getting suck in, maybe for the final scene) or a white hole (the
 reverse, possibly for the opening scene).
 Also maybe something like rain, where they cascade down and then if
-they reach the bottom, a new particle can spawn at the top.
-^--- DO THIS NEXT!!
+they reach the bottom, a new particle can spawn at the top. 
+^--- DO THIS NEXT!! - DONE
 
 Pondering
 ~~~
@@ -583,3 +583,24 @@ Pondering
   the dynamics system only updates the desired pos?
   Still need independent velocity...
 - Ability to update linked math_vars without having to unlink first. - DONE
+
+Colour and palettes
+~~~
+VIDC register writes: VIDC_ColN | 0xbgr
+Current palette format for OSWORD: 0x00BbGgRr
+
+Need to be able to lerp a single colour, i.e. the ball, from col A to col B.
+
+col[i]=col_A + blend * (col_B - col_A)
+Where blend is a FP word.
+Drive blend with math_var.
+Macro to lerp over frames - could drive from radius etc.?
+
+colour_make_lerp address_final_rgb, col_A, col_B, 
+colour_kill_lerp address_final_rgb
+
+Colours for this frame need to be set at vsync to avoid tearing.
+Need buffer of 16 VIDC writes for each bank.
+Write VIDC commands on vsync for pending bank.
+
+Probably easiest to keep OSWORD format for blending - write bytes.

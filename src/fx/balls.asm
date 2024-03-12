@@ -43,10 +43,8 @@ balls_next_free:
 balls_first_active:
     .long 0
 
-.if _DEBUG
 balls_alive_count:
     .long 0
-.endif
 
 ball_gravity:
     FLOAT_TO_FP (Ball_Gravity / 50.0)     ; (pixels/frame not pixels/sec)
@@ -87,9 +85,7 @@ balls_init:
     mov r10, #0
     str r10, [r12, #0]              ; last ball has zero pointer.
     str r10, balls_first_active     ; no balls active.
-    .if _DEBUG
     str r10, balls_alive_count
-    .endif
 
     ldr pc, [sp], #4
 
@@ -210,12 +206,10 @@ ball_destroy:
 
     mov r12, r11                        ; step back to previous ball
 
-    .if _DEBUG
     ; Safe to use R11 here as it will be immediately set to R12 curr=next.
     ldr r11, balls_alive_count
     sub r11, r11, #1
     str r11, balls_alive_count
-    .endif
 
     mov pc, lr
 
@@ -580,12 +574,10 @@ balls_debug_drop:
     str r10, balls_first_active
 
     mov r10, r8                     ; curr_p = next_p
-    .if _DEBUG
     ; Safe to use R8 here as just assigned to r10 above.
     ldr r8, balls_alive_count
     add r8, r8, #1
     str r8, balls_alive_count
-    .endif
     str r10, balls_next_free
 
     mov pc, lr

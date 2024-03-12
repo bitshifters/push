@@ -69,7 +69,11 @@ particles_init:
     bne .1
 
     mov r10, #0
-    str r10, [r12, #0]                  ; last particle has zero pointer.
+    str r10, [r12, #Particle_Next]      ; last particle has zero pointer.
+    .if _DEBUG
+    str r10, particles_alive_count
+    .endif
+
     ldr pc, [sp], #4
 
 

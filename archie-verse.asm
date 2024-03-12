@@ -378,10 +378,10 @@ event_handler:
 	cmp r0, #Event_VSync
 	bne event_handler_return
 
-	STMDB sp!, {r0-r1, lr}
+	STMDB sp!, {r0-r1,r11-r12,lr}
     b app_vsync_code
 exitVs:
-	LDMIA sp!, {r0-r1, lr}
+	LDMIA sp!, {r0-r1,r11-r12,lr}
     .endif
 
 event_handler_return:
@@ -394,6 +394,7 @@ event_handler_return:
     .endif
 
 
+
 mark_write_bank_as_pending_display:
 	; Mark write bank as pending display.
 	ldr r1, write_bank
@@ -402,12 +403,46 @@ mark_write_bank_as_pending_display:
 	; At the moment we block but could also overwrite
 	; the pending buffer with the newer one to catch up.
 	; TODO: A proper fifo queue for display buffers.
-	.1:
+.1:
 	ldr r0, pending_bank
 	cmp r0, #0
 	bne .1
 	str r1, pending_bank
 
+    ; Convert palette buffer to VIDC writes here!
+    ldr r2, vidc_buffers_p
+    add r2, r2, r1, lsl #6              ; 64 bytes per bank
+
+    ldr r3, palette_array_p
+    cmp r3, #0
+    moveq r0, #-1                       ; no palette to set.
+    streq r0, [r2]
+    beq .2
+
+    ; TODO: Could think about a palette dirty flag.
+
+    mov r4, #0
+.3:
+    ldr r0, [r3], #4            ; 0x00BbGgRr
+
+    ; Convert from OSWORD to VIDC format.
+    mov r7, r0, lsr #20
+    and r7, r7, #0xf            ; 0xB
+    mov r6, r0, lsr #12
+    and r6, r6, #0xf            ; 0xG
+    mov r5, r0, lsr #4
+    and r5, r5, #0xf            ; 0xR
+
+    orr r0, r5, r6, lsl #4
+    orr r0, r0, r7, lsl #8      ; 0xBGR
+    orr r0, r0, r4, lsl #26     ; VIDC_ColN = N << 26
+    str r0, [r2], #4
+
+    add r4, r4, #1
+    cmp r4, #16
+    blt .3
+
+.2:
 	; Show pending bank at next vsync.
 	MOV r0, #OSByte_WriteDisplayBank
 	swi OS_Byte
@@ -481,7 +516,7 @@ error_handler:
 ; ============================================================================
 
 screen_addr:
-	.long 0					; ptr to the current VIDC screen bank being written to.
+	.long 0			    ; ptr to the current VIDC screen bank being written to.
 
 displayed_bank:
 	.long 0				; VIDC sreen bank being displayed
@@ -494,6 +529,12 @@ pending_bank:
 
 vsync_count:
 	.long 0				; current vsync count from start of exe.
+
+palette_array_p:
+    .long 0             ; pointer to the palette array for this frame.
+
+vidc_buffers_p:
+    .long vidc_buffers_no_adr - 64
 
 .if _DEBUG
 debug_main_loop_pause:

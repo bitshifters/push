@@ -72,6 +72,9 @@ debug_register_var:
     mov r2, #0
 .1:
     ldr r3, [r1, r2, lsl #2]
+    cmp r3, r0
+    moveq pc, lr        ; already registered.
+
     cmp r3, #0
     streq r0, [r1, r2, lsl #2]
     moveq pc, lr

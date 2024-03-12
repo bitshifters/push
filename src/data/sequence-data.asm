@@ -4,12 +4,10 @@
 
     ; Init FX modules.
     call_0 math_emitter_init
-    call_0 particles_init
     ;call_0 balls_init
     call_0 sprite_utils_init
     call_0 the_ball_init
     call_0 particle_grid_init
-    call_0 particle_dave_init
 
     ; Make sprites.
     call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
@@ -30,20 +28,20 @@
     ; Call each part in turn.
 
 seq_loop:
-    call_3 palette_set_block, 0, 0, seq_palette_green_white_ramp
+    write_addr palette_array_p, seq_palette_green_white_ramp
     gosub seq_part5
     gosub seq_part1
 
-    call_3 palette_set_block, 0, 0, seq_palette_blue_cyan_ramp
+    write_addr palette_array_p, seq_palette_blue_cyan_ramp
     gosub seq_part6
 
-    call_3 palette_set_block, 0, 0, seq_palette_black_on_white
+    write_addr palette_array_p, seq_palette_black_on_white
     gosub seq_part4
 
-    call_3 palette_set_block, 0, 0, seq_palette_red_additive
+    write_addr palette_array_p, seq_palette_red_additive
     gosub seq_part2
 
-    call_3 palette_set_block, 0, 0, seq_palette_green_white_ramp
+    write_addr palette_array_p, seq_palette_green_white_ramp
     gosub seq_part3
 
     yield seq_loop
@@ -76,11 +74,11 @@ seq_part1:
     ; ~20 seconds to get to max radius 100. 1000/speed=100;speed=10.
 
     ; radius = i/10
-    math_register_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
     ; Want this to be the radius value -----------------------v
-    math_register_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_register_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     call_1 particle_grid_set_dave_rotation, 12
     call_1 particle_grid_set_dave_expansion, 12
@@ -113,9 +111,9 @@ seq_part1:
     wait_secs 15.0
 .endif
 
-    math_unregister_var the_ball_block+TheBall_x
-    math_unregister_var the_ball_block+TheBall_y
-    math_unregister_var seq_path_radius
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    math_kill_var seq_path_radius
 
     call_2f the_ball_set_pos, 300.0, 0.0
     wait_secs 2.0
@@ -154,11 +152,11 @@ seq_part2:
     ;math_link_vars particle_grid_collider_pos+4,   0.0, -1.0, the_ball_block+TheBall_y
 
     ; radius = i/10
-    math_register_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
     ; Want this to be the radius value -----------------------v
-    math_register_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_register_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     call_1 particle_grid_set_dave_rotation, 12
     call_1 particle_grid_set_dave_expansion, 12
@@ -187,9 +185,9 @@ seq_part2:
     wait_secs 30.0
 .endif
 
-    math_unregister_var the_ball_block+TheBall_x
-    math_unregister_var the_ball_block+TheBall_y
-    math_unregister_var seq_path_radius
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    math_kill_var seq_path_radius
 
     call_2f the_ball_set_pos, 300.0, 0.0
     wait_secs 2.0
@@ -355,6 +353,8 @@ seq_part4:
 
 
 seq_part5:
+    call_0 particles_init
+
     ; Set layers.
     call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
     call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,   particles_draw_all_as_2x2
@@ -374,16 +374,16 @@ seq_part5:
     ; Ball motion.
     ; v = a + b * f(c + d * t)
     ; radius = i/10
-    math_register_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
     ; Want this to be the radius value -----------------------v
-    math_register_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_register_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     wait_secs 20.0
 
     ; Copy free particles to the particle grid.
-    call_1 particles_transfer_to_grid, 1
+    call_1 particles_transfer_to_grid, 0
 
     call_1f the_ball_set_radiusf, TheBall_DefaultRadius
 
@@ -394,17 +394,17 @@ seq_part5:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-;    math_register_var the_ball_block+TheBall_x,   0.0, 50.0, math_sin, 0.0, 1.0/(MATHS_2PI*200.0)
-;    math_register_var the_ball_block+TheBall_y,   0.0, 50.0, math_cos, 0.0, 1.0/(MATHS_2PI*80.0)
+;    math_make_var the_ball_block+TheBall_x,   0.0, 50.0, math_sin, 0.0, 1.0/(MATHS_2PI*200.0)
+;    math_make_var the_ball_block+TheBall_y,   0.0, 50.0, math_cos, 0.0, 1.0/(MATHS_2PI*80.0)
 
     wait_secs 20.0
 
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
 
-    math_unregister_var the_ball_block+TheBall_x
-    math_unregister_var the_ball_block+TheBall_y
-    math_unregister_var seq_path_radius
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    math_kill_var seq_path_radius
 
     ; TODO: Separate tick & draw layers - I shouldn't have to know about CLS here!
     call_3 fx_set_layer_fns, 0, 0               screen_cls
@@ -412,6 +412,8 @@ seq_part5:
 
 
 seq_part6:
+    call_0 particle_dave_init
+
     ; Set layers.
     call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
     call_3 fx_set_layer_fns, 1, particle_dave_tick_all,            particle_dave_draw_all_as_2x2
@@ -438,11 +440,11 @@ seq_part6:
     ; ~20 seconds to get to max radius 100. 1000/speed=100;speed=10.
 
     ; radius = i/10
-    math_register_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
     ; Want this to be the radius value -----------------------v
-    math_register_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_register_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     call_2f particles_set_constant_force 0.0, -1.0/50.0
 
@@ -453,9 +455,12 @@ seq_part6:
 
     wait_secs 15.0
 
-    math_unregister_var the_ball_block+TheBall_x
-    math_unregister_var the_ball_block+TheBall_y
-    math_unregister_var seq_path_radius
+    math_unlink_vars particle_grid_collider_pos+0
+    math_unlink_vars particle_grid_collider_pos+4
+
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    math_kill_var seq_path_radius
 
     call_3 fx_set_layer_fns, 0, 0               screen_cls
     end_script
@@ -481,7 +486,7 @@ seq_loop:
 ;    wait_secs 5.0
 
 ;    call_1 the_env_remove_plane the_env_floor_plane
-    math_unregister_var                  the_ball_block+TheBall_x
+    math_kill_var                  the_ball_block+TheBall_x
     call_2f the_ball_set_vel,            0.0, 0.0
     call_2f the_ball_add_impulse,        1.0, 1.0
     call_2f the_env_set_constant_force,  0.0, -(Ball_Gravity/50.0)

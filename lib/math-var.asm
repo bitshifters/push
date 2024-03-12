@@ -296,15 +296,15 @@ math_read_addr:
 
 .equ math_no_func, 0
 
-.macro math_register_var addr, a, b, f, c, d
+.macro math_make_var addr, a, b, f, c, d
     .long script_call_6, math_var_register, \addr, MATHS_CONST_1*\a, MATHS_CONST_1*\b, MATHS_CONST_1*\c, MATHS_CONST_1*\d, \f
 .endm
 
-.macro math_register_var2 addr, a, b, f, c, d
+.macro math_make_var2 addr, a, b, f, c, d
     .long script_call_7, math_var_register_ex, \addr, MATHS_CONST_1*\a, \b, MATHS_CONST_1*\c, MATHS_CONST_1*\d, \f, math_evaluate_func2
 .endm
 
-.macro math_unregister_var addr
+.macro math_kill_var addr
     .long script_call_1, math_var_unregister, \addr
 .endm
 
@@ -313,7 +313,7 @@ math_read_addr:
 .endm
 
 .macro math_unlink_vars addr, c
-    math_unregister_var \addr
+    math_kill_var \addr
 .endm
 
 ; ============================================================================
