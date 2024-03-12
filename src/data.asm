@@ -134,7 +134,7 @@ circ_verts_no_adr:
 .if AppConfig_UseQtmEmbedded
 .p2align 2
 QtmEmbedded_Base:
-.incbin "data/lib/QTM149c,ffa"
+.incbin "data/lib/tinyQTM149,ffa"
 .endif
 
 ; ============================================================================
