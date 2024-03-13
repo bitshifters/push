@@ -594,13 +594,13 @@ Need to be able to lerp a single colour, i.e. the ball, from col A to col B.
 col[i]=col_A + blend * (col_B - col_A)
 Where blend is a FP word.
 Drive blend with math_var.
-Macro to lerp over frames - could drive from radius etc.?
+Macro to lerp over frames or could drive from radius etc.
 
-colour_make_lerp address_final_rgb, col_A, col_B, 
-colour_kill_lerp address_final_rgb
+colour_make_lerp rgb_addr, col_A, col_B, blend_addr - DONE
+colour_kill_lerp rgb_addr
 
-Colours for this frame need to be set at vsync to avoid tearing.
-Need buffer of 16 VIDC writes for each bank.
-Write VIDC commands on vsync for pending bank.
+Colours for this frame need to be set at vsync to avoid tearing. - DONE
+Need buffer of 16 VIDC writes for each bank. - DONE
+Write VIDC commands on vsync for pending bank. - DONE
 
 Probably easiest to keep OSWORD format for blending - write bytes.

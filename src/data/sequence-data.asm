@@ -351,6 +351,13 @@ seq_part4:
     math_unlink_vars particle_grid_collider_pos+4
     end_script
 
+seq_col_blend:
+    .long 0
+
+.macro rgb_lerp_over_secs rgb_addr, from_rgb, to_rgb, secs
+    math_make_var seq_col_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; 5 seconds.
+    math_make_rgb \rgb_addr, \from_rgb, \to_rgb, seq_col_blend
+.endm
 
 seq_part5:
     call_0 particles_init
@@ -380,7 +387,14 @@ seq_part5:
     math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
-    wait_secs 20.0
+    wait_secs 5.0
+    rgb_lerp_over_secs seq_palette_green_white_ramp+15*4, 0x00ffffff, 0x0000ff00, 5.0
+
+    wait_secs 10.0
+    math_make_var seq_col_blend, 0.0, 1.0, math_clamp, 1.0, -1.0/(5.0*50.0)  ; 5 seconds.
+
+    wait_secs 10.0
+    math_make_var seq_col_blend, 0.5, 0.5, math_sin, 0.0, 1.0/50.0
 
     ; Copy free particles to the particle grid.
     call_1 particles_transfer_to_grid, 0

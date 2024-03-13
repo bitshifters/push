@@ -6,7 +6,7 @@
 ; NB. Variables are ticked in the order they are added.
 ; ============================================================================
 
-.equ MathVars_MAX,      32
+.equ MathVars_MAX,      8
 
 .equ MathVar_Next,      0
 .equ MathVar_Iter,      4
@@ -19,7 +19,7 @@
 .equ MathVar_EvalFn,    32
 .equ MathVar_SIZE,      36
 
-.equ _MATH_VAR_REPLACE, 1
+.equ _MATH_VAR_REPLACE, 1   ; Don't barf if a variable is redefined, just replace it.
 
 ; ============================================================================
 
@@ -45,7 +45,7 @@ math_var_init:
 .1:
     str r11, [r10, #MathVar_Next]   ; this->next=next_p
     mov r10, r11                    ; this=next_p
-    add r11, r11, #MathEmitter_SIZE ; next_p++
+    add r11, r11, #MathVar_SIZE     ; next_p++
     cmp r11, r12                    ; next_p==end?
     ble .1
 
@@ -87,7 +87,7 @@ math_var_register_ex:
     ; Found matching var?
     ldr r7, [r12, #MathVar_Addr]        ; curr_p->addr
     cmp r7, r0
-    addeq r10, r12, #MathVar_Addr       ; reset iter?
+    addeq r10, r12, #MathVar_Iter       ; reset iter?
     beq .3 
     .else
     .if _DEBUG
@@ -108,9 +108,9 @@ math_var_register_ex:
 
     mov r7, #0
     str r7, [r10], #4                   ; this->next=0
-    str r7, [r10], #4                   ; this->iter=0
-
 .3:
+    mov r7, #0
+    str r7, [r10], #4                   ; this->iter=0
     stmia r10!, {r0-r6}                 ; store all params
     mov pc, lr
 
@@ -239,6 +239,57 @@ math_evaluate_func2:
     mla r0, r2, r0, r1      ; a + b * f(c + d * i)  [16.16]
     ldr pc, [sp], #4
 
+; Evaluate the RGB lerp function v = RGB[a] + RAM[c] * (RGB[b] - RGB[a])
+; Params:
+;  R10=ptr to func parameters [a, b, c, d, f]
+;  R0=i [16.0]
+; Trashes: R1-R9
+; Returns: R0=v, R10=ptr to next func.
+math_evaluate_rgb_lerp:
+    ldmia r10!, {r1-r3}     ; [a, b, c]
+
+    ldr r3, [r3]            ; blend = RAM[c] [1.16]
+
+    ; TODO: Clamp to [0,1] here?
+
+    ; col_a = 0x00BbGgRr
+    and r4, r1, #0xff       ; col_a.r   [8.0]
+    mov r5, r1, lsr #8
+    and r5, r5, #0xff       ; col_a.g   [8.0]
+    mov r6, r1, lsr #16     ; col_a.b   [8.0]
+
+    ; col_b = 0x00BbGgRr
+    and r7, r2, #0xff       ; col_b.r   [8.0]
+    mov r8, r2, lsr #8
+    and r8, r8, #0xff       ; col_b.g   [8.0]
+    mov r9, r2, lsr #16     ; col_b.b   [8.0]
+
+    ; col_b - col_a
+    sub r7, r7, r4
+    sub r8, r8, r5
+    sub r9, r9, r6
+
+    ; lerp
+    mul r7, r3, r7      ; col_a.r + blend * (col_b.r - col_a.r)     [8.16]
+    mul r8, r3, r8      ; col_a.g + blend * (col_b.g - col_a.g)     [8.16]
+    mul r9, r3, r9      ; col_a.b + blend * (col_b.b - col_a.b)     [8.16]
+
+    ; precision.
+    add r4, r4, r7, asr #16
+    and r4, r4, #0xff
+    add r5, r5, r8, asr #16
+    and r5, r5, #0xff
+    add r6, r6, r9, asr #16
+    and r6, r6, #0xff
+
+    ; combine.
+    orr r0, r4, r5, lsl #8
+    orr r0, r0, r6, lsl #16
+    
+    mov pc, lr
+
+; ============================================================================
+
 .equ math_sin, sine
 .equ math_cos, cosine
 
@@ -266,6 +317,14 @@ math_and15:
 ; R0=var address.
 math_read_addr:
     ldr r0, [r0]                ; load the value.
+    mov pc, lr
+
+; R0=value
+math_clamp:
+    cmp r0, #0
+    movlt r0, #0
+    cmp r0, #MATHS_CONST_1
+    movgt r0, #MATHS_CONST_1
     mov pc, lr
 
 ; ============================================================================
@@ -314,6 +373,14 @@ math_read_addr:
 
 .macro math_unlink_vars addr, c
     math_kill_var \addr
+.endm
+
+.macro math_make_rgb rgb_addr, colA, colB, blend_addr
+    .long script_call_7, math_var_register_ex, \rgb_addr, \colA, \colB, \blend_addr, 0, 0, math_evaluate_rgb_lerp
+.endm
+
+.macro math_kill_rgb rgb_addr
+    math_kilL_var \addr
 .endm
 
 ; ============================================================================
