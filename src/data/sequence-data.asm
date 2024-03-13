@@ -29,8 +29,10 @@
 
 seq_loop:
     write_addr palette_array_p, seq_palette_green_white_ramp
-    gosub seq_part5
     gosub seq_part1
+
+    write_addr palette_array_p, seq_palette_green_white_ramp
+    gosub seq_part5
 
     write_addr palette_array_p, seq_palette_blue_cyan_ramp
     gosub seq_part6
@@ -45,6 +47,21 @@ seq_loop:
     gosub seq_part3
 
     yield seq_loop
+    end_script
+
+seq_palette_id:
+    .long 0
+
+.macro palette_lerp_over_secs palette_A, palette_B, secs
+    math_make_var seq_palette_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; seconds.
+    math_make_palette seq_palette_id, \palette_A, \palette_B, seq_palette_blend, seq_palette_lerped
+    write_addr palette_array_p, seq_palette_lerped
+    fork_and_wait_secs \secs, seq_unlink_palette_lerp
+.endm
+
+seq_unlink_palette_lerp:
+    math_kill_var seq_palette_blend
+    math_kill_var seq_palette_id
     end_script
 
 ; Ball moves in a spiral through the particle grid.
@@ -104,11 +121,19 @@ seq_part1:
 
     wait_secs 5.0
 .else
-    wait_secs 15.0
+    wait_secs 5.0
 
+    palette_lerp_over_secs seq_palette_green_white_ramp, seq_palette_red_additive, 5.0
+
+    wait_secs 10.0
+
+    palette_lerp_over_secs seq_palette_red_additive, seq_palette_blue_cyan_ramp, 2.0
     call_3 particle_grid_add_verts, 520, circ_verts_no_adr, 1
 
-    wait_secs 15.0
+    wait_secs 5.0
+    palette_lerp_over_secs seq_palette_blue_cyan_ramp, seq_palette_green_white_ramp, 2.0
+
+    wait_secs 10.0
 .endif
 
     math_kill_var the_ball_block+TheBall_x
@@ -351,12 +376,15 @@ seq_part4:
     math_unlink_vars particle_grid_collider_pos+4
     end_script
 
-seq_col_blend:
+seq_rgb_blend:
+    .long 0
+
+seq_palette_blend:
     .long 0
 
 .macro rgb_lerp_over_secs rgb_addr, from_rgb, to_rgb, secs
-    math_make_var seq_col_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; 5 seconds.
-    math_make_rgb \rgb_addr, \from_rgb, \to_rgb, seq_col_blend
+    math_make_var seq_rgb_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; 5 seconds.
+    math_make_rgb \rgb_addr, \from_rgb, \to_rgb, seq_rgb_blend
 .endm
 
 seq_part5:
@@ -391,10 +419,10 @@ seq_part5:
     rgb_lerp_over_secs seq_palette_green_white_ramp+15*4, 0x00ffffff, 0x0000ff00, 5.0
 
     wait_secs 10.0
-    math_make_var seq_col_blend, 0.0, 1.0, math_clamp, 1.0, -1.0/(5.0*50.0)  ; 5 seconds.
+    math_make_var seq_rgb_blend, 0.0, 1.0, math_clamp, 1.0, -1.0/(5.0*50.0)  ; 5 seconds.
 
     wait_secs 10.0
-    math_make_var seq_col_blend, 0.5, 0.5, math_sin, 0.0, 1.0/50.0
+    math_make_var seq_rgb_blend, 0.5, 0.5, math_sin, 0.0, 1.0/50.0
 
     ; Copy free particles to the particle grid.
     call_1 particles_transfer_to_grid, 0
@@ -419,6 +447,10 @@ seq_part5:
     math_kill_var the_ball_block+TheBall_x
     math_kill_var the_ball_block+TheBall_y
     math_kill_var seq_path_radius
+
+    math_kill_rgb seq_palette_green_white_ramp+15*4
+    math_kill_var seq_rgb_blend
+    write_addr seq_palette_green_white_ramp+15*4, 0x00ffffff
 
     ; TODO: Separate tick & draw layers - I shouldn't have to know about CLS here!
     call_3 fx_set_layer_fns, 0, 0               screen_cls
@@ -674,6 +706,19 @@ seq_palette_blue_cyan_ramp:
     .long 0x00f0f0a0                    ; 13 = 1101 =
     .long 0x00f0f0c0                    ; 14 = 1110 = oranges
     .long 0x00f0f0e0                    ; 15 = 1111 = white
+
+seq_palette_all_black:
+    .rept 16
+    .long 0x00000000
+    .endr
+
+seq_palette_all_white:
+    .rept 16
+    .long 0x00ffffff
+    .endr
+
+seq_palette_lerped:
+    .skip 64
 
 block_sprite_sheet_def_no_adr:
     ; 8 sprites at 2 words (8 pixels) x 8 rows.

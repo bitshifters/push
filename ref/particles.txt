@@ -536,8 +536,8 @@ Direction from Dave:
     - Dave asked for particles in 2 colours with separate ramp of 7 colours for each.
     - Need palette lerping to blend between palettes over time.
     - Implement math_lerp fn.
-    - Implement rgb_lerp fn but decide on RGB format => VIDC or OSWORD?
-    - Might need to implement colour updates on vsync (again).
+    - Implement rgb_lerp fn but decide on RGB format => VIDC or OSWORD? - DONE
+    - Might need to implement colour updates on vsync (again). - DONE
 
 - How to start? <== NEXT
     - Orb grows to size.
@@ -604,3 +604,12 @@ Need buffer of 16 VIDC writes for each bank. - DONE
 Write VIDC commands on vsync for pending bank. - DONE
 
 Probably easiest to keep OSWORD format for blending - write bytes.
+
+Moar TODO
+~~~
+- Add _RELEASE or _FINAL or _UNUSED define to remove unused code.
+- Display something when setting up tables etc.
+- Max circle size?
+- Max line fill length?
+- Remove vertex shapes.
+- Dots on screen edges.

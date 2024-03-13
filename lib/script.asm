@@ -380,7 +380,7 @@ script_call_swi:
 .endm
 
 .macro fork_and_wait_secs secs, program
-    .long script_fork_and_wait, \program, \secs*50
+    .long script_fork_and_wait, \program, \secs*50.0
 .endm
 
 .macro yield cont

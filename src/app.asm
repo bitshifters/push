@@ -40,6 +40,8 @@ app_init_debug:
     DEBUG_REGISTER_KEY RMKey_D,          debug_toggle_byte,             debug_show_info
     DEBUG_REGISTER_KEY RMKey_R,          debug_toggle_byte,             debug_show_rasters
     DEBUG_REGISTER_KEY RMKey_ArrowRight, debug_skip_to_next_pattern,    0
+
+    DEBUG_REGISTER_VAR math_var_active_count
     ldr pc, [sp], #4
 .endif
 
