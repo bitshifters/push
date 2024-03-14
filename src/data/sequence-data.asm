@@ -1,17 +1,31 @@
 ; ============================================================================
+; Sequence helper macros.
+; ============================================================================
+
+.macro on_pattern pattern_no, do_thing
+    fork_and_wait_secs SeqConfig_PatternLength_Secs*\pattern_no, \do_thing
+.endm
+
+.macro palette_lerp_over_secs palette_A, palette_B, secs
+    math_make_var seq_palette_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; seconds.
+    math_make_palette seq_palette_id, \palette_A, \palette_B, seq_palette_blend, seq_palette_lerped
+    write_addr palette_array_p, seq_palette_lerped
+    fork_and_wait_secs \secs, seq_unlink_palette_lerp
+.endm
+
+.macro rgb_lerp_over_secs rgb_addr, from_rgb, to_rgb, secs
+    math_make_var seq_rgb_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; 5 seconds.
+    math_make_rgb \rgb_addr, \from_rgb, \to_rgb, seq_rgb_blend
+.endm
+
+; ============================================================================
 ; The actual sequence for the demo.
 ; ============================================================================
 
     ; Init FX modules.
     call_0 math_emitter_init
-    ;call_0 balls_init
-    call_0 sprite_utils_init
     call_0 the_ball_init
     call_0 particle_grid_init
-
-    ; Make sprites.
-    call_5 sprite_utils_make_table, additive_block_sprite, temp_sprite_ptrs_no_adr, 1, 8, additive_block_sprite_buffer_no_adr
-    call_1 sprite_utils_make_shifted_sheet, block_sprite_sheet_def_no_adr
 
     ; Screen setup.
 
@@ -27,45 +41,26 @@
 
     ; Call each part in turn.
 
+    ; Feel like we need a make / main / kill for each part.
+
 seq_loop:
-    write_addr palette_array_p, seq_palette_green_white_ramp
-    gosub seq_part1
+    on_pattern 0, seq_part1
 
-    write_addr palette_array_p, seq_palette_green_white_ramp
-    gosub seq_part5
+    on_pattern 4, seq_part5
 
-    write_addr palette_array_p, seq_palette_blue_cyan_ramp
-    gosub seq_part6
+    on_pattern 8, seq_part6
 
-    write_addr palette_array_p, seq_palette_black_on_white
-    gosub seq_part4
+    on_pattern 12, seq_part4
 
-    write_addr palette_array_p, seq_palette_red_additive
-    gosub seq_part2
+    on_pattern 16, seq_part2
 
-    write_addr palette_array_p, seq_palette_green_white_ramp
-    gosub seq_part3
+    on_pattern 20, seq_part3
 
-    yield seq_loop
-    end_script
-
-seq_palette_id:
-    .long 0
-
-.macro palette_lerp_over_secs palette_A, palette_B, secs
-    math_make_var seq_palette_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; seconds.
-    math_make_palette seq_palette_id, \palette_A, \palette_B, seq_palette_blend, seq_palette_lerped
-    write_addr palette_array_p, seq_palette_lerped
-    fork_and_wait_secs \secs, seq_unlink_palette_lerp
-.endm
-
-seq_unlink_palette_lerp:
-    math_kill_var seq_palette_blend
-    math_kill_var seq_palette_id
     end_script
 
 ; Ball moves in a spiral through the particle grid.
 seq_part1:
+    write_addr palette_array_p, seq_palette_green_white_ramp
 
     ; Make particle grid.
     call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
@@ -100,57 +95,33 @@ seq_part1:
     call_1 particle_grid_set_dave_rotation, 12
     call_1 particle_grid_set_dave_expansion, 12
 
-.if 0
     wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, -8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 0
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, -8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 0
-
-    wait_secs 5.0
-.else
-    wait_secs 15.0
 
     palette_lerp_over_secs seq_palette_green_white_ramp, seq_palette_red_additive, 5.0
 
-    wait_secs 10.0
+    wait_secs 5.0
 
     palette_lerp_over_secs seq_palette_red_additive, seq_palette_blue_cyan_ramp, 2.0
     call_3 particle_grid_add_verts, 520, circ_verts_no_adr, 1
 
     wait_secs 5.0
-    palette_lerp_over_secs seq_palette_blue_cyan_ramp, seq_palette_green_white_ramp, 2.0
 
-    wait_secs 10.0
-.endif
+    palette_lerp_over_secs seq_palette_blue_cyan_ramp, seq_palette_green_white_ramp, 2.0
 
     math_kill_var the_ball_block+TheBall_x
     math_kill_var the_ball_block+TheBall_y
     math_kill_var seq_path_radius
 
-    call_2f the_ball_set_pos, 300.0, 0.0
-    wait_secs 2.0
+    call_2f the_ball_set_pos, 0.0, 160.0
+    wait_secs 0.5
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
     end_script
 
-seq_path_radius:
-    .long 0
 
 ; Ball moves in a spiral through the particle grid.
 seq_part2:
+    write_addr palette_array_p, seq_palette_red_additive
 
     ; Make particle grid.
     ; X [-147, 147] step 14 = 22 total (border 13)
@@ -186,29 +157,7 @@ seq_part2:
     call_1 particle_grid_set_dave_rotation, 12
     call_1 particle_grid_set_dave_expansion, 12
 
-.if 0
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, -8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 0
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, -8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 0
-
-    wait_secs 5.0
-.else
-    wait_secs 30.0
-.endif
+    wait_secs 13.0
 
     math_kill_var the_ball_block+TheBall_x
     math_kill_var the_ball_block+TheBall_y
@@ -220,11 +169,14 @@ seq_part2:
     math_unlink_vars particle_grid_collider_pos+4
     end_script
 
+
 ; Ball moves in straight lines through the particle grid.
 seq_part3:
+    write_addr palette_array_p, seq_palette_green_white_ramp
 
     ; Make particle grid.
     call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 1
+
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     ; Setup the ball.
@@ -242,24 +194,23 @@ seq_part3:
     call_2f the_ball_set_vel,  -2.0, 0.0
     wait_secs 5.0
 
+    call_0 bits_logo_make_verts
+
     ; Top and move down.
     call_2f the_ball_set_pos, -138.0, 160.0
     call_2f the_ball_set_vel,  0.0, -2.0
     wait_secs 5.0
-
-    call_3 particle_grid_add_verts, 520, bits_verts_no_adr, 1
 
     ; Bottom and move up.
     call_2f the_ball_set_pos, 64.0, -160.0
     call_2f the_ball_set_vel,  0.0, 2.0
     wait_secs 5.0
 
+.if 0
     ; Right and move left again.
     call_2f the_ball_set_pos, 200.0, 44.0
     call_2f the_ball_set_vel,  -2.0, 0.0
     wait_secs 5.0
-
-    call_0 bits_logo_make_verts
 
     ; Left and move right again.
     call_2f the_ball_set_pos, -200.0, -80.0
@@ -299,14 +250,17 @@ seq_part3:
     ; Settle.
     call_2f the_ball_set_vel,  0.0, 0.0
     wait_secs 3.0
+.endif
 
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
 
     end_script
 
+
 ; Ball drops under gravity etc.
 seq_part4:
+    write_addr palette_array_p, seq_palette_black_on_white
 
     ; Make particle grid.
     ; X [-147, 147] step 14 = 22 total (border 13)
@@ -334,29 +288,7 @@ seq_part4:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-.if 0
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, -8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_rotation, 0
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, -8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 8
-
-    wait_secs 5.0
-    call_1 particle_grid_set_dave_expansion, 0
-
-    wait_secs 5.0
-.else
-    wait_secs 30.0
-.endif
+    wait_secs 15.0
 
     call_1 the_env_remove_plane, the_env_left_plane
     ;call_1 the_env_remove_plane, the_env_left_slope
@@ -364,7 +296,7 @@ seq_part4:
     ;call_1 the_env_remove_plane, the_env_right_slope
 
     ; Settle.
-    wait_secs 2.0
+    wait_secs 0.5
 
     call_2f the_ball_set_pos, 200.0, 0.0
     call_2f the_ball_set_vel, 0.0, 0.0
@@ -376,18 +308,10 @@ seq_part4:
     math_unlink_vars particle_grid_collider_pos+4
     end_script
 
-seq_rgb_blend:
-    .long 0
 
-seq_palette_blend:
-    .long 0
-
-.macro rgb_lerp_over_secs rgb_addr, from_rgb, to_rgb, secs
-    math_make_var seq_rgb_blend, 0.0, 1.0, math_clamp, 0.0, 1.0/(\secs*50.0)  ; 5 seconds.
-    math_make_rgb \rgb_addr, \from_rgb, \to_rgb, seq_rgb_blend
-.endm
-
+; Orb emits particles.
 seq_part5:
+    write_addr palette_array_p, seq_palette_green_white_ramp
     call_0 particles_init
 
     ; Set layers.
@@ -415,14 +339,10 @@ seq_part5:
     math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
-    wait_secs 5.0
-    rgb_lerp_over_secs seq_palette_green_white_ramp+15*4, 0x00ffffff, 0x0000ff00, 5.0
-
-    wait_secs 10.0
-    math_make_var seq_rgb_blend, 0.0, 1.0, math_clamp, 1.0, -1.0/(5.0*50.0)  ; 5 seconds.
-
-    wait_secs 10.0
+    math_make_rgb seq_palette_green_white_ramp+15*4, 0x00ffffff, 0x0000ff00, seq_rgb_blend
     math_make_var seq_rgb_blend, 0.5, 0.5, math_sin, 0.0, 1.0/50.0
+
+    wait_secs 10.0
 
     ; Copy free particles to the particle grid.
     call_1 particles_transfer_to_grid, 0
@@ -439,7 +359,7 @@ seq_part5:
 ;    math_make_var the_ball_block+TheBall_x,   0.0, 50.0, math_sin, 0.0, 1.0/(MATHS_2PI*200.0)
 ;    math_make_var the_ball_block+TheBall_y,   0.0, 50.0, math_cos, 0.0, 1.0/(MATHS_2PI*80.0)
 
-    wait_secs 20.0
+    wait_secs 5.0
 
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
@@ -457,7 +377,9 @@ seq_part5:
     end_script
 
 
+; Rain down!
 seq_part6:
+    write_addr palette_array_p, seq_palette_blue_cyan_ramp
     call_0 particle_dave_init
 
     ; Set layers.
@@ -494,12 +416,12 @@ seq_part6:
 
     call_2f particles_set_constant_force 0.0, -1.0/50.0
 
-    wait_secs 15.0
+    wait_secs 10.0
 
     call_2f particles_set_constant_force 0.0, 0.0
     write_addr math_emitter_p, math_emitter_config_5
 
-    wait_secs 15.0
+    wait_secs 5.0
 
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
@@ -512,36 +434,15 @@ seq_part6:
     end_script
 
 
-; Particles examples!
-.if 0
-seq_loop:
-    call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
+; ============================================================================
+; Support functions.
+; ============================================================================
 
-    write_addr particles_sprite_def_p, block_sprite_sheet_def_no_adr
-    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_8x8_tinted
-    wait_secs 5.0
-
-    write_addr particles_sprite_table_p, temp_sprite_ptrs_no_adr
-    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_8x8_additive
-    wait_secs 5.0
-
-    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_points
-    wait_secs 5.0
-
-;    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,     particles_draw_all_as_circles
-;    wait_secs 5.0
-
-;    call_1 the_env_remove_plane the_env_floor_plane
-    math_kill_var                  the_ball_block+TheBall_x
-    call_2f the_ball_set_vel,            0.0, 0.0
-    call_2f the_ball_add_impulse,        1.0, 1.0
-    call_2f the_env_set_constant_force,  0.0, -(Ball_Gravity/50.0)
-
-    fork seq_loop
-
-    ; THE END.
+seq_unlink_palette_lerp:
+    math_kill_var seq_palette_blend
+    math_kill_var seq_palette_id
     end_script
-.endif
+
 
 ; ============================================================================
 ; Sequence tasks can be forked and self-terminate on completion.
@@ -570,13 +471,6 @@ seq_test_fade_up_loop:
     call_0 palette_update_fade_from_black
     end_script_if_zero palette_interp
     yield seq_test_fade_up_loop
-.endif
-
-.if 0
-    ; Balls!
-    call_3 fx_set_layer_fns, 2, balls_tick_all,         balls_draw_all
-    call_3 fx_set_layer_fns, 3, 0,                      circles_plot_all
-    wait_secs 10.0
 .endif
 
 ; ============================================================================
@@ -720,13 +614,22 @@ seq_palette_all_white:
 seq_palette_lerped:
     .skip 64
 
-block_sprite_sheet_def_no_adr:
-    ; 8 sprites at 2 words (8 pixels) x 8 rows.
-    SpriteSheetDef_Mode9 8, 1, 8, block_sprites_no_adr
 
 ; ============================================================================
 ; Sequence specific bss.
 ; ============================================================================
+
+seq_rgb_blend:
+    .long 0
+
+seq_palette_blend:
+    .long 0
+
+seq_path_radius:
+    .long 0
+
+seq_palette_id:
+    .long 0
 
 the_env_floor_plane:
     .skip EnvPlane_SIZE

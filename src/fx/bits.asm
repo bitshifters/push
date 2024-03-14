@@ -56,7 +56,7 @@ bits_logo_init:
     ldr r0, bits_logo_p
     subs r10, r10, r0
     cmp r10, #Bits_Logo_Bytes
-    adrgt r0, err_spriteoverflow
+    adrgt r0, err_bitbufoverflow
     swigt OS_GenerateError
     .endif
 
@@ -69,6 +69,14 @@ bits_logo_init:
 ;    bl bits_logo_make_verts
 
     ldr pc, [sp], #4
+
+.if _DEBUG
+err_bitbufoverflow: ;The error block
+.long 18
+.byte "Bits buffer overflow!"
+.align 4
+.long 0
+.endif
 
 ; Get a pixel from the image.
 ; R0=width in words (stride)

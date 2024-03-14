@@ -121,8 +121,12 @@ bits_draw_file_end_no_adr:
 
 ; ============================================================================
 
-bits_verts_no_adr:
-    .include "src/obj/bs_obj.asm"
+.macro VERT x, y, z
+VECTOR2 100.0*\x, 100.0*\z
+.endm
+
+;bits_verts_no_adr:
+;    .include "src/obj/bs_obj.asm"
 
 circ_verts_no_adr:
     .include "src/obj/circ_obj.asm"

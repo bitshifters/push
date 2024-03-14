@@ -1098,6 +1098,7 @@ particle_grid_draw_all_as_points:
 
 ; ============================================================================
 
+.if 0
 particle_grid_sprite_def_p:
     .long 0
 
@@ -1215,6 +1216,8 @@ particle_grid_draw_all_as_8x8_tinted:
     bne .1
 
     ldr pc, [sp], #4
+.endif
+
 
 ; R12=screen addr
 particle_grid_draw_all_as_2x2_tinted:

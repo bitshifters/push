@@ -783,7 +783,7 @@ particles_draw_all_as_circles:
 .2:
     ldr pc, [sp], #4
 
-
+.if 0
 particles_draw_next_p:
     .long 0
 
@@ -1053,6 +1053,7 @@ particles_draw_all_as_8x8_additive:
 
 .2:
     ldr pc, [sp], #4
+.endif
 
 ; ============================================================================
 

@@ -5,29 +5,29 @@
 
 .equ AppConfig_StackSize,               1024
 .equ AppConfig_LoadModFromFile,         0
-.equ AppConfig_DynamicSampleSpeed,      1
+.equ AppConfig_DynamicSampleSpeed,      0
 .equ AppConfig_InstallIrqHandler,       0       ; otherwise uses Event_VSync.
 .equ AppConfig_UseSyncTracks,           0       ; currently Luapod could also be Rocket.
 .equ AppConfig_UseQtmEmbedded,          1
 
-.equ AppConfig_SpriteBufferSize,        8192
+.equ AppConfig_SpriteBufferSize,        8192    ; should be LibConfig?
 
 ; ============================================================================
 ; Sequence config.
 ; ============================================================================
 
-.equ SeqConfig_EnableLoop, 1
-.equ SeqConfig_MaxPatterns, 39
+.equ SeqConfig_EnableLoop,              1
+.equ SeqConfig_MaxPatterns,             23
 
-.equ SeqConfig_ProTracker_Tempo,        108
+.equ SeqConfig_ProTracker_Tempo,        122
 .equ SeqConfig_ProTracker_TicksPerRow,  3
 
 .equ SeqConfig_PatternLength_Rows,      64
 ; TODO: Calculate dependent vars.
-.equ SeqConfig_PatternLength_Secs,      4.44444
-.equ SeqConfig_PatternLength_Frames,    222.222
+.equ SeqConfig_PatternLength_Secs,      (2.5*SeqConfig_ProTracker_TicksPerRow*SeqConfig_PatternLength_Rows)/SeqConfig_ProTracker_Tempo
+.equ SeqConfig_PatternLength_Frames,    SeqConfig_PatternLength_Secs*50.0
 
-.equ SeqConfig_MaxFrames,               65536        ; 222.222 frames per pattern.
+.equ SeqConfig_MaxFrames,               SeqConfig_MaxPatterns*SeqConfig_PatternLength_Frames
 
 ; ============================================================================
 ; Audio config.
@@ -35,7 +35,7 @@
 
 .equ AudioConfig_SampleSpeed_SlowCPU,   48		    ; ideally get this down for ARM2
 .equ AudioConfig_SampleSpeed_FastCPU,   24		    ; ideally 16us for ARM250+
-.equ AudioConfig_SampleSpeed_Default,   AudioConfig_SampleSpeed_SlowCPU
+.equ AudioConfig_SampleSpeed_Default,   AudioConfig_SampleSpeed_FastCPU
 .equ AudioConfig_SampleSpeed_CPUThreshold, 80       ; ARM3~=20, ARM250~=70, ARM2~=108
 
 .equ AudioConfig_StereoPos_Ch1,         -127        ; full left

@@ -33,7 +33,7 @@ app_init_debug:
 
     DEBUG_REGISTER_VAR vsync_delta
     DEBUG_REGISTER_VAR frame_counter
-    ;DEBUG_REGISTER_VAR music_pos
+    DEBUG_REGISTER_VAR music_pos
     DEBUG_REGISTER_KEY RMKey_Space,      debug_toggle_main_loop_pause,  0
     DEBUG_REGISTER_KEY RMKey_A,          debug_set_byte_true,           debug_restart_flag
     DEBUG_REGISTER_KEY RMKey_S,          debug_set_byte_true,           debug_main_loop_step
@@ -133,9 +133,11 @@ app_init_audio:
 	; Setup QTM for our needs.
 	QTMSWI QTM_SetSampleSpeed
 
+    .if 0
     mov r0, #AudioConfig_VuBars_Effect
     mov r1, #AudioConfig_VuBars_Gravity
     QTMSWI QTM_VUBarControl
+    .endif
 
     mov r0, #1
     mov r1, #AudioConfig_StereoPos_Ch1

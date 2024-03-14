@@ -12,7 +12,7 @@
 .equ LibConfig_IncludeVector,   0
 .equ LibConfig_IncludeMatrix,   0
 .equ LibConfig_IncludeCircles,  1
-.equ LibConfig_IncludeSprites,  1
+.equ LibConfig_IncludeSprites,  0
 .equ LibConfig_IncludeMathVar,  1
 
 .equ LibConfig_IncludeSine,     (LibConfig_IncludeMatrix || 1)

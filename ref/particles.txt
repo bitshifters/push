@@ -612,6 +612,41 @@ Moar TODO
     - Max line fill length?
     - Remove vertex shapes.
 - Display something when setting up tables etc.
-- Dots on screen edges.
+- Dynamic sample speed! Adjust count thresholds!
+- Dots on screen edges. - DONE
 - Reenable hot reload of script.
-- Fix step forward by pattern for editing.
+- Fix step forward by pattern for editing. - DONE
+
+14/3 Brain dump from Dave
+~~~
+Love:
+- the transitions from one particle state to the other.
+- the variations in particles, all the way from the mess of random-looking ones to the more delicate red spiral (love the way the orb parts the spiral strains on that one)
+- the particle generator dot is ace
+
+My general thoughts are, given that you've already devised a nice way of transition the particles, we should just concentrate on the following:
+- any scenes that build up from nothing should have the previous scene transition to nothing so there's no blanking
+- it's OK (good, even) to jump-cut from one particle scene to the next so long as the ball stays in motion on the same path. Maybe we can use jump cuts for when the music is at its fullest.
+- Is there a cool way to get back and forth from the generator dot to the main orb? Like maybe it could scale down and when it scales back up it becomes the regular repeller orb? Maybe switch back and forth between the two (that is if it's not possible to have both one and the other on screen at the same time)
+- If we are to pulse the orb in colour, I think it should do as we did in Chequered Past and go to the brightest colour in an instant on the beat and then fade back to the darkest colour.
+- Scene swapping should happen on a beat. That could be every 2 patterns / 1 pattern / half / quarter etc.
+- White background is too jarring I think. Maybe we could try something other than black, like a dark version of the particles maybe instead, but black is good too.
+- Spirals / circles / lines / rain formations work well. I think the lined grid is the least interesting.
+- Text formation is quite cool - a bit difficult to read atm (maybe a brightness issue). Maybe we could have a dot spit out the particles and the the orb wipes them away and they fade out before we have more text.
+
+Thinking if we're having greets, we need to delineate between our names / groups (i.e. credits) and greeted people. Could we have a section with generated text not as particles but as solid graphics that pulse in time to the beat, just one pulse per greet, perhaps? Could that be done at the same time as random particles elsewhere on screen?
+
+But in general, the heavy lifting of the demo is done purely by the particles moving in relation to the orb and each other, which is quite mesmerising.
+It's just about tweaking for style / structure now.
+
+I'm working on updating the tune now. Think I might stick with larger patterns for more flexibility if I need it. Sorry for the brain dump!
+
+Tempo=122
+Speed=3
+
+Tick (ms) = 2500/bpm = 2500/122 = 20.4918 ms
+3x ticks per row = 61.4754 ms
+64 rows per pattern = 3,934.42 ms = 3.934s
+Or 196.72 vsyncs per pattern.
+Or 3.074 vsyncs per row. :s
+

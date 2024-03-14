@@ -97,7 +97,9 @@ script_ffwd_to_frame:
     str r2, frame_counter
 
     .1:
+    str r9, [sp, #-4]!
     bl script_tick_all
+    ldr r9, [sp], #4
     subs r9, r9, #1
     bne .1
 

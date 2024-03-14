@@ -106,6 +106,7 @@ bits_logo_no_adr:
 
 ; ============================================================================
 
+.if 0
 ; src/particles.asm
 additive_block_sprite_buffer_no_adr:
     .skip 8*8*8 ; width_in_bytes * rows * 8 pixel shifts
@@ -115,6 +116,7 @@ temp_sprite_ptrs_no_adr:
 
 sprite_buffer_no_adr:
     .skip AppConfig_SpriteBufferSize
+.endif
 
 ; ============================================================================
 ; Library BSS.
