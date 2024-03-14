@@ -608,8 +608,10 @@ Probably easiest to keep OSWORD format for blending - write bytes.
 Moar TODO
 ~~~
 - Add _RELEASE or _FINAL or _UNUSED define to remove unused code.
+    - Max circle size?
+    - Max line fill length?
+    - Remove vertex shapes.
 - Display something when setting up tables etc.
-- Max circle size?
-- Max line fill length?
-- Remove vertex shapes.
 - Dots on screen edges.
+- Reenable hot reload of script.
+- Fix step forward by pattern for editing.

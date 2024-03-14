@@ -121,7 +121,7 @@ seq_part1:
 
     wait_secs 5.0
 .else
-    wait_secs 5.0
+    wait_secs 15.0
 
     palette_lerp_over_secs seq_palette_green_white_ramp, seq_palette_red_additive, 5.0
 

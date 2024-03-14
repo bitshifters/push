@@ -4,6 +4,8 @@
 ; 2D particles only.
 ; ============================================================================
 
+.equ _PARTICLE_DAVE_FULL_EDGE_CLIP, 0
+
 .equ ParticleDave_Next,     0       ; R0 = pointer to next active/free.
 .equ ParticleDave_XPos,     4       ; R1
 .equ ParticleDave_YPos,     8       ; R2
@@ -452,15 +454,31 @@ particle_dave_draw_all_as_2x2:
     mov r1, r1, asr #16
     mov r2, r2, asr #16
 
-    cmp r1, #0
-    blt .1                              ; clip left
-    cmp r1, r8  ;#Screen_Width-1
-    bge .1                              ; clip right
+    .if _PARTICLE_DAVE_FULL_EDGE_CLIP
+    cmp r1, #-1
+    blt .1                              ; cull left
+    beq .6                              ; full clip to edge
+    cmp r1, r8                          ; #Screen_Width-1
+    bgt .1                              ; cull right
+    beq .6                              ; full clip to edge
 
-    cmp r2, #0
-    blt .1                              ; clip top
     cmp r2, #Screen_Height-1
-    bge .1                              ; clip bottom
+    bgt .1                              ; cull bottom
+    beq .7                              ; full clip to edge
+    cmp r2, #-1
+    blt .1                              ; cull top
+    beq .7                              ; full clip to edge
+    .else
+    cmp r1, #-1
+    ble .1                              ; cull left
+    cmp r1, r8                          ; #Screen_Width-1
+    bge .1                              ; cull right
+
+    cmp r2, #Screen_Height-1
+    bge .1                              ; cull bottom
+    cmp r2, #-1
+    ble .1                              ; cull top
+    .endif
 
     ; Calculate screen ptr to the byte.
     add r10, r12, r2, lsl #7
@@ -515,6 +533,97 @@ particle_dave_draw_all_as_2x2:
     strb r14, [r10]                   ; 4c
     strb r14, [r10, #Screen_Stride]   ; 4c
     b .1
+
+.if _PARTICLE_DAVE_FULL_EDGE_CLIP
+    ; Full clipping to screen edges.
+.6:
+    ; We know that at least one of these is true!
+    ; X=-1 or X=319 but Y is not yet checked.
+    cmp r2, #Screen_Height-1
+    bgt .1                              ; cull bottom
+    cmp r2, #-1
+    blt .1                              ; cull top
+
+.7:
+    ; We know that Y>=-1 and Y<=255.
+
+    ; Calculate screen ptr to the first line.
+    add r10, r12, r2, lsl #7
+    add r10, r10, r2, lsl #5            ; y*160
+
+    ; Do we need the first line?
+    cmp r2, #-1
+    beq .9                              ; skip first line.
+
+    ; Do we need the first pixel?
+    cmp r1, #-1
+    beq .8                              ; skip first pixel.
+
+    ; First line, first pixel.
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    ; Do we need second pixel?
+    cmp r1, r8                          ; #Screen_Width-1
+    beq .9
+
+.8:
+    ; First line, second pixel.
+    add r1, r1, #1
+
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    sub r1, r1, #1
+
+    ; Do we need the second line?
+    cmp r2, #Screen_Height-1
+    beq .1
+
+.9:
+    ; Move to second line.
+    add r10, r10, #Screen_Stride
+
+    cmp r1, #-1
+    beq .10                              ; skip first pixel.
+
+    ; Second line, first pixel.
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    ; Do we need second pixel?
+    cmp r1, r8                          ; #Screen_Width-1
+    beq .1
+
+.10:
+    ; Second line, second pixel.
+    add r1, r1, #1
+
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    b .1
+.endif
 
 .if _DEBUG
 particle_dave_draw_origin_as_points:

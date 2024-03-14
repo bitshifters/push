@@ -6,6 +6,8 @@
 ; Apply forces to each particle, including a spring force to return to origin.
 ; ============================================================================
 
+.equ _PARTICLE_GRID_FULL_EDGE_CLIP,     1
+
 ; Particle variables block:
 .equ ParticleGrid_XPos,     0       ; R1
 .equ ParticleGrid_YPos,     4       ; R2
@@ -1240,15 +1242,31 @@ particle_grid_draw_all_as_2x2_tinted:
     mov r2, r2, asr #16
 
     ; Clipping.
-    cmp r1, #0
+    .if _PARTICLE_GRID_FULL_EDGE_CLIP
+    cmp r1, #-1
     blt .3                              ; cull left
-    cmp r1, r8  ;#Screen_Width-1
+    beq .6                              ; full clip to edge
+    cmp r1, r8                          ; #Screen_Width-1
+    bgt .3                              ; cull right
+    beq .6                              ; full clip to edge
+
+    cmp r2, #Screen_Height-1
+    bgt .3                              ; cull bottom
+    beq .7                              ; full clip to edge
+    cmp r2, #-1
+    blt .3                              ; cull top
+    beq .7                              ; full clip to edge
+    .else
+    cmp r1, #-1
+    ble .3                              ; cull left
+    cmp r1, r8                          ; #Screen_Width-1
     bge .3                              ; cull right
 
-    cmp r2, #0
-    blt .3                              ; cull top
     cmp r2, #Screen_Height-1
     bge .3                              ; cull bottom
+    cmp r2, #-1
+    ble .3                              ; cull top
+    .endif
 
     ;  r1 = X centre
     ;  r2 = Y centre
@@ -1320,7 +1338,97 @@ particle_grid_draw_all_as_2x2_tinted:
     add r11, r11, #ParticleGrid_SIZE
     subs r9, r9, #1
     bne .1
-
     ldr pc, [sp], #4
+
+.if _PARTICLE_GRID_FULL_EDGE_CLIP
+    ; Full clipping to screen edges.
+.6:
+    ; We know that at least one of these is true!
+    ; X=-1 or X=319 but Y is not yet checked.
+    cmp r2, #Screen_Height-1
+    bgt .3                              ; cull bottom
+    cmp r2, #-1
+    blt .3                              ; cull top
+
+.7:
+    ; We know that Y>=-1 and Y<=255.
+
+    ; Calculate screen ptr to the first line.
+    add r10, r12, r2, lsl #7
+    add r10, r10, r2, lsl #5            ; y*160
+
+    ; Do we need the first line?
+    cmp r2, #-1
+    beq .9                              ; skip first line.
+
+    ; Do we need the first pixel?
+    cmp r1, #-1
+    beq .8                              ; skip first pixel.
+
+    ; First line, first pixel.
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    ; Do we need second pixel?
+    cmp r1, r8                          ; #Screen_Width-1
+    beq .9
+
+.8:
+    ; First line, second pixel.
+    add r1, r1, #1
+
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    sub r1, r1, #1
+
+    ; Do we need the second line?
+    cmp r2, #Screen_Height-1
+    beq .3
+
+.9:
+    ; Move to second line.
+    add r10, r10, #Screen_Stride
+
+    cmp r1, #-1
+    beq .10                              ; skip first pixel.
+
+    ; Second line, first pixel.
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    ; Do we need second pixel?
+    cmp r1, r8                          ; #Screen_Width-1
+    beq .3
+
+.10:
+    ; Second line, second pixel.
+    add r1, r1, #1
+
+    ldrb r3, [r10, r1, lsr #1]
+    tst r1, #1
+    biceq r3, r3, #0x0f
+    orreq r3, r3, r14, lsr #4
+    bicne r3, r3, #0xf0
+    orrne r3, r3, r14, lsl #4
+    strb r3, [r10, r1, lsr #1]
+
+    b .3
+.endif
 
 ; ============================================================================
