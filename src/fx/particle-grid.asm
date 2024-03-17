@@ -48,7 +48,7 @@ particle_grid_collider_pos:
     VECTOR2 0.0, 0.0
 
 particle_grid_collider_radius:
-    FLOAT_TO_FP 48.0        ;Particles_CircleCollider_Radius
+    FLOAT_TO_FP TheBall_DefaultRadius * 3.0
 
 particle_grid_gloop_factor:
     FLOAT_TO_FP 0.95

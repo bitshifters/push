@@ -22,6 +22,10 @@ sequence_init:
     bl sync_init
     .endif
 
+    .if LibConfig_IncludeMathVar
+    bl math_var_init
+    .endif
+
     ; Initialise script system.
     bl script_init
 

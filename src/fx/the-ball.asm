@@ -10,7 +10,6 @@
 .equ TheBall_ix,       20      ; R5
 .equ TheBall_iy,       24      ; R6
 .equ TheBall_radius,   28      ; R7
-.equ TheBall_colour,   30      ; R7
 .equ TheBall_SIZE,     32
 
 .equ TheBall_DefaultRadius, 16
@@ -203,9 +202,10 @@ the_ball_draw:
     mov r1, r2, asr #16
 
     ;  r2 = radius of circle
+    mov r2, r7, asr #16
+
     ;  r9 = tint
-    mov r9, r7, lsr #16                 ; colour
-    eor r2, r7, r9, lsl #16             ; radius
+    mov r9, #TheBall_DefaultColour
 
     ; Schedule our ball to be drawn.
     bl circles_add_to_plot_by_order
@@ -306,15 +306,11 @@ the_ball_set_vel:
 
 ; R0=radius
 the_ball_set_radiusf:
-    ldr r1, the_ball_block + TheBall_radius
-    bic r1, r1, #0x00ff
-    bic r1, r1, #0xff00
-    orr r1, r1, r0, asr #16
-    str r1, the_ball_block + TheBall_radius
+    str r0, the_ball_block + TheBall_radius
     mov pc, lr
-; TODO: Just make TheBall_radius a word so can be driven with a math_var.
 
 ; R0=colour
+.if 0
 the_ball_set_colour:
     ldr r1, the_ball_block + TheBall_radius
     bic r1, r1, #0x00ff0000
@@ -322,6 +318,7 @@ the_ball_set_colour:
     orr r1, r1, r0, lsl #16
     str r1, the_ball_block + TheBall_radius
     mov pc, lr
+.endif
 
 ; Adds a force to the ball for one frame.
 ; R0=fx

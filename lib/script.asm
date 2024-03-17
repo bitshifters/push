@@ -18,7 +18,7 @@
 .equ ScriptContext_LR, 8            ; Link Register. NOTE: we don't have a stack!!
 
 .equ Script_ContextSize, 12
-.equ Script_MaxScripts, 32
+.equ Script_MaxScripts, 16
 
 script_contexts:
     .skip Script_ContextSize*Script_MaxScripts
@@ -35,10 +35,15 @@ script_tick_context:
     
     ; Waiting?
     cmp r11, #0
-    subne r11, r11, #1
-    strne r11, [r12, #ScriptContext_Wait]
-    ldrne pc, [sp], #4
+    beq .4
 
+    ldr r1, vsync_delta
+    subs r11, r11, r1
+    movlt r11, #0
+    str r11, [r12, #ScriptContext_Wait]
+    ldr pc, [sp], #4
+
+    .4:
     ; Execute program.
     ldr r11, [r10], #4                  ; load program ptr.
     str r10, [r12, #ScriptContext_PC]

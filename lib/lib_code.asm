@@ -66,9 +66,6 @@ lib_init:
     .if LibConfig_IncludeCircles
     bl ClearCircleBuf
     .endif
-    .if LibConfig_IncludeMathVar
-    bl math_var_init
-    .endif
     .if LibConfig_IncludeSpanGen
     bl gen_code
     .endif

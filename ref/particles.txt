@@ -616,6 +616,12 @@ Moar TODO
 - Dots on screen edges. - DONE
 - Reenable hot reload of script.
 - Fix step forward by pattern for editing. - DONE
+- Test 1bpp image compression.
+- 1bpp image conversion and expand 1bpp to 4bpp at runtime.
+- Replace use of MemAlloc module with OS_ChangeDynamicAre
+    - Sprite, Font, RMA - see page 1-377 in RICOS PRMs
+    - WimpSlot comes from the Window Manager module?
+
 
 14/3 Brain dump from Dave
 ~~~
@@ -641,6 +647,44 @@ It's just about tweaking for style / structure now.
 
 I'm working on updating the tune now. Think I might stick with larger patterns for more flexibility if I need it. Sorry for the brain dump!
 
+Other comments from Dave in our chat.
+- Solid group names will be move readable (wanted filled vector but we'll settle for bitmaps).
+- Perhaps bitmap graphics like the Revision logo?
+- Look at scaling the orb and the repulsion radius - but not to the beat, probably too intense.
+- Perhaps scale up the radius on the chord that grows in volume.
+- Dave's emphasis is on a really interesting (non-chippy) tune.
+- We have all the elements.
+
+Patterns, each one is 3.84s long!
+Assume there's already a field of particles on screen?
+- Perhaps these dots are drawn during the init stage like a progress bar?
+
+0 | 1 = bare bass - orb grows, but doesn't move.
+
+1-4 | 2,3 = bass and untz - orb moves around 2x 2 pats
+
+5-8 | 6,7 = simple melody - 2x 2 pats
+    - new motion - perhaps straight lines here.
+    - morph to a new shape for second round.
+    - perhaps change the orb size and influence
+
+9-12 | 8,9 = more complex melody - 2x 2 pats
+    - rain effect?
+
+13-16 | 10,11,12 = volume chords - 2x 2 pats
+    - fire spiral
+
+17 | 13 = base bass segue
+    - not sure yet!
+
+18-21 | 14,15 = anthemic (most intense) - 2x 2 pats
+    - particle emitter?
+
+
+All needs speeding up, more dynamic!
+
+
+
 Tempo=122
 Speed=3
 
@@ -649,4 +693,4 @@ Tick (ms) = 2500/bpm = 2500/122 = 20.4918 ms
 64 rows per pattern = 3,934.42 ms = 3.934s
 Or 196.72 vsyncs per pattern.
 Or 3.074 vsyncs per row. :s
-
+=> Dave moved back to default tempo 125.

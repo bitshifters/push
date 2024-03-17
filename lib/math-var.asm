@@ -185,7 +185,7 @@ math_var_tick:
 
     ; Increment iteration value.
     ldr r10, [r11, #MathVar_Iter]
-    add r10, r10, #1
+    add r10, r10, #1                    ; TODO: Use delta value?
     str r10, [r11, #MathVar_Iter]
 
     ; Evaluate the function.
@@ -318,7 +318,7 @@ math_evaluate_palette_lerp:
     ldr r3, [r3]                ; blend = RAM[c] [1.16]
     ; TODO: Clamp to [0,1] here?
 
-    mov r0, #0
+    mov r0, #1                  ; not including colour 0 (background)
 .1:
     ldmia r10, {r1-r2}          ; palette_A, palette_B
 
@@ -363,7 +363,7 @@ math_evaluate_palette_lerp:
     ldr r5, [r10, #12]          ; dest_palette
     str r4, [r5, r0, lsl #2]
     add r0, r0, #1
-    cmp r0, #16
+    cmp r0, #15                 ; not including colour 15 (orb).
     blt .1
     
     mov pc, lr

@@ -100,6 +100,9 @@ main:
 	; Play music!
 	QTMSWI QTM_Start
 
+    ldr r0, vsync_count
+    str r0, last_vsync
+
 main_loop:
 
 	; ========================================================================
@@ -189,6 +192,13 @@ main_loop_skip_tick:
 	sub r0, r2, r1
 	str r2, last_vsync
 	str r0, vsync_delta
+
+    .if _DEBUG
+    ldr r1, vsyncs_missed
+    sub r0, r0, #1
+    add r1, r1, r0
+    str r1, vsyncs_missed
+    .endif
 
 	; R0 = vsync delta since last frame.
 	.if _CHECK_FRAME_DROP
@@ -345,6 +355,11 @@ last_vsync:
 
 vsync_delta:
 	.long 0
+
+.if _DEBUG
+vsyncs_missed:
+    .long 0
+.endif
 
 .if _CHECK_FRAME_DROP
 last_dropped_frame:
