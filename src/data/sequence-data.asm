@@ -65,14 +65,21 @@ seq_loop:
     wait_patterns 3.75
 
     palette_lerp_over_secs seq_palette_red_magenta_ramp, seq_palette_all_black, SeqConfig_PatternLength_Secs*0.25
+    rgb_lerp_over_secs seq_palette_lerped+15*4, 0x00ffffff, 0x00000000, SeqConfig_PatternLength_Secs*0.25
     wait_patterns 0.25
     gosub seq_kill_orb_straight_lines
+    math_kill_rgb seq_palette_lerped+15*4
 
     write_addr palette_array_p, seq_palette_blue_cyan_ramp
 
     fork seq_init_rain
-    wait_patterns 4
+    wait_patterns 3.75
+
+    palette_lerp_over_secs seq_palette_blue_cyan_ramp, seq_palette_all_black, SeqConfig_PatternLength_Secs*0.25
+    rgb_lerp_over_secs seq_palette_lerped+15*4, 0x00ffffff, 0x00000000, SeqConfig_PatternLength_Secs*0.25
+    wait_patterns 0.25
     gosub seq_kill_rain
+    math_kill_rgb seq_palette_lerped+15*4
 
     write_addr palette_array_p, seq_palette_red_additive
 
@@ -84,8 +91,10 @@ seq_loop:
     wait_patterns 0.75
 
     palette_lerp_over_secs seq_palette_red_additive, seq_palette_all_black, SeqConfig_PatternLength_Secs*0.25
+    rgb_lerp_over_secs seq_palette_lerped+15*4, 0x00ffffff, 0x00000000, SeqConfig_PatternLength_Secs*0.25
     wait_patterns 0.25
     gosub seq_kill_ball_under_gravity
+    math_kill_rgb seq_palette_lerped+15*4
 
     write_addr palette_array_p, seq_palette_green_white_ramp
 
@@ -210,11 +219,11 @@ seq_init_fire_spiral:
     ;math_link_vars particle_grid_collider_pos+4,   0.0, -1.0, the_ball_block+TheBall_y
 
     ; radius = i/10
-    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/8.0
 
     ; Want this to be the radius value -----------------------v
-    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*40.0)
+    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*40.0)
 
     call_1 particle_grid_set_dave_rotation, 12
     call_1 particle_grid_set_dave_expansion, 12
@@ -332,9 +341,9 @@ seq_init_ball_under_gravity:
 ;    make_and_add_env_plane the_env_right_slope, 80.0, -128.0, -32.0        ; -45 degrees
 
     ; Setup the ball.
-    call_2f the_env_set_constant_force  0.0, -(0.2/50.0)
-    call_2f the_ball_set_pos, 80.0, 80.0            ; centre ball
-    call_2f the_ball_set_vel,  0.5, 0.0
+    call_2f the_env_set_constant_force  0.0, -(2.0/50.0)
+;    call_2f the_ball_set_pos, 80.0, 80.0            ; centre ball
+;    call_2f the_ball_set_vel,  0.5, 0.0
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -342,7 +351,6 @@ seq_init_ball_under_gravity:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-    wait_secs 15.0
     end_script
 
 seq_kill_ball_under_gravity:
@@ -380,16 +388,16 @@ seq_init_orb_particle_emitter:
     ; Ball motion.
     ; v = a + b * f(c + d * t)
     ; radius = i/10
-    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+    math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/10.0
 
     ; Want this to be the radius value -----------------------v
-    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*40.0)
+    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*40.0)
 
     math_make_rgb seq_palette_green_white_ramp+15*4, 0x00ffffff, 0x0000ff00, seq_rgb_blend
     math_make_var seq_rgb_blend, 0.5, 0.5, math_sin, 0.0, 1.0/50.0
 
-    wait_secs 10.0
+    wait_secs SeqConfig_PatternLength_Secs*3
 
     ; Copy free particles to the particle grid.
     call_1 particles_transfer_to_grid, 0
@@ -398,6 +406,9 @@ seq_init_orb_particle_emitter:
 
     ; Then lerp them to become the spiral.
     ;call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*4.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
+
+    ; TODO: Separate tick & draw layers - I shouldn't have to know about CLS here!
+    call_3 fx_set_layer_fns, 0, 0               screen_cls
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
@@ -406,11 +417,6 @@ seq_init_orb_particle_emitter:
 ;    math_make_var the_ball_block+TheBall_x,   0.0, 50.0, math_sin, 0.0, 1.0/(MATHS_2PI*200.0)
 ;    math_make_var the_ball_block+TheBall_y,   0.0, 50.0, math_cos, 0.0, 1.0/(MATHS_2PI*80.0)
 
-    wait_secs 5.0
-
-    math_kill_rgb seq_palette_green_white_ramp+15*4
-    math_kill_var seq_rgb_blend
-    write_addr seq_palette_green_white_ramp+15*4, 0x00ffffff
     end_script
 
 seq_kill_orb_particle_emitter:
@@ -419,9 +425,7 @@ seq_kill_orb_particle_emitter:
     math_kill_var the_ball_block+TheBall_x
     math_kill_var the_ball_block+TheBall_y
     math_kill_var seq_path_radius
-
-    ; TODO: Separate tick & draw layers - I shouldn't have to know about CLS here!
-    call_3 fx_set_layer_fns, 0, 0               screen_cls
+    math_kill_rgb seq_palette_green_white_ramp+15*4
     end_script
 
 
@@ -458,8 +462,8 @@ seq_init_rain:
     math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/8.0
 
     ; Want this to be the radius value -----------------------v
-    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
-    math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*40.0)
+    ;math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     call_2f particles_set_constant_force 0.0, -1.0/50.0
 
@@ -543,7 +547,7 @@ math_emitter_config_2:
     math_const 8.0                                                      ; emitter.radius = 8.0
 
 math_emitter_config_3:  ; attached to the_ball.
-    math_const 50.0/20                                                  ; emission rate=80 particles per second fixed.
+    math_const 50.0/40                                                  ; emission rate=80 particles per second fixed.
     math_func_read_addr 0.0, 1.0, the_ball_block+TheBall_x              ; emitter.x = 0.0 + 1.0 * the_ball_block.x
     math_func_read_addr 0.0, 1.0, the_ball_block+TheBall_y              ; emitter.y = 0.0 + 1.0 * the_ball_block.y
     math_func  0.0,    0.25,    math_sin,  0.0,   1.0/(MATHS_2PI*5.0)  ; emitter.dir.x = 2.0 * math.sin(f/100)
@@ -559,7 +563,7 @@ math_emitter_config_4:
     math_const 0.0                                                      ; emitter.vel.x = 0.0
     math_const -0.5                                                      ; emitter.vel.y = 0.0
     math_const 512                                                      ; emitter.life
-    math_const 15                                                       ; emitter.colour
+    math_const 14                                                       ; emitter.colour
     math_const 8.0                                                      ; emitter.radius = 8.0
 
 math_emitter_config_5:
@@ -569,7 +573,7 @@ math_emitter_config_5:
     math_const 0.0                                                      ; emitter.vel.x = 0.0
     math_func  0.0,     -1.0,     math_rand,  0.0,  0.0                 ; emitter.vel.y = - 4.0 * math.random()
     math_const 512                                                      ; emitter.life
-    math_const 15                                                       ; emitter.colour
+    math_const 14                                                       ; emitter.colour
     math_const 8.0                                                      ; emitter.radius = 8.0
 
 ; ============================================================================
@@ -582,14 +586,14 @@ seq_palette_red_additive:
     .long 0x00000080                    ; 04 = 0100 =
     .long 0x000000a0                    ; 05 = 0101 =
     .long 0x000000c0                    ; 06 = 0110 =
-    .long 0x000000e0                    ; 07 = 0111 = reds
-    .long 0x000020e0                    ; 08 = 1000 =
-    .long 0x000040e0                    ; 09 = 1001 =
-    .long 0x000060e0                    ; 10 = 1010 =
-    .long 0x000080e0                    ; 11 = 1011 =
-    .long 0x0000a0e0                    ; 12 = 1100 =
-    .long 0x0000c0e0                    ; 13 = 1101 =
-    .long 0x0000e0e0                    ; 14 = 1110 = oranges
+    .long 0x000020e0                    ; 07 = 0111 = reds
+    .long 0x000040e0                    ; 08 = 1000 =
+    .long 0x000060e0                    ; 09 = 1001 =
+    .long 0x000080e0                    ; 10 = 1010 =
+    .long 0x0000a0e0                    ; 11 = 1011 =
+    .long 0x0000c0e0                    ; 12 = 1100 =
+    .long 0x0000d0e0                    ; 13 = 1101 =
+    .long 0x00e0e0e0                    ; 14 = 1110 = oranges
     .long 0x00f0f0f0                    ; 15 = 1111 = white
 
 seq_palette_green_white_ramp:

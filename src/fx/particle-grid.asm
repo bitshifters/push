@@ -1232,8 +1232,8 @@ particle_grid_draw_all_as_2x2_tinted:
 
     ; Clamp distance to calculate colour index.
     mov r14, r14, asr #17                 ; ((int) dist) / 2 [0-30] -> [1.15]
-    cmp r14, #14
-    movgt r14, #14
+    cmp r14, #13
+    movgt r14, #13
     add r14, r14, #1
     orr r14, r14, r14, lsl #4
 
