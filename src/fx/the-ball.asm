@@ -75,9 +75,10 @@ the_ball_move:
     ; R4=vy
     ; R5=ix
     ; R6=iy
-    ; R7=radius + colour
+    ; R7=radius
+    ; [Was radius + colour]
     ;mov r9, r7, lsr #16                 ; colour
-    mov r7, r7, lsl #16                 ; radius [16.16]
+    ;mov r7, r7, lsl #16                 ; radius [16.16]
 
     ; Ball dynamics.
 

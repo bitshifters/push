@@ -17,10 +17,10 @@
 ; ============================================================================
 
 .equ SeqConfig_EnableLoop,              1
-.equ SeqConfig_MaxPatterns,             22
+.equ SeqConfig_MaxPatterns,             18
 
-.equ SeqConfig_ProTracker_Tempo,        125         ; Default = 125.
-.equ SeqConfig_ProTracker_TicksPerRow,  3
+.equ SeqConfig_ProTracker_Tempo,        120         ; Default = 125.
+.equ SeqConfig_ProTracker_TicksPerRow,  4
 
 .equ SeqConfig_PatternLength_Rows,      64
 ; TODO: Calculate dependent vars.
@@ -35,7 +35,7 @@
 
 .equ AudioConfig_SampleSpeed_SlowCPU,   48		    ; ideally get this down for ARM2
 .equ AudioConfig_SampleSpeed_FastCPU,   24		    ; ideally 16us for ARM250+
-.equ AudioConfig_SampleSpeed_Default,   AudioConfig_SampleSpeed_FastCPU
+.equ AudioConfig_SampleSpeed_Default,   AudioConfig_SampleSpeed_SlowCPU
 .equ AudioConfig_SampleSpeed_CPUThreshold, 80       ; ARM3~=20, ARM250~=70, ARM2~=108
 
 .equ AudioConfig_StereoPos_Ch1,         -127        ; full left

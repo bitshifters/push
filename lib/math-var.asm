@@ -58,6 +58,7 @@ math_var_init:
 
     mov r11, #0
     str r11, [r10, #MathVar_Next]   ; this->next=next_p
+    str r11, math_var_first_active_p
     .if _DEBUG
     str r11, math_var_active_count
     .endif

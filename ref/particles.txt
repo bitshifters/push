@@ -655,6 +655,8 @@ Other comments from Dave in our chat.
 - Dave's emphasis is on a really interesting (non-chippy) tune.
 - We have all the elements.
 
+House tune
+~~~
 Patterns, each one is 3.84s long!
 Assume there's already a field of particles on screen?
 - Perhaps these dots are drawn during the init stage like a progress bar?
@@ -680,10 +682,7 @@ Assume there's already a field of particles on screen?
 18-21 | 14,15 = anthemic (most intense) - 2x 2 pats
     - particle emitter?
 
-
 All needs speeding up, more dynamic!
-
-
 
 Tempo=122
 Speed=3
@@ -694,3 +693,29 @@ Tick (ms) = 2500/bpm = 2500/122 = 20.4918 ms
 Or 196.72 vsyncs per pattern.
 Or 3.074 vsyncs per row. :s
 => Dave moved back to default tempo 125.
+
+
+Liquid tune
+~~~
+Tempo=120
+Speed=4
+5.333s per pattern
+4.1667 vsyncs per row
+266.667 vsyncs per pattern
+
+
+| Pat | Desc.                    | Effect?
+| 0   | Intro motif w/ reverb    | 
+| 1   | Intro motif w/ reverb    |
+| 2   | Intro highlights         |
+| 3   | Intro to percusion       |
+| 4   | Low bass heavy kick      |
+| 6   | Low bass second pat      |
+| 5   | High bass heavy kick     |
+| 7   | High bass second pat     |
+| 8   | Rolling snare w/ hilite  |
+| 9   | Rolling snare second pat |
+| 10  | Main melody              |
+| 11  | Main melody second pat   |
+
+
