@@ -30,6 +30,7 @@
     call_0 math_emitter_init
     call_0 the_ball_init
     call_0 particle_grid_init
+    gosub seq_make_owl_verts            ; NB. This takes about 10 frames!
 
     ; Screen setup.
 
@@ -112,6 +113,7 @@ seq_loop:
 seq_init_expand_orb:
     ; Make particle grid.
     call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
+
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     ; Static grid to start.
@@ -197,10 +199,7 @@ seq_kill_grid_with_orb_spiral:
 
 
 seq_init_fire_spiral:
-    ; Make particle grid.
-    ; X [-147, 147] step 14 = 22 total (border 13)
-    ; Y [-105, 105] step 14 = 16 total (border 23)
-;    call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
+    ; Nice spiral.
     call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*4.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 0
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
@@ -273,16 +272,16 @@ seq_init_orb_straight_lines:
 
     wait_secs SeqConfig_PatternLength_Secs*0.75
 
+    ; Morph to new shape.
+;    call_3 particle_grid_add_verts, 520, circ_verts_no_adr, 1
+;    call_3 particle_grid_add_verts, 520, bits_owl_vert_array_no_adr, 1
+    call_3 particle_grid_add_verts, 520, bits_logo_vert_array_no_adr, 1
+
     ; Bottom and move up.
     call_2f the_ball_set_pos, 64.0, -176.0
     call_2f the_ball_set_vel,  0.0, 2.64
 
     wait_secs SeqConfig_PatternLength_Secs*0.75
-
-;    call_0 bits_logo_make_verts
-;    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 1
-    ; Morph to new shape.
-;    call_3 particle_grid_add_verts, 520, circ_verts_no_adr, 1
 
     ; Right and move left again.
     call_2f the_ball_set_pos, 208.0, 44.0
@@ -491,6 +490,17 @@ seq_unlink_palette_lerp:
     math_kill_var seq_palette_id
     end_script
 
+seq_make_owl_verts:
+    ; Convert 1bpp image to 4bpp using colour 7.
+    call_5 bits_convert_mode4_to_mode9, bits_owl_no_adr, bits_owl_mode9_no_adr, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, 0x7
+
+    ; Random sampling of 4bpp image (marks top bit).
+    call_4 bits_logo_select_random, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, 520
+
+    ; Create a vertex array (slow) to reduce run-time overhead.
+    call_5 bits_create_vert_array_from_image, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, bits_owl_vert_array_no_adr, 520*VECTOR2_SIZE
+
+    end_script
 
 ; ============================================================================
 ; Sequence tasks can be forked and self-terminate on completion.

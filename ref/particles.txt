@@ -654,6 +654,7 @@ Other comments from Dave in our chat.
 - Perhaps scale up the radius on the chord that grows in volume.
 - Dave's emphasis is on a really interesting (non-chippy) tune.
 - We have all the elements.
+- I think unless we're doing jump cuts with the orb still in motion, I think the orb should disappear or scale down/up to/from nothing.
 
 House tune
 ~~~

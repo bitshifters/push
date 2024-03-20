@@ -115,9 +115,14 @@ block_sprites_no_adr:
 
 ; ============================================================================
 
+.if 0
 bits_draw_file_no_adr:
     .incbin "data/sys-req-amiga,aff"
 bits_draw_file_end_no_adr:
+.endif
+
+bits_owl_no_adr:
+    .incbin "build/bbc_owl.bin"
 
 ; ============================================================================
 

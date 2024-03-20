@@ -90,14 +90,14 @@ def pack_1bpp(pixels):
     assert len(pixels)==8,pixels
     for i in range(8): assert pixels[i]==0 or pixels[i]==1
 
-    return (pixels[0]<<7|
-            pixels[1]<<6|
-            pixels[2]<<5|
-            pixels[3]<<4|
-            pixels[4]<<3|
-            pixels[5]<<2|
-            pixels[6]<<1|
-            pixels[7]<<0)
+    return (pixels[0]<<0|
+            pixels[1]<<1|
+            pixels[2]<<2|
+            pixels[3]<<3|
+            pixels[4]<<4|
+            pixels[5]<<5|
+            pixels[6]<<6|
+            pixels[7]<<7)
 
 ##########################################################################
 ##########################################################################

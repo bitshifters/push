@@ -104,6 +104,17 @@ balls_array_no_adr:
 bits_logo_no_adr:
     .skip Bits_Logo_Bytes
 
+bits_logo_vert_array_no_adr:
+    .skip VECTOR2_SIZE*520
+
+; ============================================================================
+
+bits_owl_mode9_no_adr:
+    .skip Bits_Owl_Mode9_Bytes
+
+bits_owl_vert_array_no_adr:
+    .skip VECTOR2_SIZE*520
+
 ; ============================================================================
 
 .if 0
