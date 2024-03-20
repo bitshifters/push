@@ -48,8 +48,12 @@ stack_p:
 ; ============================================================================
 
 main:
-    ; Allocate and clear screen buffers etc.
-    bl app_init_video
+	; Claim the Error vector.
+	MOV r0, #ErrorV
+	ADR r1, error_handler
+	MOV r2, #0
+	SWI OS_Claim
+    ; TODO: Do we need this outside of _DEBUG?
 
 	; Claim the Event vector.
 	MOV r0, #EventV
@@ -66,19 +70,18 @@ main:
 	SWI OS_Byte
     .endif
 
-	; Claim the Error vector.
-	MOV r0, #ErrorV
-	ADR r1, error_handler
-	MOV r2, #0
-	SWI OS_Claim
-
-	; EARLY INIT / LOAD STUFF HERE! 
+	; Library initialisation.
 	bl lib_init
 	; Returns R12=top of RAM used.
+
+    ; Allocate and clear screen buffers etc.
+    bl app_init_video
 
     ; Initialise the music player etc.
 	; Param R12=top of RAM used.
     bl app_init_audio
+
+    ; EARLY INIT - LOAD STUFF HERE!
 
 	; Bootstrap the main sequence.
     ; Does one tick of the script!
@@ -100,6 +103,7 @@ main:
 	; Play music!
 	QTMSWI QTM_Start
 
+    ; Reset vsync count.
     ldr r0, vsync_count
     str r0, last_vsync
 

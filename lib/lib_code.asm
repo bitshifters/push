@@ -54,20 +54,38 @@
 
 lib_init:
     str lr, [sp, #-4]!
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .if LibSine_MakeSinusTable
     bl MakeSinus
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .endif
     .if LibDivide_UseRecipTable
     bl MakeReciprocal
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .endif
     .if LibSqrt_MakeSqrtTable
     bl sqrt_init
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .endif
     .if LibConfig_IncludeCircles
     bl ClearCircleBuf
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .endif
     .if LibConfig_IncludeSpanGen
     bl gen_code
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .endif
     ; Keep this last so R12 returns top of RAM.
     ldr pc, [sp], #4

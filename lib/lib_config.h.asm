@@ -2,7 +2,9 @@
 ; Library module config header (include at start).
 ; ============================================================================
 
-; TODO: Allow configuration of more than one screen mode?
+; TODO: Allow configuration of more than one screen mode for code gen etc.?
+
+.equ LibConfig_ShowInitProgress,    1
 
 .equ LibConfig_IncludeSqrt,     1
 .equ LibConfig_IncludeLine,     0

@@ -17,6 +17,9 @@
 .org 0x8000
 
 main:
+    adr r0, message_text
+    swi OS_WriteO
+
     ; NB. Could calculate this from end of free RAM SWI call.
     ldr r8, reloc_to                ; reloc_to
 
@@ -50,6 +53,11 @@ main:
     mov sp, r8                      ; reset stack top
     mov lr, #0x8000                 ; return address
     mov pc, r8                      ; jump to reloc
+
+message_text:
+    .byte "Unshrinkling"
+    .byte 0
+.p2align 2
 
 reloc_to:
     .long 0x8000 + _WIMPSLOT - (reloc_end - reloc_start) - (NUM_CONTEXTS*4) - 4
