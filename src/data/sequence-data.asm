@@ -49,8 +49,6 @@
 seq_loop:
     ; Start!
 
-    write_addr palette_array_p, seq_palette_green_white_ramp
-
     ; ====== PART 1 ======
 
     palette_lerp_over_secs seq_palette_all_black, seq_palette_green_white_ramp, SeqConfig_PatternLength_Secs
@@ -264,12 +262,13 @@ seq_kill_fire_spiral:
 
 seq_init_morph_spirals:
     ; Nice spiral.
-    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*4.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
     call_2f the_ball_set_vel, 0.0, 0.0
+    call_1f the_ball_set_radiusf, 8.0
+    write_fp particle_grid_collider_radius, 24.0
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -287,22 +286,31 @@ seq_init_morph_spirals:
     call_1 particle_grid_set_dave_rotation, 11
     call_1 particle_grid_set_dave_expansion, 12
 
-    wait_patterns 0.25
+;    call_7 particle_grid_make_spiral, 520, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 0
+    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 0
+    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 1
 
     call_2f the_ball_set_pos, 208.0, 176.0
     call_2f the_ball_set_vel, -1.56, -1.32
 
-    wait_patterns 1.25
-;    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*3.0, MATHS_CONST_1*8.0, MATHS_CONST_1*0.2, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
+    wait_patterns 1.0
+
+    call_7 particle_grid_make_circles, 520, 26, MATHS_CONST_1*4.0, MATHS_CONST_1*6.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
 
     call_2f the_ball_set_pos, -208.0, 176.0
     call_2f the_ball_set_vel, 1.56, -1.32
 
-    wait_patterns 1.25
-;    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*2.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
+    wait_patterns 1.0
+
+    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*4.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
 
     call_2f the_ball_set_pos, -208.0, -176.0              ; centre ball
     call_2f the_ball_set_vel, 1.56, 1.32
+
+    wait_patterns 1.0
+    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 1
+    call_2f the_ball_set_pos, 208.0, -176.0
+    call_2f the_ball_set_vel, -1.56, 1.32
 
 .if 0
     wait_patterns 1.25
@@ -321,6 +329,9 @@ seq_kill_morph_spirals:
     math_kill_var seq_path_radius
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
+
+    call_1f the_ball_set_radiusf, TheBall_DefaultRadius
+    write_fp particle_grid_collider_radius, TheBall_DefaultRadius*3.0
     end_script
 
 

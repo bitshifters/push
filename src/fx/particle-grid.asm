@@ -303,6 +303,103 @@ particle_grid_make_spiral:
 
     ldr pc, [sp], #4
 
+
+; R0=total particles
+; R1=particles per circle
+; R2=start radius
+; R3=radius increment
+; R4=centre X
+; R5=centre Y
+; R6=0 always reset positions, otherwise just origin (morph)
+particle_grid_make_circles:
+    str lr, [sp, #-4]!
+
+    mov r2, r2, asr #8  ; radius
+    mov r3, r3, asr #8  ; inc_r
+
+    strb r1, .2         ; SELF-MOD!
+
+    ; Calculate 1/parts per circle.
+    ldr r7, particle_grid_recip_p
+    mov r10, r1, asl #16
+    ; Put divisor in table range.
+    mov r10, r10, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (b<<s)
+
+    .if _DEBUG
+    cmp r10, #0
+    adrle r0,divbyzero          ; and flag an error
+    swile OS_GenerateError      ; when necessary
+
+    ; Limited precision.
+    cmp r10, #1<<LibDivide_Reciprocal_t    ; Test for numerator too large
+    adrge r0,divrange           ; and flag an error
+    swige OS_GenerateError      ; when necessary
+    .endif
+
+    ; Lookup 1/dist.
+    ldr r10, [r7, r10, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
+    mov r10, r10, asl #8        ; 256/parts.
+
+    cmp r6, #0
+    beq .10
+
+    mov r6, r0
+    ldr r7, particle_grid_total
+    cmp r6, r7          ; total to make > current total?
+    movgt r6, r7        ; limit to current total.
+
+.10:
+    ldr r11, particle_grid_array_p
+
+    mov r12, r0         ; count
+    str r12, particle_grid_total
+    .if _DEBUG
+    cmp r12, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+
+.2:
+    mov r7, #0          ; num per circle SELF-MOD
+
+    mov r8, #0          ; angle
+.1:
+    mov r0, r8          ; angle
+    bl sin_cos          ; trashes R9
+    ; R0=sin(angle)
+    ; R1=cos(angle)
+
+    mov r0, r0, asr #8
+    mov r1, r1, asr #8
+
+    mla r0, r2, r0, r4  ; x = cx + r * sin(a)
+    mla r1, r2, r1, r5  ; y = cy + r * cos(a)
+
+    ; Write particle block.
+    mov r9, #0
+
+    subs r6, r6, #1
+    addpl r11, r11, #16
+    stmmiia r11!, {r0-r1}   ; pos
+    strmi r9, [r11], #4
+    strmi r9, [r11], #4     ; vel
+    stmia r11!, {r0-r1}     ; origin
+
+    add r8, r8, r10         ; a+=256 / num
+
+    subs r12, r12, #1       ; count--
+    beq .3
+
+    subs r7, r7, #1
+    bne .1
+
+    add r2, r2, r3          ; r+=inc_r
+    b .2
+.3:
+
+    ldr pc, [sp], #4
+
+
 ; R0=Num verts
 ; R1=Ptr to vert data.
 ; R2=0 always reset positions, otherwise just origin (morph)
