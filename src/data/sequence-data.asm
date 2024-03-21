@@ -48,9 +48,12 @@
 
 seq_loop:
     ; Start!
-    palette_lerp_over_secs seq_palette_all_black, seq_palette_green_white_ramp, SeqConfig_PatternLength_Secs
+
+    write_addr palette_array_p, seq_palette_green_white_ramp
 
     ; ====== PART 1 ======
+
+    palette_lerp_over_secs seq_palette_all_black, seq_palette_green_white_ramp, SeqConfig_PatternLength_Secs
 
     fork seq_init_expand_orb
     wait_patterns 1
@@ -101,22 +104,33 @@ seq_loop:
     write_addr palette_array_p, seq_palette_green_white_ramp
 
     fork seq_init_orb_particle_emitter
-    wait_patterns 2
+    wait_patterns 4
     gosub seq_kill_orb_particle_emitter
 
     ; ====== PART 6 ======
 
-    write_addr palette_array_p, seq_palette_green_white_ramp
-
-    fork seq_init_orb_particle_emitter
-    wait_patterns 2
-    gosub seq_kill_orb_particle_emitter
-
-    ; ====== PART 7 ======
+    write_addr palette_array_p, seq_palette_blue_cyan_ramp
 
     fork seq_init_wind_tunnel
     wait_patterns 4.0
     gosub seq_kill_wind_tunnel
+
+    ; ====== PART 7 ======
+
+    write_addr palette_array_p, seq_palette_blue_cyan_ramp
+    fork seq_init_morph_spirals
+    wait_patterns 4
+    gosub seq_kill_morph_spirals
+
+    ; ====== PART 8 ======
+
+    write_addr palette_array_p, seq_palette_red_magenta_ramp
+    wait_patterns 4.0
+
+    ; ====== PART 9 ======
+
+    write_addr palette_array_p, seq_palette_green_white_ramp
+    wait_patterns 4.0
 
     ; END HERE FOR NOW,
     end_script
@@ -227,12 +241,6 @@ seq_init_fire_spiral:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-    ; Make the ball the particle grid collider but inverted!
-    ; particle_grid_collider_pos.x = -the_ball.x
-    ; particle_grid_collider_pos.y = -the_ball.y
-    ;math_link_vars particle_grid_collider_pos+0,   0.0, -1.0, the_ball_block+TheBall_x
-    ;math_link_vars particle_grid_collider_pos+4,   0.0, -1.0, the_ball_block+TheBall_y
-
     ; radius = i/10
     math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
 
@@ -246,6 +254,68 @@ seq_init_fire_spiral:
     end_script
 
 seq_kill_fire_spiral:
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    math_kill_var seq_path_radius
+    math_unlink_vars particle_grid_collider_pos+0
+    math_unlink_vars particle_grid_collider_pos+4
+    end_script
+
+
+seq_init_morph_spirals:
+    ; Nice spiral.
+    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*4.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
+
+    ; Setup the ball.
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+    call_2f the_ball_set_vel, 0.0, 0.0
+
+    ; Make the ball the particle grid collider.
+    ; particle_grid_collider_pos.x = the_ball.x
+    ; particle_grid_collider_pos.y = the_ball.y
+    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+
+    ; radius = i/10
+    ;math_make_var seq_path_radius, 0.0, 1.0, math_no_func, 0.0, 1.0/15.0
+
+    ; Want this to be the radius value -----------------------v
+    ;math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
+    ;math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
+
+    call_1 particle_grid_set_dave_rotation, 11
+    call_1 particle_grid_set_dave_expansion, 12
+
+    wait_patterns 0.25
+
+    call_2f the_ball_set_pos, 208.0, 176.0
+    call_2f the_ball_set_vel, -1.56, -1.32
+
+    wait_patterns 1.25
+;    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*3.0, MATHS_CONST_1*8.0, MATHS_CONST_1*0.2, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
+
+    call_2f the_ball_set_pos, -208.0, 176.0
+    call_2f the_ball_set_vel, 1.56, -1.32
+
+    wait_patterns 1.25
+;    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*2.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
+
+    call_2f the_ball_set_pos, -208.0, -176.0              ; centre ball
+    call_2f the_ball_set_vel, 1.56, 1.32
+
+.if 0
+    wait_patterns 1.25
+
+    call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*4.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
+
+    call_2f the_ball_set_pos, 208.0, -176.0
+    call_2f the_ball_set_vel, -1.56, 1.32
+.endif
+
+    end_script
+
+seq_kill_morph_spirals:
     math_kill_var the_ball_block+TheBall_x
     math_kill_var the_ball_block+TheBall_y
     math_kill_var seq_path_radius

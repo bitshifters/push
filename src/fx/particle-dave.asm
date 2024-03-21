@@ -74,6 +74,7 @@ particle_dave_init:
 
     mov r10, #0
     str r10, [r12, #ParticleDave_Next]      ; last particle has zero pointer.
+    str r10, particle_dave_first_active     ; none active!!
     .if _DEBUG
     str r10, particle_dave_alive_count
     .endif
