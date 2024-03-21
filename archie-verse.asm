@@ -48,18 +48,18 @@ stack_p:
 ; ============================================================================
 
 main:
+	; Claim the Event vector.
+	MOV r0, #EventV
+	ADR r1, event_handler
+	MOV r2, #0
+	SWI OS_Claim
+
 	; Claim the Error vector.
 	MOV r0, #ErrorV
 	ADR r1, error_handler
 	MOV r2, #0
 	SWI OS_Claim
     ; TODO: Do we need this outside of _DEBUG?
-
-	; Claim the Event vector.
-	MOV r0, #EventV
-	ADR r1, event_handler
-	MOV r2, #0
-	SWI OS_Claim
 
 	; Install our own IRQ handler - thanks Steve! :)
     .if AppConfig_InstallIrqHandler

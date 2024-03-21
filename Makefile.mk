@@ -46,7 +46,6 @@ $(FOLDER): build ./build/archie-verse.bin ./build/!run.txt ./build/icon.bin ./bu
 	$(COPY) .\build\!run.txt "$(FOLDER)\!Run,feb"
 	$(COPY) .\build\icon.bin "$(FOLDER)\!Sprites,ff9"
 	$(COPY) .\build\archie-verse.bin "$(FOLDER)\!RunImage,ff8"
-	$(COPY) .\build\music.mod "$(FOLDER)\Music,001"
 
 .PHONY:seq
 seq: ./build/seq.bin
@@ -138,7 +137,7 @@ clean:
 ##########################################################################
 ##########################################################################
 
-./build/music.mod: ./data/music/particles_04.mod
+./build/music.mod: ./data/music/particles_04_temp.mod
 	$(COPY) $(subst /,\\,$+) $(subst /,\\,$@)
 
 ##########################################################################

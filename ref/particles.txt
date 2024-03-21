@@ -611,16 +611,17 @@ Moar TODO
     - Max circle size?
     - Max line fill length?
     - Remove vertex shapes.
-- Display something when setting up tables etc.
-- Dynamic sample speed! Adjust count thresholds!
+- Display something when setting up tables etc. - DONE JUST ...
+- Dynamic sample speed! Adjust count thresholds! REMEMBER _SMALL_EXE!
 - Dots on screen edges. - DONE
 - Reenable hot reload of script.
 - Fix step forward by pattern for editing. - DONE
-- Test 1bpp image compression.
-- 1bpp image conversion and expand 1bpp to 4bpp at runtime.
-- Replace use of MemAlloc module with OS_ChangeDynamicAre
-    - Sprite, Font, RMA - see page 1-377 in RICOS PRMs
+- Test 1bpp image compression. - DONE
+- 1bpp image conversion and expand 1bpp to 4bpp at runtime. - DONE
+- Replace use of MemAlloc module with OS_ChangeDynamicArea
+    - Sprite, Font, RMA - see page 1-377 in RICOS PRMs - NOT NEEDED?
     - WimpSlot comes from the Window Manager module?
+    => Have to *wimpslot 1200k ahead of running the demo on command line.
 
 
 14/3 Brain dump from Dave
@@ -719,4 +720,37 @@ Speed=4
 | 10  | Main melody              |
 | 11  | Main melody second pat   |
 
+Effects
+~~~
 
+Procedural shapes: grid + spiral + lines (+ concentric circles?)
+From images: Revision logo?
+Text: Bitshifters (+ Torment + Kieran + Rhino)
+Generation: rain, emitter
+Motion: spiral + straight lines + under gravity (+ sine wave?)
+Palettes: red/fire + green/white + blue/cyan + red/seq_palette_red_magenta_ramp
+The Orb: radius + colour + influence + 
+
+36 patterns * 5.333s = 192s (3m 12s)
+Assuming 4 patterns per effect min = 9 effects max.
+
+1. Intro - grid
+2. A bit more intro - grid
+3. Wow effect - rain?
+4. Another wow effect - fire spiral?
+5. Greets - group names + emitter mostly
+6. Bigger wow - wind tunnel
+7. Biggest wow effect - todo
+8. Credits - names + morph
+9. Revision logo?
+
+Ideas to try:
+- Sideways 'rain' (starfield) with ball under gravity. - NICE!
+- Dave likes the morphs - which look the best not random?
+- Concentric circles with diagonal sine motion
+- Ease-in ease-out of ball, not constant velocity
+- Play with the ball size and influence
+- Worry about more palettes later.
+- Diagonals?
+- Morph between different spirals.
+- Morph between grid and concentric circles.

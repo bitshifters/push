@@ -48,7 +48,9 @@
 
 seq_loop:
     ; Start!
-    write_addr palette_array_p, seq_palette_green_white_ramp
+    palette_lerp_over_secs seq_palette_all_black, seq_palette_green_white_ramp, SeqConfig_PatternLength_Secs
+
+    ; ====== PART 1 ======
 
     fork seq_init_expand_orb
     wait_patterns 1
@@ -59,6 +61,8 @@ seq_loop:
     fork seq_init_grid_with_orb_spiral
     wait_patterns 3
     gosub seq_kill_grid_with_orb_spiral
+
+    ; ====== PART 2 ======
 
     palette_lerp_over_secs seq_palette_green_white_ramp, seq_palette_red_magenta_ramp, SeqConfig_PatternLength_Secs/2.0
 
@@ -71,6 +75,8 @@ seq_loop:
     gosub seq_kill_orb_straight_lines
     math_kill_rgb seq_palette_lerped+15*4
 
+    ; ====== PART 3 ======
+
     write_addr palette_array_p, seq_palette_blue_cyan_ramp
 
     fork seq_init_rain
@@ -82,28 +88,35 @@ seq_loop:
     gosub seq_kill_rain
     math_kill_rgb seq_palette_lerped+15*4
 
+    ; ====== PART 4 ======
+
     write_addr palette_array_p, seq_palette_red_additive
 
     fork seq_init_fire_spiral
     wait_patterns 4
     gosub seq_kill_fire_spiral
 
-.if 0
-    fork seq_init_ball_under_gravity
-    wait_patterns 0.75
-
-    palette_lerp_over_secs seq_palette_red_additive, seq_palette_all_black, SeqConfig_PatternLength_Secs*0.25
-    rgb_lerp_over_secs seq_palette_lerped+15*4, 0x00ffffff, 0x00000000, SeqConfig_PatternLength_Secs*0.25
-    wait_patterns 0.25
-    gosub seq_kill_ball_under_gravity
-    math_kill_rgb seq_palette_lerped+15*4
-.endif
+    ; ====== PART 5 ======
 
     write_addr palette_array_p, seq_palette_green_white_ramp
 
     fork seq_init_orb_particle_emitter
     wait_patterns 2
     gosub seq_kill_orb_particle_emitter
+
+    ; ====== PART 6 ======
+
+    write_addr palette_array_p, seq_palette_green_white_ramp
+
+    fork seq_init_orb_particle_emitter
+    wait_patterns 2
+    gosub seq_kill_orb_particle_emitter
+
+    ; ====== PART 7 ======
+
+    fork seq_init_wind_tunnel
+    wait_patterns 4.0
+    gosub seq_kill_wind_tunnel
 
     ; END HERE FOR NOW,
     end_script
@@ -227,8 +240,8 @@ seq_init_fire_spiral:
     math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
-    call_1 particle_grid_set_dave_rotation, 12
-    call_1 particle_grid_set_dave_expansion, 12
+    call_1 particle_grid_set_dave_rotation, 0
+    call_1 particle_grid_set_dave_expansion, 0
 
     end_script
 
@@ -322,26 +335,30 @@ seq_kill_orb_straight_lines:
 
 
 ; Ball drops under gravity etc.
-seq_init_ball_under_gravity:
-    ; Make particle grid.
-    ; X [-147, 147] step 14 = 22 total (border 13)
-    ; Y [-105, 105] step 14 = 16 total (border 23)
-;   call_6 particle_grid_make, 22, 16, MATHS_CONST_1*-147.0, MATHS_CONST_1*-105.0, MATHS_CONST_1*14.0, MATHS_CONST_1*14.0
-    call_7 particle_gridlines_make, 8, 6, MATHS_CONST_1*-128.0, MATHS_CONST_1*-96.0, MATHS_CONST_1*8.0, 4, 1
+seq_init_wind_tunnel:
+    call_0 particle_dave_init
 
-    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
+    ; Set layers.
+    call_3 fx_set_layer_fns, 0, math_emitter_tick_all              screen_cls
+    call_3 fx_set_layer_fns, 1, particle_dave_tick_all,            particle_dave_draw_all_as_2x2
+
+    ; Setup emitter.
+    write_addr math_emitter_p, math_emitter_config_6
+    write_addr math_emitter_spawn_fn, particle_dave_spawn
 
     ; Environment setup.
     make_and_add_env_plane the_env_floor_plane, 0.0, -128.0, 0.0
-;    make_and_add_env_plane the_env_left_plane, -160.0, -128.0, 64.0        ; +90 degrees
+    make_and_add_env_plane the_env_left_plane, -160.0, -128.0, 64.0        ; +90 degrees
 ;    make_and_add_env_plane the_env_left_slope, -80.0, -128.0, 32.0         ; +45 degrees
 ;    make_and_add_env_plane the_env_right_plane, 160.0, -128.0, -64.0       ; -90 degrees
 ;    make_and_add_env_plane the_env_right_slope, 80.0, -128.0, -32.0        ; -45 degrees
 
     ; Setup the ball.
-    call_2f the_env_set_constant_force  0.0, -(2.0/50.0)
-;    call_2f the_ball_set_pos, 80.0, 80.0            ; centre ball
-;    call_2f the_ball_set_vel,  0.5, 0.0
+    call_2f the_env_set_constant_force  0.05/50.0, -(0.5/50.0)
+    call_2f the_ball_set_pos, 208.0, 80.0            ; centre ball
+    call_2f the_ball_set_vel,  -0.8, 0.0
+
+    call_2f particles_set_constant_force 1.0/50.0, 0.0
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -349,17 +366,28 @@ seq_init_ball_under_gravity:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
+    wait_patterns 3.0
+
+    ; Increase the wind to send the ball off screen right.
+    call_2f the_env_set_constant_force  1.0/50.0, -(0.5/50.0)
+    wait_patterns 0.25
+
+    ; Stop the particles to also disppear off screen right.
+    write_addr math_emitter_p, 0
+
     end_script
 
-seq_kill_ball_under_gravity:
-;    call_1 the_env_remove_plane, the_env_left_plane
+seq_kill_wind_tunnel:
+    call_1 the_env_remove_plane, the_env_left_plane
     ;call_1 the_env_remove_plane, the_env_left_slope
-;    call_1 the_env_remove_plane, the_env_right_plane
+    ;call_1 the_env_remove_plane, the_env_right_plane
     ;call_1 the_env_remove_plane, the_env_right_slope
     call_1 the_env_remove_plane, the_env_floor_plane
 
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
+
+    call_3 fx_set_layer_fns, 0, 0               screen_cls
     end_script
 
 
@@ -432,7 +460,7 @@ seq_init_rain:
     call_0 particle_dave_init
 
     ; Set layers.
-    call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
+    call_3 fx_set_layer_fns, 0, math_emitter_tick_all              screen_cls
     call_3 fx_set_layer_fns, 1, particle_dave_tick_all,            particle_dave_draw_all_as_2x2
     
     ; Setup emitter.
@@ -569,7 +597,7 @@ math_emitter_config_4:
     math_const 50.0/120                                                 ; emission rate=120 particles per second fixed.
     math_func  -160.0,  320.0,    math_rand,  0.0,  0.0                 ; emitter.pos.x = 160.0 * math.random()
     math_func  128.0,   32.0,     math_rand,  0.0,  0.0                 ; emitter.pos.y = 128.0 + 32.0 * math.random()
-    math_const 0.0                                                      ; emitter.vel.x = 0.0
+    math_func  -0.25,  0.5,       math_rand,  0.0,  0.0                 ; emitter.vel.x = 0.5*rand()-0.25
     math_const 0.0                                                      ; emitter.vel.y = 0.0
     math_const 512                                                      ; emitter.life
     math_const 14                                                       ; emitter.colour
@@ -579,8 +607,18 @@ math_emitter_config_5:
     math_const 50.0/50                                                  ; emission rate=50 particles per second fixed.
     math_func  -160.0,  320.0,    math_rand,  0.0,  0.0                 ; emitter.pos.x = 160.0 * math.random()
     math_func  128.0,   32.0,     math_rand,  0.0,  0.0                 ; emitter.pos.y = 128.0 + 32.0 * math.random()
-    math_const 0.0                                                      ; emitter.vel.x = 0.0
+    math_func  -0.25,   0.5,      math_rand,  0.0,  0.0                 ; emitter.vel.x = 0.5*rand()-0.25
     math_func  0.0,     -0.5,     math_rand,  0.0,  0.0                 ; emitter.vel.y = - 4.0 * math.random()
+    math_const 512                                                      ; emitter.life
+    math_const 14                                                       ; emitter.colour
+    math_const 8.0                                                      ; emitter.radius = 8.0
+
+math_emitter_config_6:
+    math_const 50.0/120                                                 ; emission rate=120 particles per second fixed.
+    math_func  -160.0,  -32.0,    math_rand,  0.0,  0.0                 ; emitter.pos.x = 160.0 * math.random()
+    math_func  -128.0,  256.0,    math_rand,  0.0,  0.0                 ; emitter.pos.y = 128.0 + 32.0 * math.random()
+    math_const 0.0                                                      ; emitter.vel.x = 0.0
+    math_func  -0.25,  0.5,    math_rand,  0.0,  0.0                    ; emitter.vel.y = 0.5*rand()-0.25
     math_const 512                                                      ; emitter.life
     math_const 14                                                       ; emitter.colour
     math_const 8.0                                                      ; emitter.radius = 8.0
