@@ -151,8 +151,8 @@ VECTOR2 100.0*\x, 100.0*\z
 ;bits_verts_no_adr:
 ;    .include "src/obj/bs_obj.asm"
 
-circ_verts_no_adr:
-    .include "src/obj/circ_obj.asm"
+;circ_verts_no_adr:
+;    .include "src/obj/circ_obj.asm"
 
 ; ============================================================================
 ; QTM Embedded.
@@ -162,6 +162,8 @@ circ_verts_no_adr:
 .p2align 2
 QtmEmbedded_Base:
 .incbin "data/lib/tinyQTM149,ffa"
+; TODO: Replace with this version and preconverted MOD!
+;.incbin "data/lib/tinyQ149t2,ffa"
 .endif
 
 ; ============================================================================

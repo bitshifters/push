@@ -137,6 +137,7 @@ clean:
 ##########################################################################
 ##########################################################################
 
+# TODO: Replace with preconverted version before ship!
 ./build/music.mod: ./data/music/particles_10.mod
 	$(COPY) $(subst /,\\,$+) $(subst /,\\,$@)
 
