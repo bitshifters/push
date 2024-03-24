@@ -7,6 +7,8 @@
 ;  Trinity. [Bold|Medium].[Oblique]
 ; ============================================================================
 
+.equ _OUTLINE_FONT_CENTRE_TO_SCREEN, 1
+
 ; Paint a string to the screen using RISCOS outline fonts.
 ; Then copies the bounding box of the screen data to a buffer.
 ; Uses the currently selected font colours.
@@ -53,11 +55,7 @@ outline_font_paint_to_buffer:
     mov r8, r8, lsr #2                      ; pixel width.
     mov r9, r4, lsr #2                      ; pixel height.
 
-    add r8, r8, #7                          ; round up to full word.
-    mov r8, r8, lsr #3                      ; word width.
-
-    ; TODO: CLS?
-;    swi OS_WriteI+12
+    ; TODO: CLS? swi OS_WriteI+12
 
     ; Paint to screen.
     mov r0, r6                              ; font handle.
@@ -66,11 +64,20 @@ outline_font_paint_to_buffer:
 
     ; Ensure string is painted exactly in top left of the screen buffer.
 
+    .if _OUTLINE_FONT_CENTRE_TO_SCREEN
+    rsb r3, r11, #640                       ; 640-x1
+    sub r3, r3, r8, lsl #1                  ; 6400-(x1+os width/2)
+    mov r8, #Screen_Width                   ; screen width
+    .else
     rsb r3, r11, #0                         ; 0-x1
+    .endif
     mov r4, #1024
     sub r4, r4, r5                          ; 1024-y1
     sub r4, r4, r9, lsl #2                  ; 1024-y1-os height
     swi Font_Paint
+
+    add r8, r8, #7                          ; round up to full word.
+    mov r8, r8, lsr #3                      ; word width.
 
     ; Copy screen data to buffer.
     mov r2, r9

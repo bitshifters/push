@@ -131,7 +131,7 @@ clean:
 ./build/block-sprites.bin: ./data/gfx/block_sprites_8x8x8.png $(PNG2ARC_DEPS)
 	$(PYTHON2) $(PNG2ARC_FONT) --glyph-dim 8 8 -o $@ $< 9
 
-./build/bbc_owl.bin: ./data/gfx/bbc_logo.png $(PNG2ARC_DEPS)
+./build/bbc_owl.bin: ./data/gfx/revision.png $(PNG2ARC_DEPS)
 	$(PYTHON2) $(PNG2ARC) --loud -o $@ $< 4
 
 ##########################################################################

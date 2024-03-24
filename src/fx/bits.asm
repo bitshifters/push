@@ -3,7 +3,7 @@
 ; ============================================================================
 
 .equ Bits_Text_Max,         16
-.equ Bits_Text_PoolSize,    Screen_Stride*64*2
+.equ Bits_Text_PoolSize,    Screen_Stride*64*6
 
 .equ Bits_Num_Verts,        520
 
@@ -21,12 +21,17 @@ bits_font_def_homerton_bold:
 .p2align 2
 
 bits_font_def_homerton_regular:
-    .byte "Homerton"
+    .byte "Homerton.Medium"
     .byte 0
 .p2align 2
 
 bits_font_def_homerton_italic:
     .byte "Homerton.Oblique"
+    .byte 0
+.p2align 2
+
+bits_font_def_homerton_bold_italic:
+    .byte "Homerton.Bold.Oblique"
     .byte 0
 .p2align 2
 
@@ -36,12 +41,17 @@ bits_font_def_corpus_bold:
 .p2align 2
 
 bits_font_def_corpus_regular:
-    .byte "Corpus"
+    .byte "Corpus.Medium"
     .byte 0
 .p2align 2
 
 bits_font_def_corpus_italic:
     .byte "Corpus.Oblique"
+    .byte 0
+.p2align 2
+
+bits_font_def_corpus_bold_italic:
+    .byte "Corpus.Bold.Oblique"
     .byte 0
 .p2align 2
 
@@ -51,12 +61,17 @@ bits_font_def_trinity_bold:
 .p2align 2
 
 bits_font_def_trinity_regular:
-    .byte "Trinity"
+    .byte "Trinity,Medium"
     .byte 0
 .p2align 2
 
 bits_font_def_trinity_italic:
     .byte "Trinity.Oblique"
+    .byte 0
+.p2align 2
+
+bits_font_def_trinity_bold_italic:
+    .byte "Trinity.Bold.Oblique"
     .byte 0
 .p2align 2
 
@@ -84,7 +99,7 @@ bits_text_pool_top_p:
 bits_text_defs_p:
     .long bits_text_defs_no_adr
 
-bits_text_num:
+bits_text_total:
     .long 0
 
 ; ============================================================================
@@ -125,7 +140,7 @@ bits_text_init:
         ;  R10=end of sprite buffer.
         ; Trashes: R0-R7,R11
     mov r11, r7
-    ldr r0, bits_text_num
+    ldr r0, bits_text_total
     .if _DEBUG
     cmp r0, #Bits_Text_Max
     adrge r0, err_bitoutoftexts
@@ -152,7 +167,7 @@ bits_text_init:
     str r10, bits_text_pool_p
 
     add r0, r0, #1
-    str r0, bits_text_num
+    str r0, bits_text_total
 
     ; Skip over text to next def.
 .3:
@@ -852,5 +867,100 @@ bits_draw_file_p:
 bits_draw_file_end:
     .long bits_draw_file_end_no_adr
 .endif
+
+; ============================================================================
+
+bits_text_curr:
+    .long 4                     ; which one to plot.
+
+bits_text_xpos:
+    FLOAT_TO_FP 12.0
+
+bits_text_ypos:                 ; Y coordinate for centre of word.
+    FLOAT_TO_FP 0.0
+; TODO: Could drive address lookup per scanline with an iterator.
+
+bits_text_colour:
+    FLOAT_TO_FP 15.0
+; TODO: Could drive per scanline colour with an iterator.
+
+; Plot the current text to the screen along with a CLS.
+; 
+; R12=screen adrr.
+bits_draw_text:
+    ldr r0, bits_text_curr
+
+    ; TODO: Could have stored these as a block...
+    adr r11, bits_text_pixel_ptrs
+    ldr r11, [r11, r0, lsl #2]
+    adr r8, bits_text_widths
+    ldr r8, [r8, r0, lsl #2]
+    adr r9, bits_text_heights
+    ldr r9, [r9, r0, lsl #2]
+
+    ldr r10, bits_text_ypos
+    mov r10, r10, asr #16
+    sub r10, r10, r9, lsr #1        ; top scanline where text begins.
+    add r9, r10, r9                 ; bottom scanline where text ends.
+
+    ; Bump start ptr by word offset.
+    ; A bit hacky but should work for smaller shifts...
+    ldr r2, bits_text_xpos
+    mov r2, r2, asr #16
+    sub r11, r11, r2, lsl #2
+
+    ldr r5, bits_text_colour
+    mov r5, r5, asr #16
+    orr r5, r5, r5, lsl #4
+    orr r5, r5, r5, lsl #8
+    orr r5, r5, r5, lsl #16
+
+    ; Handle clipping on top of the screen.
+    ;       i.e. r10 < -128 and r9 > -128
+    mov r7, #-128                   ; scanline.
+
+    subs r6, r7, r10                ; -128 - ypos
+    addgt r11, r11, r6, lsl #7
+    addgt r11, r11, r6, lsl #5      ; add N lines to src.
+
+.1:
+    cmp r7, r10
+    blt .2                          ; draw a blank line.
+    
+    cmp r7, r9
+    bge .2                          ; draw a blank line.
+
+    ; Copy a line to screen.
+    ; Fix everything to screen width for speed.
+    .rept Screen_Stride/16
+    ldmia r11!, {r0-r3}
+    and r0, r0, r5
+    and r1, r1, r5
+    and r2, r2, r5
+    and r3, r3, r5
+    stmia r12!, {r0-r3}
+    .endr
+
+    ; Code duplicated below.
+    add r7, r7, #1
+    cmp r7, #128
+    blt .1
+    mov pc, lr
+
+.2:
+    mov r0, #0
+    mov r1, #0
+    mov r2, #0
+    mov r3, #0
+    .rept Screen_Stride/16
+    stmia r12!, {r0-r3}
+    .endr
+
+    ; Code duplicated above.
+    add r7, r7, #1
+    cmp r7, #128
+    blt .1
+
+    mov pc, lr
 
 ; ============================================================================

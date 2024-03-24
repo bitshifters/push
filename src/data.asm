@@ -127,6 +127,10 @@ block_sprites_no_adr:
 bits_text_defs_no_adr:
     text_def homerton_bold, 78, 78*1.5, 7, "BITSHIFTERS"
     text_def trinity_bold, 90, 90*1.2, 7, "TORMENT"
+    text_def corpus_bold_italic, 78, 78*1.5, 7, "kieran"
+    text_def corpus_bold_italic, 78, 78*1.5, 7, "Rhino"
+    text_def corpus_regular, 78, 78*1.5, 0xf, "code"
+    text_def corpus_regular, 78, 78*1.5, 0xf, "music"
     .long -1
 
 .if 0

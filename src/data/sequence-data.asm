@@ -176,7 +176,6 @@ seq_kill_expand_orb:
 
 ; Ball moves in a spiral through the particle grid.
 seq_init_grid_with_orb_spiral:
-
     ; Make particle grid.
     ;call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
     ;call_3 particle_grid_add_verts, Bits_Num_Verts, bits_verts_no_adr, 0
@@ -369,7 +368,11 @@ seq_init_orb_straight_lines:
     ; Morph to new shape.
 ;    call_3 particle_grid_add_verts, Bits_Num_Verts, circ_verts_no_adr, 1
 ;    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_owl_vert_array_no_adr, 1
-    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_logo_vert_array_no_adr, 0
+    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_logo_vert_array_no_adr, 1
+
+    write_addr bits_text_curr, 4
+    call_3 fx_set_layer_fns, 0, 0, bits_draw_text
+    math_make_var bits_text_ypos, 0.0, 128.0, math_sin, 0.0, 1.0/(MATHS_2PI*60.0)
 
     ; Bottom and move up.
     call_2f the_ball_set_pos, 64.0, -176.0
@@ -377,7 +380,7 @@ seq_init_orb_straight_lines:
 
     wait_secs SeqConfig_PatternLength_Secs*0.75
 
-    call_3 particle_grid_add_verts, Bits_Num_Verts, tmt_logo_vert_array_no_adr, 1
+;    call_3 particle_grid_add_verts, Bits_Num_Verts, tmt_logo_vert_array_no_adr, 1
 
     ; Right and move left again.
     call_2f the_ball_set_pos, 208.0, 44.0
@@ -414,6 +417,8 @@ seq_init_orb_straight_lines:
 seq_kill_orb_straight_lines:
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
+    math_kill_var bits_text_ypos
+    call_3 fx_set_layer_fns, 0, 0               screen_cls
     end_script
 
 
