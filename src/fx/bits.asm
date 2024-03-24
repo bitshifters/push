@@ -2,49 +2,103 @@
 ; Bits logo.
 ; ============================================================================
 
-.equ Bits_Logo_Bytes, Screen_Stride*64
-.equ Bits_Logo_PointSize, 78*16
+.equ Bits_Text_Max,         16
+.equ Bits_Text_PoolSize,    Screen_Stride*64*2
+
+.equ Bits_Num_Verts,        520
 
 .equ Bits_Owl_Width_Pixels, 256
-.equ Bits_Owl_Width_Bytes, (Bits_Owl_Width_Pixels/8)
-.equ Bits_Owl_Height_Rows, 256
-.equ Bits_Owl_Mode9_Bytes, (Bits_Owl_Width_Pixels/2)*Bits_Owl_Height_Rows
-
-bits_logo_p:
-    .long bits_logo_no_adr
-
-bits_width:
-    .long 0
-
-bits_height:
-    .long 0
+.equ Bits_Owl_Width_Bytes,  (Bits_Owl_Width_Pixels/8)
+.equ Bits_Owl_Height_Rows,  256
+.equ Bits_Owl_Mode9_Bytes,  (Bits_Owl_Width_Pixels/2)*Bits_Owl_Height_Rows
 
 bits_font_handle:
     .long 0
 
-bits_font_def:
+bits_font_def_homerton_bold:
     .byte "Homerton.Bold"
     .byte 0
 .p2align 2
 
-bits_logo_string:
-    .byte "BITSHIFTERS"
+bits_font_def_homerton_regular:
+    .byte "Homerton"
+    .byte 0
+.p2align 2
+
+bits_font_def_homerton_italic:
+    .byte "Homerton.Oblique"
+    .byte 0
+.p2align 2
+
+bits_font_def_corpus_bold:
+    .byte "Corpus.Bold"
+    .byte 0
+.p2align 2
+
+bits_font_def_corpus_regular:
+    .byte "Corpus"
+    .byte 0
+.p2align 2
+
+bits_font_def_corpus_italic:
+    .byte "Corpus.Oblique"
+    .byte 0
+.p2align 2
+
+bits_font_def_trinity_bold:
+    .byte "Trinity.Bold"
+    .byte 0
+.p2align 2
+
+bits_font_def_trinity_regular:
+    .byte "Trinity"
+    .byte 0
+.p2align 2
+
+bits_font_def_trinity_italic:
+    .byte "Trinity.Oblique"
     .byte 0
 .p2align 2
 
 bits_logo_vert_array_p:
     .long bits_logo_vert_array_no_adr
 
+tmt_logo_vert_array_p:
+    .long tmt_logo_vert_array_no_adr
+
+bits_text_widths:
+    .skip Bits_Text_Max*4
+
+bits_text_heights:
+    .skip Bits_Text_Max*4
+
+bits_text_pixel_ptrs:
+    .skip Bits_Text_Max*4
+
+bits_text_pool_p:
+    .long bits_text_pool_base_no_adr
+
+bits_text_pool_top_p:
+    .long bits_text_pool_top_no_adr
+
+bits_text_defs_p:
+    .long bits_text_defs_no_adr
+
+bits_text_num:
+    .long 0
+
 ; ============================================================================
 
 ; R12=screen addr.
-bits_logo_init:
+bits_text_init:
     str lr, [sp, #-4]!
 
+    ldr r11, bits_text_defs_p
+    b .2
+
+.1:
     ; Get font handle.
-    adr r1, bits_font_def
-    mov r2, #Bits_Logo_PointSize
-    mov r3, #Bits_Logo_PointSize*1.5            ; TODO: Increase height?
+    ldmia r11!, {r2-r3}                     ; get point sizes
     mov r4, #0
     mov r5, #0
     swi Font_FindFont
@@ -52,43 +106,150 @@ bits_logo_init:
 
     ; Set colours for this logo.
     mov r0, #0                              ; font handle.
+    ldr r0, bits_font_handle
     mov r1, #0                              ; background logical colour
-    mov r2, #7                              ; foreground logical colour
+    ldr r2, [r11], #4                       ; get colour
     mov r3, #0                              ; how many colours
     swi Font_SetColours
 
-    ; Paint 'Bitshifters' to a MODE 9 buffer.
+    ; Paint text to a MODE 9 buffer.
     mov r0, #0
-    adr r1, bits_logo_string
-    ldr r2, bits_logo_p
+    ldr r0, bits_font_handle
+    mov r1, r11
+    ldr r2, bits_text_pool_p
     bl outline_font_paint_to_buffer
-
-    str r8, bits_width
-    str r9, bits_height
-
+        ; Returns:
+        ;  R7=ptr to string.
+        ;  R8=width in words.
+        ;  R9=height in rows.
+        ;  R10=end of sprite buffer.
+        ; Trashes: R0-R7,R11
+    mov r11, r7
+    ldr r0, bits_text_num
     .if _DEBUG
-    ldr r0, bits_logo_p
-    subs r10, r10, r0
-    cmp r10, #Bits_Logo_Bytes
-    adrgt r0, err_bitbufoverflow
-    swigt OS_GenerateError
+    cmp r0, #Bits_Text_Max
+    adrge r0, err_bitoutoftexts
+    swige OS_GenerateError
     .endif
 
-    ; Select 520 random pixels from the logo.
-    ldr r0, bits_width
-    ldr r1, bits_height
-    ldr r2, bits_logo_p
-    mov r3, #520
+    ; Store width & height.
+    adr r1, bits_text_widths
+    str r8, [r1, r0, lsl #2]
+    adr r1, bits_text_heights
+    str r9, [r1, r0, lsl #2]
+
+    ; Store pixel ptr.
+    .if _DEBUG
+    ldr r7, bits_text_pool_top_p
+    cmp r10, r7
+    adrge r0, err_bitpooloverflow
+    swige OS_GenerateError
+    .endif
+
+    adr r1, bits_text_pixel_ptrs
+    ldr r2, bits_text_pool_p
+    str r2, [r1, r0, lsl #2]
+    str r10, bits_text_pool_p
+
+    add r0, r0, #1
+    str r0, bits_text_num
+
+    ; Skip over text to next def.
+.3:
+    ldrb r1, [r11], #1
+    cmp r1, #0
+    bne .3
+    add r11, r11, #3
+    bic r11, r11, #3
+
+.if 0
+;    swi OS_WriteI+12
+.else
+    ; Clear screen of previous font stuffs.
+    mov r0, #0
+    mov r1, #0
+    mov r2, #0
+    mov r3, #0
+    mov r4, #0
+    mov r5, #0
+    mov r6, #0
+    mov r7, #0
+    mov r10, r12
+.4:
+    .rept Screen_Stride/32
+    stmia r10!, {r0-r7}
+    .endr
+    subs r9, r9, #1
+    bne .4
+.endif
+
+.2:
+    ldr r1, [r11], #4                       ; ptr to font def
+    cmp r1, #-1
+    bne .1
+
+    ldr pc, [sp], #4
+
+; R12=screen addr.
+bits_logo_init:
+    str lr, [sp, #-4]!
+
+    ; Has to be done after font text has been drawn, therefore
+    ; can't be in the script as the first script frame is called
+    ; before the late draw. TODO: Separate 'run once' script?
+    mov r0, #0
+    ldr r1, bits_logo_vert_array_p
+    mov r2, #Bits_Num_Verts
+    mov r3, #VECTOR2_SIZE*Bits_Num_Verts
+    bl bits_make_verts_from_text
+
+    mov r0, #1
+    ldr r1, tmt_logo_vert_array_p
+    mov r2, #Bits_Num_Verts
+    mov r3, #VECTOR2_SIZE*Bits_Num_Verts
+    bl bits_make_verts_from_text
+
+    ldr pc, [sp], #4
+
+; R0=text no.
+; R1=vert array ptr
+; R2=num verts
+; R3=vert array size
+bits_make_verts_from_text:
+    ; Check if we already did this...
+    .if _DEBUG && 0
+    ldr r2, [r1]
+    cmp r2, #0
+    movne pc, lr
+    .endif
+
+    str lr, [sp, #-4]!
+    stmfd sp!, {r0-r3}
+
+    ; Select N random pixels from the image.
+    mov r3, r2
+    adr r2, bits_text_pixel_ptrs
+    ldr r2, [r2, r0, lsl #2]
+    adr r1, bits_text_heights
+    ldr r1, [r1, r0, lsl #2]
+    adr r4, bits_text_widths
+    ldr r0, [r4, r0, lsl #2]
     bl bits_logo_select_random
 
+    ldmfd sp!, {r0-r3}
     ; Turn those marked pixels into a vertex array.
-    ldr r1, bits_height
-    ldr r2, bits_logo_p
-    ldr r3, bits_logo_vert_array_p
-    mov r4, #VECTOR2_SIZE*520
+    mov r4, r3
+    mov r3, r1
+    adr r2, bits_text_pixel_ptrs
+    ldr r2, [r2, r0, lsl #2]
+    adr r1, bits_text_heights
+    ldr r1, [r1, r0, lsl #2]
+    adr r5, bits_text_widths
+    ldr r0, [r5, r0, lsl #2]
     bl bits_create_vert_array_from_image
 
     ldr pc, [sp], #4
+
 
 .if _DEBUG
 err_bitbufoverflow: ;The error block
@@ -96,11 +257,23 @@ err_bitbufoverflow: ;The error block
 .byte "Bits buffer overflow!"
 .align 4
 .long 0
+
+err_bitoutoftexts: ;The error block
+.long 18
+.byte "Out of Bits text slots!"
+.align 4
+.long 0
+
+err_bitpooloverflow: ;The error block
+.long 18
+.byte "Bits text pool overflow!"
+.align 4
+.long 0
 .endif
 
 ; ============================================================================
 
-.if _DEBUG
+.if _DEBUG && 0
 ; R12=screen addr.
 bits_logo_draw:
     str lr, [sp, #-4]!
@@ -215,7 +388,7 @@ bits_logo_select_random:
     swieq OS_GenerateError
     .endif
 
-    mov r4, #0             ; tries
+    mov r4, #0              ; tries
     mov r11, r3             ; count
     mov r3, r1              ; height in pixels.
     mov r10, r0, lsl #3     ; width in pixels.
@@ -353,6 +526,13 @@ bits_create_vert_array_from_image:
     cmp r2, #0
     adreq r0, error_invalidparams
     swieq OS_GenerateError
+
+    ; Check if we already did this.
+    .if 0
+    ldr r11, [r3]
+    cmp r11, #0
+    ldrne pc, [sp, #-4]!
+    .endif
     .endif
 
     mov r11, r3             ; vert_ptr

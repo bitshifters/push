@@ -114,6 +114,20 @@ block_sprites_no_adr:
     .incbin "build/block-sprites.bin"
 
 ; ============================================================================
+; Text.
+; ============================================================================
+
+.macro text_def font, point, height, colour, text
+    .long bits_font_def_\font, \point*16, \height*16, \colour
+    .byte "\text", 0
+    .p2align 2
+.endm
+
+; Font def, points size, point size height, text string, null terminated.
+bits_text_defs_no_adr:
+    text_def homerton_bold, 78, 78*1.5, 7, "BITSHIFTERS"
+    text_def trinity_bold, 90, 90*1.2, 7, "TORMENT"
+    .long -1
 
 .if 0
 bits_draw_file_no_adr:

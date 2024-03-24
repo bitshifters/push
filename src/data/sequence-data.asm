@@ -179,7 +179,7 @@ seq_init_grid_with_orb_spiral:
 
     ; Make particle grid.
     ;call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
-    ;call_3 particle_grid_add_verts, 520, bits_verts_no_adr, 0
+    ;call_3 particle_grid_add_verts, Bits_Num_Verts, bits_verts_no_adr, 0
 
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
@@ -367,15 +367,17 @@ seq_init_orb_straight_lines:
     wait_secs SeqConfig_PatternLength_Secs*0.75
 
     ; Morph to new shape.
-;    call_3 particle_grid_add_verts, 520, circ_verts_no_adr, 1
-;    call_3 particle_grid_add_verts, 520, bits_owl_vert_array_no_adr, 1
-    call_3 particle_grid_add_verts, 520, bits_logo_vert_array_no_adr, 1
+;    call_3 particle_grid_add_verts, Bits_Num_Verts, circ_verts_no_adr, 1
+;    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_owl_vert_array_no_adr, 1
+    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_logo_vert_array_no_adr, 0
 
     ; Bottom and move up.
     call_2f the_ball_set_pos, 64.0, -176.0
     call_2f the_ball_set_vel,  0.0, 2.64
 
     wait_secs SeqConfig_PatternLength_Secs*0.75
+
+    call_3 particle_grid_add_verts, Bits_Num_Verts, tmt_logo_vert_array_no_adr, 1
 
     ; Right and move left again.
     call_2f the_ball_set_pos, 208.0, 44.0
@@ -604,10 +606,10 @@ seq_make_owl_verts:
     call_5 bits_convert_mode4_to_mode9, bits_owl_no_adr, bits_owl_mode9_no_adr, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, 0x7
 
     ; Random sampling of 4bpp image (marks top bit).
-    call_4 bits_logo_select_random, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, 520
+    call_4 bits_logo_select_random, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, Bits_Num_Verts
 
     ; Create a vertex array (slow) to reduce run-time overhead.
-    call_5 bits_create_vert_array_from_image, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, bits_owl_vert_array_no_adr, 520*VECTOR2_SIZE
+    call_5 bits_create_vert_array_from_image, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, bits_owl_vert_array_no_adr, Bits_Num_Verts*VECTOR2_SIZE
 
     end_script
 

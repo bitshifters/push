@@ -746,11 +746,29 @@ Assuming 4 patterns per effect min = 9 effects max.
 
 Ideas to try:
 - Sideways 'rain' (starfield) with ball under gravity. - NICE!
-- Dave likes the morphs - which look the best not random?
+- Dave likes the morphs - which look the best not random? - MAYBE?
 - Concentric circles with diagonal sine motion
+    - Concentric circles harder than they look!!
 - Ease-in ease-out of ball, not constant velocity
 - Play with the ball size and influence
 - Worry about more palettes later.
-- Diagonals?
-- Morph between different spirals.
-- Morph between grid and concentric circles.
+- Diagonals? - TRIED.
+- Morph between different spirals. - MEH?
+- Morph between grid and concentric circles. - KINDA?
+
+MONDAY: Sequence w/ credits & greets
+TUESDAY: Colours
+WEDNESDAY: Ball size variation
+THURSDAY: Polish and record
+
+For greets - could have particle spray with a repsulsion field over the top
+of the word (no orb) so it is more readable. Have the credits appear in different
+places on the screen and move the opening.
+
+For credits - could have our names move behind with the group logo as particles on top?
+
+Need a demo name! Something about fluid or flow?
+
+Plot text:
+- Y pos from var - drive with maths_var etc.
+- Use math_var to iterate math_var for colour per row.

@@ -182,7 +182,10 @@ app_init_audio:
 
 ; R12=screen addr.
 app_late_init:
-    b bits_logo_init
+    str lr, [sp, #-4]!
+    bl bits_text_init
+    bl bits_logo_init
+    ldr pc, [sp], #4
 ; TODO: Make this more generic or include in sequence?
 
 

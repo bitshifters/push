@@ -101,11 +101,15 @@ balls_array_no_adr:
 
 ; ============================================================================
 
-bits_logo_no_adr:
-    .skip Bits_Logo_Bytes
-
 bits_logo_vert_array_no_adr:
     .skip VECTOR2_SIZE*520
+
+tmt_logo_vert_array_no_adr:
+    .skip VECTOR2_SIZE*520
+
+bits_text_pool_base_no_adr:
+    .skip Bits_Text_PoolSize
+bits_text_pool_top_no_adr:
 
 ; ============================================================================
 

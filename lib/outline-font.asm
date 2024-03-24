@@ -20,8 +20,10 @@
 ;  R8=width in words.
 ;  R9=height in rows.
 ;  R10=end of sprite buffer.
-; Trashes: R0-R7
+; Trashes: R0-R7,R11
 outline_font_paint_to_buffer:
+    str r12, [sp, #-4]!
+
     ; Stash params.
     mov r6, r0
     mov r7, r1
@@ -55,6 +57,7 @@ outline_font_paint_to_buffer:
     mov r8, r8, lsr #3                      ; word width.
 
     ; TODO: CLS?
+;    swi OS_WriteI+12
 
     ; Paint to screen.
     mov r0, r6                              ; font handle.
@@ -84,6 +87,7 @@ outline_font_paint_to_buffer:
     subs r2, r2, #1
     bne .1
 
+    ldr r12, [sp], #4
     mov pc, lr
 
 outline_font_coord_block:
