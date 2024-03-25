@@ -772,3 +772,13 @@ Need a demo name! Something about fluid or flow?
 Plot text:
 - Y pos from var - drive with maths_var etc.
 - Use math_var to iterate math_var for colour per row.
+
+Tune v10
+~~~
+4 pats intro
+4 pats w/ kick
+4 pats w/ percusion
+10 pats intense
+4 pats breathe
+11 pats intense
+(doesn't finish yet)
