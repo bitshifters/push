@@ -363,7 +363,7 @@ app_vsync_code:
 ; ============================================================================
 
 .include "src/fx/math-emitter.asm"
-.include "src/fx/particles.asm"
+.include "src/fx/particles.asm" ; TODO: Can be removed.
 .include "src/fx/particle-dave.asm"
 .include "src/fx/particle-grid.asm"
 .include "src/fx/bits.asm"

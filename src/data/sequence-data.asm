@@ -110,7 +110,6 @@ seq_loop:
 
     ; ====== PART 6 5/10 ======
 
-
     write_addr palette_array_p, seq_palette_red_magenta_ramp
     fork seq_init_morph_spirals
     wait_patterns 6
@@ -217,11 +216,16 @@ seq_init_grid_with_orb_spiral:
     math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*40.0)
     math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*40.0)
 
+    wait_patterns 3.6
+
+    ; Exit ball escape velocity.
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    call_0 the_ball_set_vel_inst
+
     end_script
 
 seq_kill_grid_with_orb_spiral:
-    math_kill_var the_ball_block+TheBall_x
-    math_kill_var the_ball_block+TheBall_y
     math_kill_var seq_path_radius
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
@@ -237,6 +241,12 @@ seq_init_fire_spiral:
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
     call_2f the_ball_set_pos, 0.0, 0.0              ; centre ball
     call_2f the_ball_set_vel, 0.0, 0.0
+    call_1f the_ball_set_radiusf 1.0
+
+    math_make_var the_ball_block+TheBall_radius, 1.0, TheBall_DefaultRadius-1.0, math_clamp, 0.0, 1.0/(SeqConfig_PatternLength_Frames*4.0)
+
+    ; Collider radius = 3.0 * the ball radius.
+    math_link_vars particle_grid_collider_radius, 0.0, 3.0, the_ball_block+TheBall_radius
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
@@ -251,17 +261,26 @@ seq_init_fire_spiral:
     math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*50.0)
     math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
-    call_1 particle_grid_set_dave_rotation, 0
+    call_1 particle_grid_set_dave_rotation, 13
     call_1 particle_grid_set_dave_expansion, 0
+
+    wait_patterns 5.6
+
+    ; Exit ball escape velocity.
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    call_0 the_ball_set_vel_inst
 
     end_script
 
 seq_kill_fire_spiral:
-    math_kill_var the_ball_block+TheBall_x
-    math_kill_var the_ball_block+TheBall_y
+    math_kill_var the_ball_block+TheBall_radius
     math_kill_var seq_path_radius
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
+    math_unlink_vars particle_grid_collider_radius
+    write_fp the_ball_block+TheBall_radius, TheBall_DefaultRadius
+    write_fp particle_grid_collider_radius, TheBall_DefaultRadius*3.0
     end_script
 
 
@@ -385,7 +404,7 @@ seq_init_orb_straight_lines:
     ; Morph to new shape.
 ;    call_3 particle_grid_add_verts, Bits_Num_Verts, circ_verts_no_adr, 1
 ;    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_owl_vert_array_no_adr, 1
-    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_logo_vert_array_no_adr, 1
+    call_3 particle_grid_add_verts, Bits_Num_Verts, prod_logo_vert_array_no_adr, 1
 
     ; EXAMPLE: how to add text.
     .if 0
@@ -408,7 +427,7 @@ seq_init_orb_straight_lines:
 
     wait_secs SeqConfig_PatternLength_Secs*0.75
 
-    call_3 particle_grid_add_verts, Bits_Num_Verts, tmt_logo_vert_array_no_adr, 1
+;    call_3 particle_grid_add_verts, Bits_Num_Verts, tmt_logo_vert_array_no_adr, 1
 
     call_1 particle_grid_set_dave_rotation, 12
     call_1 particle_grid_set_dave_expansion, 13
@@ -511,22 +530,23 @@ seq_init_orb_particle_emitter:
 
     ; Set layers.
     call_3 fx_set_layer_fns, 0, math_emitter_tick_all               screen_cls
-;    call_3 fx_set_layer_fns, 1, particles_tick_all_under_gravity,   particles_draw_all_as_2x2
     call_3 fx_set_layer_fns, 1, particle_dave_tick_all,            particle_dave_draw_all_as_2x2
     
     ; Setup emitter.
     write_addr math_emitter_p, math_emitter_config_3
-;    write_addr math_emitter_spawn_fn, particle_spawn
     write_addr math_emitter_spawn_fn, particle_dave_spawn
 
-    ; Setup the ball. TODO: Merge these? Hmmm!
+    ; Setup the ball.
     call_2f particles_set_constant_force  0.0, 0.0
     call_2f the_env_set_constant_force  0.0, 0.0
     call_2f the_ball_set_pos, 0.0, 0.0
     call_2f the_ball_set_vel, 0.0, 0.0
+    call_1f the_ball_set_radiusf 1.0
 
-    call_1f the_ball_set_radiusf, 4.0
-    write_fp particle_grid_collider_radius, 12.0
+    math_make_var the_ball_block+TheBall_radius, 1.0, TheBall_DefaultRadius-1.0, math_clamp, 0.0, 1.0/(SeqConfig_PatternLength_Frames*4.0)
+
+    ; Collider radius = 3.0 * the ball radius.
+    math_link_vars particle_grid_collider_radius, 0.0, 3.0, the_ball_block+TheBall_radius
 
     ; Ball motion.
     ; v = a + b * f(c + d * t)
@@ -540,38 +560,27 @@ seq_init_orb_particle_emitter:
     math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
     math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
-; Ball colour.
+; EXAMPLE: Ball colour.
 ;    math_make_rgb seq_palette_green_white_ramp+15*4, 0x00ffffff, 0x0000ff00, seq_rgb_blend
 ;    math_make_var seq_rgb_blend, 0.5, 0.5, math_sin, 0.0, 1.0/50.0
 
-    wait_secs SeqConfig_PatternLength_Secs*3
+    wait_patterns 3.6
 
-    ; Copy free particles to the particle grid.
-;    call_1 particles_transfer_to_grid, 0
-
-    call_1f the_ball_set_radiusf, TheBall_DefaultRadius
-    write_fp particle_grid_collider_radius, TheBall_DefaultRadius*3.0
-
-    ; Then lerp them to become the spiral.
-    ;call_7 particle_grid_make_spiral, 500, MATHS_CONST_1*4.0, MATHS_CONST_1*1.0, MATHS_CONST_1*0.3, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 1
-
-    ; TODO: Separate tick & draw layers - I shouldn't have to know about CLS here!
-;    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
-
-;    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
-;    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
-
-;    math_make_var the_ball_block+TheBall_x,   0.0, 50.0, math_sin, 0.0, 1.0/(MATHS_2PI*200.0)
-;    math_make_var the_ball_block+TheBall_y,   0.0, 50.0, math_cos, 0.0, 1.0/(MATHS_2PI*80.0)
+    ; Exit ball escape velocity.
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    call_0 the_ball_set_vel_inst
 
     end_script
 
 seq_kill_orb_particle_emitter:
     math_unlink_vars particle_grid_collider_pos+0
     math_unlink_vars particle_grid_collider_pos+4
-    math_kill_var the_ball_block+TheBall_x
-    math_kill_var the_ball_block+TheBall_y
+    math_unlink_vars particle_grid_collider_radius
+    math_kill_var the_ball_block+TheBall_radius
     math_kill_var seq_path_radius
+    write_fp the_ball_block+TheBall_radius, TheBall_DefaultRadius
+    write_fp particle_grid_collider_radius, TheBall_DefaultRadius*3.0
 ;    math_kill_rgb seq_palette_green_white_ramp+15*4
     call_3 fx_set_layer_fns, 0, 0               screen_cls
     end_script

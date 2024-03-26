@@ -81,6 +81,9 @@ bits_logo_vert_array_p:
 tmt_logo_vert_array_p:
     .long tmt_logo_vert_array_no_adr
 
+prod_logo_vert_array_p:
+    .long prod_logo_vert_array_no_adr
+
 bits_text_widths:
     .skip Bits_Text_Max*4
 
@@ -213,15 +216,24 @@ bits_logo_init:
     ; can't be in the script as the first script frame is called
     ; before the late draw. TODO: Separate 'run once' script?
     mov r0, #0
-    ldr r1, bits_logo_vert_array_p
+    ldr r1, prod_logo_vert_array_p
     mov r2, #Bits_Num_Verts
     mov r3, #VECTOR2_SIZE*Bits_Num_Verts
+    mov r4, #MATHS_CONST_1*2.0
     bl bits_make_verts_from_text
 
     mov r0, #1
+    ldr r1, bits_logo_vert_array_p
+    mov r2, #Bits_Num_Verts
+    mov r3, #VECTOR2_SIZE*Bits_Num_Verts
+    mov r4, #MATHS_CONST_1
+    bl bits_make_verts_from_text
+
+    mov r0, #2
     ldr r1, tmt_logo_vert_array_p
     mov r2, #Bits_Num_Verts
     mov r3, #VECTOR2_SIZE*Bits_Num_Verts
+    mov r4, #MATHS_CONST_1
     bl bits_make_verts_from_text
 
     ldr pc, [sp], #4
@@ -230,6 +242,7 @@ bits_logo_init:
 ; R1=vert array ptr
 ; R2=num verts
 ; R3=vert array size
+; R4=scale [1.16]
 bits_make_verts_from_text:
     ; Check if we already did this...
     .if _DEBUG && 0
@@ -239,7 +252,7 @@ bits_make_verts_from_text:
     .endif
 
     str lr, [sp, #-4]!
-    stmfd sp!, {r0-r3}
+    stmfd sp!, {r0-r4}
 
     ; Select N random pixels from the image.
     mov r3, r2
@@ -251,16 +264,17 @@ bits_make_verts_from_text:
     ldr r0, [r4, r0, lsl #2]
     bl bits_logo_select_random
 
-    ldmfd sp!, {r0-r3}
+    ldmfd sp!, {r0-r4}
     ; Turn those marked pixels into a vertex array.
+    mov r5, r4
     mov r4, r3
     mov r3, r1
     adr r2, bits_text_pixel_ptrs
     ldr r2, [r2, r0, lsl #2]
     adr r1, bits_text_heights
     ldr r1, [r1, r0, lsl #2]
-    adr r5, bits_text_widths
-    ldr r0, [r5, r0, lsl #2]
+    adr r6, bits_text_widths
+    ldr r0, [r6, r0, lsl #2]
     bl bits_create_vert_array_from_image
 
     ldr pc, [sp], #4
@@ -445,10 +459,15 @@ bits_logo_select_random:
     ; Mark this pixel.
     bl bits_mark_pixel
 
-    ; NB. Could be an infinite loop! TODO: Fail after N tries?
+    ; NB. Could be an infinite loop so fail after N tries.
     subs r11, r11, #1
     bne .1
 .2:
+    .if _DEBUG
+    cmp r11, #0
+    adrne r0, err_randomfail
+    swine OS_GenerateError
+    .endif
 
     ldr pc, [sp], #4
 
@@ -524,6 +543,7 @@ bits_convert_mode4_to_mode9:
 ;  R2=ptr to image data
 ;  R3=ptr to vertex array buffer
 ;  R4=vertex array buffer size in bytes
+;  R5=scale [1.16]
 ; Returns:
 ;  R12=total number of verts created
 bits_create_vert_array_from_image:
@@ -575,9 +595,11 @@ bits_create_vert_array_from_image:
 
     ; Make vert position around the origin.
     sub r8, r6, r0, lsl #2  ; x pos = pixel_x - pixel_w/2
-    mov r8, r8, asl #16     ; x pos = pixel count [16.16]
+    mul r8, r5, r8          ; x pos * scale [16.16]
+;    mov r8, r8, asl #16     ; x pos = pixel count [16.16]
     sub r9, r1, r4, lsr #1  ; y pos = row - height/2
-    mov r9, r9, asl #16     ; y pos = (row - height) [16.16]
+    mul r9, r5, r9          ; y pos * scale [16.16]
+;    mov r9, r9, asl #16     ; y pos = (row - height) [16.16]
 
     ; Store vert.
     stmia r11!, {r8-r9}     ; origin
@@ -607,6 +629,12 @@ bits_create_vert_array_from_image:
 err_vertarrayoverflow: ;The error block
 .long 18
 .byte "Vertex array overflow!"
+.align 4
+.long 0
+
+err_randomfail:
+.long 18
+.byte "Failed to select all random verts."
 .align 4
 .long 0
 .endif

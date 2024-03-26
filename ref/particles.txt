@@ -612,7 +612,7 @@ Moar TODO
     - Max line fill length?
     - Remove vertex shapes.
 - Display something when setting up tables etc. - DONE JUST ...
-- Dynamic sample speed! Adjust count thresholds! REMEMBER _SMALL_EXE!
+- Dynamic sample speed! Adjust count thresholds! REMEMBER _SMALL_EXE! - DONE
 - Dots on screen edges. - DONE
 - Reenable hot reload of script.
 - Fix step forward by pattern for editing. - DONE
@@ -801,6 +801,20 @@ Dave notes
 - Swap bitshifters and torment for our names. Fill the screen!
 - Demo name, keep it short to also fill the screen. FLUIDIC, STIR, MATTER, DOT, SPECK, FLUID, FLOW, FLUX, REPEL, REPULSE, FIELD
 
-Init speed
+Init speed for dynamic sample setting.
 A3000=0x186 - 0x1aa
 A3020=0x111 - 0x102
+
+Circle data: line count=radius*2+1 each entry is -X start from centre.
+Use circle_12 or circle_13.
+
+TODO FINAL
+~~~
+- Orb spiral end transition. - DONE
+- Fire spiral start transition. - DONE
+- Update prod name. - DONE
+- Replace group names with our names.
+- Add credits list screen.
+- Add released at Revision?
+- Replace rectangular grid with circular one. - Radius ~13.
+- Prod name at end?

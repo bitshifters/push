@@ -26,6 +26,12 @@ the_ball_block:
     .short TheBall_DefaultRadius                   ; radius
     .short TheBall_DefaultColour                   ; colour
 
+the_ball_prev_pos:
+    VECTOR2 0.0, 0.0
+
+the_ball_inst_vel:
+    VECTOR2 0.0, 0.0
+
 ; ============================================================================
 
 .equ TheEnv_CentreX,            (160.0 * MATHS_CONST_1)
@@ -59,13 +65,6 @@ the_ball_init:
 the_ball_tick:
     str lr, [sp, #-4]!
 
-    bl the_ball_move
-
-    ldr pc, [sp], #4
-
-the_ball_move:
-    str lr, [sp, #-4]!
-
     ldr r12, the_ball_p
     ldmia r12, {r0-r7}                  ; load ball context
     ; R0=next
@@ -79,6 +78,16 @@ the_ball_move:
     ; [Was radius + colour]
     ;mov r9, r7, lsr #16                 ; colour
     ;mov r7, r7, lsl #16                 ; radius [16.16]
+
+    ; Calculate instantaneous velocity.
+    ldr r8, the_ball_prev_pos+0
+    ldr r9, the_ball_prev_pos+4
+    sub r8, r1, r8
+    sub r9, r2, r9
+    str r8, the_ball_inst_vel+0
+    str r9, the_ball_inst_vel+4
+    str r1, the_ball_prev_pos+0
+    str r2, the_ball_prev_pos+4
 
     ; Ball dynamics.
 
@@ -331,6 +340,13 @@ the_ball_add_impulse:
     add r3, r3, r1
     str r2, the_ball_block + TheBall_ix
     str r3, the_ball_block + TheBall_iy
+    mov pc, lr
+
+the_ball_set_vel_inst:
+    ldr r0, the_ball_inst_vel+0
+    ldr r1, the_ball_inst_vel+4
+    str r0, the_ball_block + TheBall_vx
+    str r1, the_ball_block + TheBall_vy
     mov pc, lr
 
 ; ============================================================================

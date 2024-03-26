@@ -107,6 +107,9 @@ bits_logo_vert_array_no_adr:
 tmt_logo_vert_array_no_adr:
     .skip VECTOR2_SIZE*520
 
+prod_logo_vert_array_no_adr:
+    .skip VECTOR2_SIZE*520
+
 .skip Screen_Stride
 bits_text_pool_base_no_adr:
     .skip Bits_Text_PoolSize

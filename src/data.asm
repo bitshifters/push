@@ -125,6 +125,7 @@ block_sprites_no_adr:
 
 ; Font def, points size, point size height, text string, null terminated.
 bits_text_defs_no_adr:
+    text_def homerton_bold, 78, 78*1.2, 7, "FIELD"
     text_def homerton_bold, 78, 78*1.5, 7, "BITSHIFTERS"
     text_def trinity_bold, 90, 90*1.2, 7, "TORMENT"
     text_def corpus_bold_italic, 78, 78*1.5, 7, "kieran"
