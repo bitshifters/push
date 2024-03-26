@@ -147,7 +147,8 @@ seq_loop:
 ; Ball appears and expands to starting size.
 seq_init_expand_orb:
     ; Make particle grid.
-    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
+;    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 0
+    call_5 particle_grid_make_circle 12, MATHS_CONST_1*12.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 0
 
     call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
 
@@ -318,7 +319,8 @@ seq_init_morph_spirals:
 
 ;    call_7 particle_grid_make_spiral, 520, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 0
     call_7 particle_grid_make, 26, 20, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 0
-    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 1
+;    call_7 particle_grid_make, 26, 20, MATHS_CONST_1*-137.5, MATHS_CONST_1*-104.5, MATHS_CONST_1*11.0, MATHS_CONST_1*11.0, 1
+    call_5 particle_grid_make_circle 12, MATHS_CONST_1*12.0, MATHS_CONST_1*0.0, MATHS_CONST_1*0.0, 0
 
     call_2f the_ball_set_pos, 208.0, 176.0
 

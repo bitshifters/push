@@ -814,9 +814,10 @@ TODO FINAL
 - Fire spiral start transition. - DONE
 - Update prod name. - DONE
 - Replace group names with our names.
-- Add credits list screen.
-- Add released at Revision?
+- Add credits list screen. - DONE
+- Add released at Revision? - DONE
 - Replace rectangular grid with circular one. - Radius ~13.
-- Prod name at end?
+- Fade credits screen up.
+- Morph kieran in.
 
 FOR NEXT TIME: DON'T ALLOW DEPENDENCIES ON THINGS THAT ARE MADE AFTER FIRST SCRIPT TICK!

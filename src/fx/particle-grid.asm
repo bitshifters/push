@@ -304,6 +304,67 @@ particle_grid_make_spiral:
     ldr pc, [sp], #4
 
 
+particle_grid_circle_p:
+	.long circle_lookup
+
+; R0=radius     [8.0]
+; R1=spacing    [8.16]
+; R2=centre X   [16.16]
+; R3=centre Y   [16.16]
+; R4=0 always reset positions, otherwise just origin (morph)
+particle_grid_make_circle:
+    cmp r4, #0
+    ldrne r4, particle_grid_total
+
+    ldr r11, particle_grid_array_p
+
+    ldr r12, particle_grid_circle_p
+    ldr r12, [r12, r0, lsl #2]          ; circle dat
+
+    mov r9, #0
+    mov r10, #0                         ; count
+
+    mla r3, r0, r1, r3                  ; top y = centre Y + radius * spacing
+    mov r0, r0, lsl #1
+    add r0, r0, #1                      ; rows = radius*2+1
+.1:
+    ldrb r5, [r12], #1                  ; x_offset
+
+    mul r6, r5, r1                      ; spacing * x_offset
+    sub r6, r2, r6                      ; x start
+
+    mov r5, r5, lsl #1
+    add r5, r5, #1                      ; x count = x_offset*2+1
+.2:
+
+    subs r4, r4, #1
+    addpl r11, r11, #16
+    strmi r6, [r11], #4     ; pos.x
+    strmi r3, [r11], #4     ; pos.y
+    strmi r9, [r11], #4
+    strmi r9, [r11], #4     ; vel
+    str r6, [r11], #4       ; origin.x
+    str r3, [r11], #4       ; origin.y
+
+    add r10, r10, #1
+    .if _DEBUG
+    cmp r10, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+
+    add r6, r6, r1                      ; x pos += spacing
+    subs r5, r5, #1
+    bne .2
+
+    sub r3, r3, r1                      ; y pos += spacing
+    subs r0, r0, #1
+    bne .1
+
+    str r10, particle_grid_total
+
+    mov pc, lr
+
 ; R0=total particles
 ; R1=particles per circle
 ; R2=start radius
