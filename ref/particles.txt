@@ -818,3 +818,5 @@ TODO FINAL
 - Add released at Revision?
 - Replace rectangular grid with circular one. - Radius ~13.
 - Prod name at end?
+
+FOR NEXT TIME: DON'T ALLOW DEPENDENCIES ON THINGS THAT ARE MADE AFTER FIRST SCRIPT TICK!

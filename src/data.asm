@@ -125,13 +125,14 @@ block_sprites_no_adr:
 
 ; Font def, points size, point size height, text string, null terminated.
 bits_text_defs_no_adr:
-    text_def homerton_bold, 78, 78*1.2, 7, "FIELD"
-    text_def homerton_bold, 78, 78*1.5, 7, "BITSHIFTERS"
-    text_def trinity_bold, 90, 90*1.2, 7, "TORMENT"
-    text_def corpus_bold_italic, 78, 78*1.5, 7, "kieran"
-    text_def corpus_bold_italic, 78, 78*1.5, 7, "Rhino"
-    text_def corpus_regular, 78, 78*1.5, 0xf, "code"
-    text_def corpus_regular, 78, 78*1.5, 0xf, "music"
+    text_def homerton_bold, 78, 78*1.2, 7, "FIELD"          ; 0
+    text_def homerton_bold, 78, 78*1.5, 7, "BITSHIFTERS"    ; 1
+    text_def trinity_bold, 90, 90*1.2, 7, "TORMENT"         ; 2
+    text_def homerton_bold, 90,90*1.2, 7, "kieran"          ; 3
+    text_def homerton_bold, 90, 90*1.2, 7, "rhino"          ; 4
+    text_def corpus_bold, 36, 36*1.2, 0xf, "code"        ; 5
+    text_def corpus_bold, 36, 36*1.2, 0xf, "music"       ; 6
+    text_def corpus_bold, 30, 30*1.2, 0xf, "released at revision 2024"       ; 7
     .long -1
 
 .if 0

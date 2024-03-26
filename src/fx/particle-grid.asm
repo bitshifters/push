@@ -416,7 +416,7 @@ particle_grid_add_verts:
     mov r2, r0
     ldr r3, particle_grid_total
     cmp r2, r3
-    movgt r3, r3
+    movgt r2, r3
 .2:
 
     str r0, particle_grid_total

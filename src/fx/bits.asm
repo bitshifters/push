@@ -136,12 +136,7 @@ bits_text_init:
     mov r1, r11
     ldr r2, bits_text_pool_p
     bl outline_font_paint_to_buffer
-        ; Returns:
-        ;  R7=ptr to string.
-        ;  R8=width in words.
-        ;  R9=height in rows.
-        ;  R10=end of sprite buffer.
-        ; Trashes: R0-R7,R11
+
     mov r11, r7
     ldr r0, bits_text_total
     .if _DEBUG
@@ -215,25 +210,25 @@ bits_logo_init:
     ; Has to be done after font text has been drawn, therefore
     ; can't be in the script as the first script frame is called
     ; before the late draw. TODO: Separate 'run once' script?
-    mov r0, #0
+    mov r0, #0  ; prod name
     ldr r1, prod_logo_vert_array_p
     mov r2, #Bits_Num_Verts
     mov r3, #VECTOR2_SIZE*Bits_Num_Verts
     mov r4, #MATHS_CONST_1*2.0
     bl bits_make_verts_from_text
 
-    mov r0, #1
+    mov r0, #3  ; kieran
     ldr r1, bits_logo_vert_array_p
     mov r2, #Bits_Num_Verts
     mov r3, #VECTOR2_SIZE*Bits_Num_Verts
-    mov r4, #MATHS_CONST_1
+    mov r4, #MATHS_CONST_1*2.0
     bl bits_make_verts_from_text
 
-    mov r0, #2
+    mov r0, #4  ; rhino
     ldr r1, tmt_logo_vert_array_p
     mov r2, #Bits_Num_Verts
     mov r3, #VECTOR2_SIZE*Bits_Num_Verts
-    mov r4, #MATHS_CONST_1
+    mov r4, #MATHS_CONST_1*2.0
     bl bits_make_verts_from_text
 
     ldr pc, [sp], #4
@@ -244,14 +239,8 @@ bits_logo_init:
 ; R3=vert array size
 ; R4=scale [1.16]
 bits_make_verts_from_text:
-    ; Check if we already did this...
-    .if _DEBUG && 0
-    ldr r2, [r1]
-    cmp r2, #0
-    movne pc, lr
-    .endif
-
     str lr, [sp, #-4]!
+
     stmfd sp!, {r0-r4}
 
     ; Select N random pixels from the image.
@@ -265,7 +254,14 @@ bits_make_verts_from_text:
     bl bits_logo_select_random
 
     ldmfd sp!, {r0-r4}
+
     ; Turn those marked pixels into a vertex array.
+;  R0=width in words
+;  R1=height in rows
+;  R2=ptr to image data
+;  R3=ptr to vertex array buffer
+;  R4=vertex array buffer size in bytes
+;  R5=scale [1.16]
     mov r5, r4
     mov r4, r3
     mov r3, r1
@@ -561,13 +557,6 @@ bits_create_vert_array_from_image:
     cmp r2, #0
     adreq r0, error_invalidparams
     swieq OS_GenerateError
-
-    ; Check if we already did this.
-    .if 0
-    ldr r11, [r3]
-    cmp r11, #0
-    ldrne pc, [sp, #-4]!
-    .endif
     .endif
 
     mov r11, r3             ; vert_ptr
@@ -902,7 +891,7 @@ bits_text_curr:
     .long 4                     ; which one to plot.
 
 bits_text_xpos:
-    FLOAT_TO_FP 12.0
+    FLOAT_TO_FP 0.0
 
 bits_text_ypos:                 ; Y coordinate for centre of word.
     FLOAT_TO_FP 0.0
@@ -928,6 +917,7 @@ bits_draw_text:
 
     ldr r10, bits_text_ypos
     mov r10, r10, asr #16
+    rsb r10, r10, #0                ; flip 'cos I'm a div
     sub r10, r10, r9, lsr #1        ; top scanline where text begins.
     add r9, r10, r9                 ; bottom scanline where text ends.
 

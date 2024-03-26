@@ -7,7 +7,7 @@
 ;  Trinity. [Bold|Medium].[Oblique]
 ; ============================================================================
 
-.equ _OUTLINE_FONT_CENTRE_TO_SCREEN, 1
+.equ _OUTLINE_FONT_CENTRE_TO_SCREEN, 1  ; TODO: Left, right and centre adjust.
 
 ; Paint a string to the screen using RISCOS outline fonts.
 ; Then copies the bounding box of the screen data to a buffer.

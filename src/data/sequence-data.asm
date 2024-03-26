@@ -108,7 +108,7 @@ seq_loop:
     wait_patterns 4
     gosub seq_kill_orb_particle_emitter
 
-    ; ====== PART 6 5/10 ======
+    ; ====== PART 6 6/10 ======
 
     write_addr palette_array_p, seq_palette_red_magenta_ramp
     fork seq_init_morph_spirals
@@ -116,9 +116,7 @@ seq_loop:
     gosub seq_kill_morph_spirals
     write_addr palette_array_p, seq_palette_blue_cyan_ramp
 
-    ; ====== PART 7 5/10 ======
-
-    ; GREETS?
+    ; ====== PART 7 4/10 GREETS ======
 
     fork seq_init_rain
     wait_patterns 3.75
@@ -129,12 +127,20 @@ seq_loop:
     gosub seq_kill_rain
     math_kill_rgb seq_palette_lerped+15*4
 
-    ; ====== PART 8 - END ======
+    ; ====== PART 8 - END 6/10 ======
 
     write_addr palette_array_p, seq_palette_red_magenta_ramp
-    wait_patterns 6.0
 
-    ; END HERE FOR NOW,
+    fork seq_init_final_part
+    wait_patterns 5.75
+
+    palette_lerp_over_secs seq_palette_red_magenta_ramp, seq_palette_all_black, SeqConfig_PatternLength_Secs*0.25
+    rgb_lerp_over_secs seq_palette_lerped+15*4, 0x00ffffff, 0x00000000, SeqConfig_PatternLength_Secs*0.25
+    wait_patterns 0.25
+    gosub seq_kill_final_part
+    math_kill_rgb seq_palette_lerped+15*4
+
+    ; END HERE
     end_script
 
 
@@ -640,6 +646,82 @@ seq_kill_rain:
     call_3 fx_set_layer_fns, 0, 0               screen_cls
     end_script
 
+
+; Final part:
+; kieran
+; rhino
+; presented at Revision
+; fade out
+seq_init_final_part:
+    ; kieran
+    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_logo_vert_array_no_adr, 0
+
+    ; code
+    write_addr bits_text_curr, 5    ; code
+    call_3 fx_set_layer_fns, 0, 0, bits_draw_text
+    write_fp bits_text_ypos -110.0
+    write_fp bits_text_xpos -16.0
+
+    call_3 fx_set_layer_fns, 1, particle_grid_tick_all_dave_equation,    particle_grid_draw_all_as_2x2_tinted
+
+    ; Setup the ball.
+    call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
+    call_2f the_ball_set_vel,  0.0, 0.0
+    call_2f the_ball_set_pos, 0.0, 128.0
+    call_1f the_ball_set_radiusf 8.0
+    write_fp particle_grid_collider_radius, 24.0
+
+    ; Connect the ball to the particle grid collider.
+    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
+    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+
+    math_make_var the_ball_block+TheBall_x,   0.0, 80.0, math_sin, 0.0, 2.5/(MATHS_2PI*400.0)
+    math_make_var the_ball_block+TheBall_y,   0.0, 80.0, math_cos, 0.0, 4.0/(MATHS_2PI*400.0)
+
+    call_1 particle_grid_set_dave_rotation, -12
+    call_1 particle_grid_set_dave_expansion, -13
+
+    .if 0
+    write_addr bits_text_curr, 4
+    call_3 fx_set_layer_fns, 0, 0, bits_draw_text
+    math_make_var bits_text_ypos, 0.0, 128.0, math_sin, 0.0, 1.0/(MATHS_2PI*60.0)
+    .endif
+
+    wait_secs SeqConfig_PatternLength_Secs*2.0
+
+    ; rhino
+    call_3 particle_grid_add_verts, Bits_Num_Verts, tmt_logo_vert_array_no_adr, 1
+
+    call_1 particle_grid_set_dave_rotation, 12
+    call_1 particle_grid_set_dave_expansion, 13
+
+    ; music
+    write_addr bits_text_curr, 6    ; music
+    write_fp bits_text_ypos -110.0
+    write_fp bits_text_xpos -16.0
+
+    wait_secs SeqConfig_PatternLength_Secs*2.0
+
+    ; Revision.
+    call_3 particle_grid_add_verts, Bits_Num_Verts, bits_owl_vert_array_no_adr, 1
+    write_addr bits_text_curr, 7    ; revision
+    write_fp bits_text_ypos -110.0
+    write_fp bits_text_xpos 0.0
+    
+    end_script
+
+seq_kill_final_part:
+    math_kill_var the_ball_block+TheBall_x
+    math_kill_var the_ball_block+TheBall_y
+    math_unlink_vars particle_grid_collider_pos+0
+    math_unlink_vars particle_grid_collider_pos+4
+    call_1f the_ball_set_radiusf, TheBall_DefaultRadius
+    write_fp particle_grid_collider_radius, TheBall_DefaultRadius*3.0
+;    math_kill_var bits_text_ypos
+; For text draw.
+    call_3 fx_set_layer_fns, 0, 0               screen_cls
+    end_script
+
 ; ============================================================================
 ; Support functions.
 ; ============================================================================
@@ -657,7 +739,7 @@ seq_make_owl_verts:
     call_4 bits_logo_select_random, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, Bits_Num_Verts
 
     ; Create a vertex array (slow) to reduce run-time overhead.
-    call_5 bits_create_vert_array_from_image, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, bits_owl_vert_array_no_adr, Bits_Num_Verts*VECTOR2_SIZE
+    call_6 bits_create_vert_array_from_image, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, bits_owl_vert_array_no_adr, Bits_Num_Verts*VECTOR2_SIZE, MATHS_CONST_1*0.75
 
     end_script
 
