@@ -161,9 +161,11 @@ VECTOR2 100.0*\x, 100.0*\z
 .if AppConfig_UseQtmEmbedded
 .p2align 2
 QtmEmbedded_Base:
+.if _LOG_SAMPLES
+.incbin "data/lib/tinyQ149t2,ffa"
+.else
 .incbin "data/lib/tinyQTM149,ffa"
-; TODO: Replace with this version and preconverted MOD!
-;.incbin "data/lib/tinyQ149t2,ffa"
+.endif
 .endif
 
 ; ============================================================================
@@ -173,7 +175,11 @@ QtmEmbedded_Base:
 .if !AppConfig_LoadModFromFile
 .p2align 2
 music_mod_no_adr:
-.incbin "build/music.mod"
+.if _LOG_SAMPLES
+.incbin "data/music/particles_12.002"
+.else
+.incbin "data/music/particles_12.mod"
+.endif
 .endif
 
 ; ============================================================================

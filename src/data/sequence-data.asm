@@ -133,7 +133,7 @@ seq_loop:
     ; ====== PART 8 - END ======
 
     write_addr palette_array_p, seq_palette_red_magenta_ramp
-    wait_patterns 1.0
+    wait_patterns 6.0
 
     ; END HERE FOR NOW,
     end_script

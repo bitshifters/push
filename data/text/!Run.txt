@@ -15,7 +15,7 @@ RMKILL MemAlloc
 |
 |RMLOAD <Demo$Dir>.QTM149c { > null: }
 |
-wimpslot -min 1200K
+wimpslot -min 1400K
 <Demo$Dir>.!RunImage
 |
 |RMKILL QTMTracker

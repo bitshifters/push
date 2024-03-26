@@ -773,6 +773,10 @@ Plot text:
 - Y pos from var - drive with maths_var etc.
 - Use math_var to iterate math_var for colour per row.
 
+Colours blends to add:
+- Green cyan blue
+- 
+
 Tune v10
 ~~~
 4 pats intro
@@ -782,3 +786,21 @@ Tune v10
 4 pats breathe
 11 pats intense
 (doesn't finish yet)
+
+Dave notes
+~~~
+- Transition more smoothly.
+- Orb spiral - end by shrinking the orb to no size.
+- Credits - don't necessarily need code/music - just say the names or just in corner of the screen.
+- Greets - straight columns of names, all the same size.
+- Generator small to large orb.
+- Fire spiral small to large <= COLOUR BUG.
+- Can we make the rectangular grid a circle shape? LOWEST PRI.
+- Reason to switch to a smaller orb - put this after the credits or have the previous scene end on a smaller scene.
+- "Released at Revision 2024".
+- Swap bitshifters and torment for our names. Fill the screen!
+- Demo name, keep it short to also fill the screen. FLUIDIC, STIR, MATTER, DOT, SPECK, FLUID, FLOW, FLUX, REPEL, REPULSE, FIELD
+
+Init speed
+A3000=0x186 - 0x1aa
+A3020=0x111 - 0x102

@@ -39,7 +39,7 @@ deploy: $(FOLDER)
 	$(MKDIR_P) "$(HOSTFS)\$(FOLDER)"
 	$(COPY) "$(FOLDER)\*.*" "$(HOSTFS)\$(FOLDER)\*.*"
 
-$(FOLDER): build ./build/archie-verse.bin ./build/!run.txt ./build/icon.bin ./build/music.mod
+$(FOLDER): build ./build/archie-verse.bin ./build/!run.txt ./build/icon.bin
 	$(RM_RF) $(FOLDER)
 	$(MKDIR_P) $(FOLDER)
 	$(COPY) .\folder\*.* "$(FOLDER)\*.*"
@@ -82,7 +82,7 @@ build:
 ./build/seq.bin: build ./build/seq.o link_script2.txt
 	$(VLINK) -T link_script2.txt -b rawbin1 -o $@ build/seq.o -Mbuild/linker2.txt
 
-./build/seq.o: build archie-verse.asm ./src/sequence-data.asm ./build/music.mod ./build/assets.txt
+./build/seq.o: build archie-verse.asm ./src/sequence-data.asm  ./build/assets.txt
 	$(VASM) -L build/compile.txt -m250 -Fvobj -opt-adr -o build/seq.o archie-verse.asm
 
 ./build/archie-verse.bin: build ./build/archie-verse.o link_script.txt
@@ -95,7 +95,7 @@ build:
 	$(VASM) -L build/dot_b.txt -m250 -Fbin -opt-adr -o $@ $<
 
 .PHONY:./build/archie-verse.o
-./build/archie-verse.o: build archie-verse.asm ./build/music.mod ./build/assets.txt
+./build/archie-verse.o: build archie-verse.asm ./build/assets.txt
 	$(VASM) -L build/compile.txt -m250 -Fvobj -opt-adr -o build/archie-verse.o archie-verse.asm
 
 ##########################################################################
@@ -137,8 +137,8 @@ clean:
 ##########################################################################
 ##########################################################################
 
-# TODO: Replace with preconverted version before ship!
-./build/music.mod: ./data/music/particles_10.mod
+# NOTE: NO longer used. See src/data.asm instead.
+./build/music.mod: ./data/music/particles_12.mod
 	$(COPY) $(subst /,\\,$+) $(subst /,\\,$@)
 
 ##########################################################################

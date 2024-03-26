@@ -5,7 +5,7 @@
 
 .equ AppConfig_StackSize,               1024
 .equ AppConfig_LoadModFromFile,         0
-.equ AppConfig_DynamicSampleSpeed,      0
+.equ AppConfig_DynamicSampleSpeed,      (_SMALL_EXE && 1)
 .equ AppConfig_InstallIrqHandler,       0       ; otherwise uses Event_VSync.
 .equ AppConfig_UseSyncTracks,           0       ; currently Luapod could also be Rocket.
 .equ AppConfig_UseQtmEmbedded,          1
@@ -17,7 +17,7 @@
 ; ============================================================================
 
 .equ SeqConfig_EnableLoop,              1
-.equ SeqConfig_MaxPatterns,             37
+.equ SeqConfig_MaxPatterns,             42
 
 .equ SeqConfig_ProTracker_Tempo,        120         ; Default = 125.
 .equ SeqConfig_ProTracker_TicksPerRow,  4
@@ -36,7 +36,7 @@
 .equ AudioConfig_SampleSpeed_SlowCPU,   48		    ; ideally get this down for ARM2
 .equ AudioConfig_SampleSpeed_FastCPU,   24		    ; ideally 16us for ARM250+
 .equ AudioConfig_SampleSpeed_Default,   AudioConfig_SampleSpeed_SlowCPU
-.equ AudioConfig_SampleSpeed_CPUThreshold, 80       ; ARM3~=20, ARM250~=70, ARM2~=108
+.equ AudioConfig_SampleSpeed_CPUThreshold, 0x140       ; ARM3~=20, ARM250~=70, ARM2~=108
 
 .equ AudioConfig_StereoPos_Ch1,         -127        ; full left
 .equ AudioConfig_StereoPos_Ch2,         +127        ; full right
