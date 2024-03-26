@@ -123,6 +123,9 @@ bits_owl_mode9_no_adr:
 bits_owl_vert_array_no_adr:
     .skip VECTOR2_SIZE*520
 
+greetz_mode9_no_adr:
+    .skip Screen_Bytes
+
 ; ============================================================================
 
 .if 0

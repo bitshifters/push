@@ -597,23 +597,26 @@ seq_init_rain:
     call_0 particle_dave_init
 
     ; Set layers.
-    call_3 fx_set_layer_fns, 0, math_emitter_tick_all              screen_cls
+    call_3 fx_set_layer_fns, 0, math_emitter_tick_all              static_copy_screen
     call_3 fx_set_layer_fns, 1, particle_dave_tick_all,            particle_dave_draw_all_as_2x2
     
+    ; Plot greetz.
+    write_addr static_screen_p, greetz_mode9_no_adr
+
     ; Setup emitter.
     write_addr math_emitter_p, math_emitter_config_4
     write_addr math_emitter_spawn_fn, particle_dave_spawn
 
     ; Setup the ball.
     call_2f the_env_set_constant_force, 0.0, 0.0    ; zero gravity
-    call_2f the_ball_set_pos, 0.0, 0.0              ; centre ball
+    call_2f the_ball_set_pos, 0.0, 144.0            ; off screen
     call_2f the_ball_set_vel, 0.0, 0.0
 
     ; Make the ball the particle grid collider.
     ; particle_grid_collider_pos.x = the_ball.x
     ; particle_grid_collider_pos.y = the_ball.y
-    math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
-    math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
+    ;math_link_vars particle_grid_collider_pos+0, 0.0, 1.0, the_ball_block+TheBall_x
+    ;math_link_vars particle_grid_collider_pos+4, 0.0, 1.0, the_ball_block+TheBall_y
 
     ; Equation of the ball.
     ; x=radius * sin(t/speed)
@@ -622,10 +625,12 @@ seq_init_rain:
     ; ~20 seconds to get to max radius 100. 1000/speed=100;speed=10.
 
     ; radius = i/10
-    math_make_var seq_path_radius, 40.0, -40.0, math_cos, 0.0, 1.0/(4.0*SeqConfig_PatternLength_Frames)
+    math_make_var seq_path_radius, 60.0, -60.0, math_cos, 0.0, 1.0/(4.0*SeqConfig_PatternLength_Frames)
 
     ; Want this to be the radius value -----------------------v
-    math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*40.0)
+    ;math_make_var2 the_ball_block+TheBall_x,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*40.0)
+    math_make_var2 particle_grid_collider_pos+0,   0.0, seq_path_radius, math_sin, 0.0, 1.0/(MATHS_2PI*40.0)
+    write_fp particle_grid_collider_pos+4, 80.0
     ;math_make_var2 the_ball_block+TheBall_y,   0.0, seq_path_radius, math_cos, 0.0, 1.0/(MATHS_2PI*50.0)
 
     call_2f particles_set_constant_force 0.0, -1.0/50.0
@@ -740,6 +745,9 @@ seq_make_owl_verts:
 
     ; Create a vertex array (slow) to reduce run-time overhead.
     call_6 bits_create_vert_array_from_image, Bits_Owl_Width_Bytes, Bits_Owl_Height_Rows, bits_owl_mode9_no_adr, bits_owl_vert_array_no_adr, Bits_Num_Verts*VECTOR2_SIZE, MATHS_CONST_1*0.75
+
+    ; Convert 1bpp image to 4bpp using colour 7.
+    call_5 bits_convert_mode4_to_mode9, greetz_mode4_no_adr, greetz_mode9_no_adr, 320/8, 256, 0xf
 
     end_script
 

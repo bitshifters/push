@@ -31,6 +31,7 @@ screen_cls_with_word:
     .endif
 	mov pc, lr
 
+.if 0
 screen_cls_grey:
     .long 0x33333333
 
@@ -38,7 +39,6 @@ screen_cls_to_grey:
     ldr r0, screen_cls_grey
     b screen_cls_with_word
 
-.if 0
 ; R12 = screen address
 screen_dup_lines:
 	add r9, r12, #Screen_Bytes
@@ -54,9 +54,6 @@ screen_dup_lines:
 	blt .1
 	mov pc, lr
 
-static_screen_p:
-    .long 0
-
 static_palette_p:
     .long 0
 
@@ -65,6 +62,10 @@ static_set_palette:
     cmp r2, #0
     moveq pc, lr
     b palette_set_block
+.endif
+
+static_screen_p:
+    .long 0
 
 ; R12=screen address
 static_copy_screen:
@@ -84,4 +85,3 @@ screen_copy:
     subs r10, r10, #1
     bne .1
     mov pc, lr
-.endif

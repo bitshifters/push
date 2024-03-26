@@ -144,6 +144,9 @@ bits_draw_file_end_no_adr:
 bits_owl_no_adr:
     .incbin "build/bbc_owl.bin"
 
+greetz_mode4_no_adr:
+    .incbin "build/greetz.bin"
+
 ; ============================================================================
 
 .macro VERT x, y, z
