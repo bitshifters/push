@@ -366,6 +366,36 @@ particle_grid_make_circle:
     mov pc, lr
 
 ; R0=total particles
+; R1=x pos
+; R2=y pos
+; R3=0 always reset positions, otherwise just origin (morph)
+particle_grid_make_point:
+    cmp r3, #0
+    ldrne r3, particle_grid_total
+    .if _DEBUG
+    cmp r0, #ParticleGrid_Max
+    adrgt r0, error_gridtoolarge
+    swigt OS_GenerateError
+    .endif
+    str r0, particle_grid_total
+
+    mov r4, #0
+    mov r5, #0
+
+    ldr r11, particle_grid_array_p
+.1:
+    subs r4, r4, #1
+    addpl r11, r11, #16
+    stmmiia r11!, {r1-r2,r4-r5} ; pos, vel
+    stmia r11!, {r1-r2}         ; origin
+   
+    subs r0, r0, #1
+    bne .1
+
+    mov pc, lr
+
+
+; R0=total particles
 ; R1=particles per circle
 ; R2=start radius
 ; R3=radius increment

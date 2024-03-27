@@ -70,7 +70,8 @@ shrink: build ./build/!run.txt ./build/icon.bin ./build/loader.bin
 build:
 	$(MKDIR_P) "./build"
 
-./build/assets.txt: build ./build/icon.bin ./build/block-sprites.bin ./build/bbc_owl.bin ./build/greetz.bin
+./build/assets.txt: build ./build/icon.bin ./build/block-sprites.bin ./build/bbc_owl.bin ./build/greetz1.bin \
+	./build/greetz2.bin
 	echo done > $@
 
 ./build/archie-verse.shri: build ./build/archie-verse.bin
@@ -134,7 +135,10 @@ clean:
 ./build/bbc_owl.bin: ./data/gfx/revision.png $(PNG2ARC_DEPS)
 	$(PYTHON2) $(PNG2ARC) --loud -o $@ $< 4
 
-./build/greetz.bin: ./data/gfx/greetz.png $(PNG2ARC_DEPS)
+./build/greetz1.bin: ./data/gfx/greetz_1_alt.png $(PNG2ARC_DEPS)
+	$(PYTHON2) $(PNG2ARC) --loud -o $@ $< 4
+
+./build/greetz2.bin: ./data/gfx/greetz_2_alt.png $(PNG2ARC_DEPS)
 	$(PYTHON2) $(PNG2ARC) --loud -o $@ $< 4
 
 ##########################################################################

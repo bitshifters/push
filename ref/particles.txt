@@ -813,15 +813,26 @@ TODO FINAL
 - Orb spiral end transition. - DONE
 - Fire spiral start transition. - DONE
 - Update prod name. - DONE
-- Replace group names with our names.
+- Replace group names with our names. - DONE
 - Add credits list screen. - DONE
 - Add released at Revision? - DONE
 - Replace rectangular grid with circular one. - Radius ~13.
-- Fade credits screen up.
-- Morph kieran in.
+- Fade credits screen up. - DONE
+- Morph kieran in. - DONE
 - Red additive palette bug only with small exe?! - DONE
     - Palette data looks OK? Happens with SMALL_EXE define...
     => Error in LibSqrt_MakeSqrtTable...!!! - FIXED
-- Remove serif from small fonts.
+- Remove serif from small fonts. - DONE
+- Enlarge ball size again from small one? - DONE
+- Improve palettes:
+    - Make orange less muddy.
+    - Brighten blue
+    - Brighten red yellow
+    - Change kieran to blue - DONE
+    - Change rhino to green - DONE
+    - Change Revision to red - DONE
+
+48,92
+274,168
 
 FOR NEXT TIME: DON'T ALLOW DEPENDENCIES ON THINGS THAT ARE MADE AFTER FIRST SCRIPT TICK!

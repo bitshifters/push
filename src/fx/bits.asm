@@ -5,7 +5,7 @@
 .equ Bits_Text_Max,         16
 .equ Bits_Text_PoolSize,    Screen_Stride*64*6
 
-.equ Bits_Num_Verts,        520
+.equ Bits_Num_Verts,        490 ; was 520
 
 .equ Bits_Owl_Width_Pixels, 256
 .equ Bits_Owl_Width_Bytes,  (Bits_Owl_Width_Pixels/8)
@@ -162,6 +162,19 @@ bits_text_init:
     adr r1, bits_text_pixel_ptrs
     ldr r2, bits_text_pool_p
     str r2, [r1, r0, lsl #2]
+
+    ; BODGE-O-MATIC.
+    mov r1, #0
+    mov r2, #Screen_Stride
+.5:
+    str r1, [r10], #4
+    subs r2, r2, #1
+    bne .5
+    .if _DEBUG
+    cmp r10, r7
+    adrge r0, err_bitpooloverflow
+    swige OS_GenerateError
+    .endif
     str r10, bits_text_pool_p
 
     add r0, r0, #1
@@ -193,7 +206,7 @@ bits_text_init:
     stmia r10!, {r0-r7}
     .endr
     subs r9, r9, #1
-    bne .4
+    bpl .4
 .endif
 
 .2:

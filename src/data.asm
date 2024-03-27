@@ -125,14 +125,14 @@ block_sprites_no_adr:
 
 ; Font def, points size, point size height, text string, null terminated.
 bits_text_defs_no_adr:
-    text_def homerton_bold, 78, 78*1.2, 7, "FIELD"          ; 0
+    text_def homerton_bold, 78, 78*1.2, 7, "PUSH"          ; 0
     text_def homerton_bold, 78, 78*1.5, 7, "BITSHIFTERS"    ; 1
     text_def trinity_bold, 90, 90*1.2, 7, "TORMENT"         ; 2
     text_def homerton_bold, 90,90*1.2, 7, "kieran"          ; 3
     text_def homerton_bold, 90, 90*1.2, 7, "rhino"          ; 4
-    text_def corpus_bold, 36, 36*1.2, 0xf, "code"        ; 5
-    text_def corpus_bold, 36, 36*1.2, 0xf, "music"       ; 6
-    text_def corpus_bold, 30, 30*1.2, 0xf, "released at revision 2024"       ; 7
+    text_def homerton_bold, 36, 36*1.2, 0xf, "code"        ; 5
+    text_def homerton_bold, 36, 36*1.2, 0xf, "music"       ; 6
+    text_def homerton_bold, 30, 30*1.2, 0xf, "presented at revision 2024"       ; 7
     .long -1
 
 .if 0
@@ -144,8 +144,11 @@ bits_draw_file_end_no_adr:
 bits_owl_no_adr:
     .incbin "build/bbc_owl.bin"
 
-greetz_mode4_no_adr:
-    .incbin "build/greetz.bin"
+greetz1_mode4_no_adr:
+    .incbin "build/greetz1.bin"
+
+greetz2_mode4_no_adr:
+    .incbin "build/greetz2.bin"
 
 ; ============================================================================
 
