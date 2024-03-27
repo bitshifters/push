@@ -26,7 +26,7 @@ math_emitter_p:
     .long math_emitter_config_3
 
 math_emitter_spawn_fn:
-    .long particle_spawn
+    .long particle_dave_spawn
 
 ; ============================================================================
 

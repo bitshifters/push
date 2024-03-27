@@ -77,9 +77,11 @@ scene2d_verts_buffer_no_adr:
 
 ; ============================================================================
 
+.if 0
 ; src/particles.asm
 particles_array_no_adr:
     .skip Particle_SIZE * Particles_Max
+.endif
 
 ; ============================================================================
 
@@ -95,9 +97,11 @@ particle_dave_array_no_adr:
 
 ; ============================================================================
 
+.if 0
 ; src/balls.asm
 balls_array_no_adr:
     .skip Ball_SIZE * Balls_Max
+.endif
 
 ; ============================================================================
 

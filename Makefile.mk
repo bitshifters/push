@@ -26,7 +26,7 @@ PNG2ARC=./bin/png2arc.py
 PNG2ARC_FONT=./bin/png2arc_font.py
 PNG2ARC_SPRITE=./bin/png2arc_sprite.py
 PNG2ARC_DEPS:=./bin/png2arc.py ./bin/arc.py ./bin/png2arc_font.py ./bin/png2arc_sprite.py
-FOLDER=!Verse
+FOLDER=!Push
 HOSTFS=../arculator/hostfs
 # TODO: Need a copy command that copes with forward slash directory separator. (Maybe MSYS cp?)
 
@@ -117,8 +117,8 @@ clean:
 ./build/big-font.bin: ./data/font/font-big-finalFINAL.png $(PNG2ARC_DEPS)
 	$(PYTHON2) $(PNG2ARC_FONT) -o $@ --glyph-dim 16 16 $< 9
 
-./build/icon.bin: ./data/gfx/mikroreise_icon.png $(PNG2ARC_DEPS)
-	$(PYTHON2) $(PNG2ARC_SPRITE) --name !reise -o $@ $< 9
+./build/icon.bin: ./data/gfx/push_icon.png $(PNG2ARC_DEPS)
+	$(PYTHON2) $(PNG2ARC_SPRITE) --name !push -o $@ $< 9
 
 ./build/bs-logo.bin: ./data/gfx/BITSHIFERS-logo-anaglyph.png $(PNG2ARC_DEPS)
 	$(PYTHON2) $(PNG2ARC) -o $@ -p $@.pal $< 9

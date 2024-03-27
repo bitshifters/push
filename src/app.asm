@@ -363,12 +363,11 @@ app_vsync_code:
 ; ============================================================================
 
 .include "src/fx/math-emitter.asm"
-.include "src/fx/particles.asm" ; TODO: Can be removed.
+.include "src/fx/particles.asm"
 .include "src/fx/particle-dave.asm"
 .include "src/fx/particle-grid.asm"
 .include "src/fx/bits.asm"
 .include "src/fx/the-ball.asm"
-.include "src/fx/balls.asm"
 
 ; ============================================================================
 ; Support library code modules used by the FX sequence.
@@ -379,4 +378,3 @@ app_vsync_code:
 .endif
 .include "lib/mode9-screen.asm"
 .include "lib/outline-font.asm"
-.include "lib/draw-file.asm"

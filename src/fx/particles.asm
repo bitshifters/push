@@ -3,6 +3,8 @@
 ; 2D particles only.
 ; ============================================================================
 
+.equ _PARTICLES_MINIMAL_CODE,   _SMALL_EXE
+
 ; Particle variables block:
 .equ Particle_Next,             0       ; R0 = pointer to next active/free.
 .equ Particle_XPos,             4       ; R1
@@ -27,6 +29,8 @@
 
 .equ _PARTICLES_ASSERT_SPAWN,   (_DEBUG && 0)
 .equ _PARTICLES_ADD_DRAG,       1
+
+.if !_PARTICLES_MINIMAL_CODE
 
 ; ============================================================================
 
@@ -1095,6 +1099,8 @@ particle_spawn:
 
     mov pc, lr
 
+.endif ; _PARTICLE_MINIMAL_CODE
+
 ; ============================================================================
 
 .if _DEBUG
@@ -1116,6 +1122,7 @@ particles_set_constant_force:
     str r1, particles_constant_force + 4
     mov pc, lr
 
+.if 0   ; REPLACED BY PARTICLE_DAVE...
 ; R0=0 always reset positions, otherwise just origin (morph)
 particles_transfer_to_grid:
     movs r10, r0
@@ -1145,6 +1152,7 @@ particles_transfer_to_grid:
 .2:
     str r9, particle_grid_total
     mov pc, lr
+.endif
 
 ; ============================================================================
 

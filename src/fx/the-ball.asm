@@ -14,6 +14,7 @@
 
 .equ TheBall_DefaultRadius, 16
 .equ TheBall_DefaultColour, 15
+.equ TheBall_Gravity,       5.0     ; ? 
 
 the_ball_p:
     .long the_ball_block
@@ -47,7 +48,7 @@ the_ball_inst_vel:
 .equ EnvPlane_SIZE,     24
 
 the_env_constant_force:
-    VECTOR2 0.0, -(Ball_Gravity / 50.0)
+    VECTOR2 0.0, -(TheBall_Gravity / 50.0)
 
 ; ============================================================================
 ; TODO: Visualise collision planes (at least for _DEBUG).

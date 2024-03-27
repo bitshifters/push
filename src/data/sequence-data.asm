@@ -624,9 +624,15 @@ seq_init_greetz:
 
     call_2f particles_set_constant_force 0.0, 1.0/50.0
 
-    wait_patterns 2.0
+    wait_patterns 1.75
+
+    rgb_lerp_over_secs seq_palette_lerped+15*4, 0x00ffffff, 0x00000000, SeqConfig_PatternLength_Secs*0.25
+
+    wait_patterns 0.25
 
     write_addr static_screen_p, greetz2_mode9_no_adr
+
+    rgb_lerp_over_secs seq_palette_lerped+15*4, 0x00000000, 0x00ffffff, SeqConfig_PatternLength_Secs*0.25
 
     ; Over the right.
     write_fp particle_grid_collider_pos+0, 114      ;274.0-160.0
@@ -634,21 +640,29 @@ seq_init_greetz:
 
     wait_patterns 0.45
 
+    math_kill_rgb seq_palette_lerped+15*4
+
     ; Over the left.
     write_fp particle_grid_collider_pos+0, -112.0   ;48.0-160.0
     write_fp particle_grid_collider_pos+4, 36       ;128.0-92.0
 
-    wait_patterns 0.43
+    wait_patterns 0.40
 
     ; Over the right.
     write_fp particle_grid_collider_pos+0, 114      ;274.0-160.0
     write_fp particle_grid_collider_pos+4, -40      ;128.0-168.0
 
-    wait_patterns 0.43
+    wait_patterns 0.44
 
     ; Over the left.
     write_fp particle_grid_collider_pos+0, -112.0   ;48.0-160.0
     write_fp particle_grid_collider_pos+4, 36       ;128.0-92.0
+
+    wait_patterns 0.40
+
+    ; Over the right.
+    write_fp particle_grid_collider_pos+0, 114      ;274.0-160.0
+    write_fp particle_grid_collider_pos+4, -40      ;128.0-168.0
 
 ;    call_2f particles_set_constant_force 0.0, 0.0
 ;    write_addr math_emitter_p, math_emitter_config_5
