@@ -819,5 +819,9 @@ TODO FINAL
 - Replace rectangular grid with circular one. - Radius ~13.
 - Fade credits screen up.
 - Morph kieran in.
+- Red additive palette bug only with small exe?! - DONE
+    - Palette data looks OK? Happens with SMALL_EXE define...
+    => Error in LibSqrt_MakeSqrtTable...!!! - FIXED
+- Remove serif from small fonts.
 
 FOR NEXT TIME: DON'T ALLOW DEPENDENCIES ON THINGS THAT ARE MADE AFTER FIRST SCRIPT TICK!

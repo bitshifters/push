@@ -31,6 +31,10 @@ sqrt_table_no_adr:
     ; Values are in 16.16 format.
 	.incbin "data/lib/sqrt_large.bin"
 .endif
+.if _SQRT_VERIFY
+sqrt_table_from_file_no_adr:
+	.incbin "data/lib/sqrt_large.bin"
+.endif
 
 .if LibSqrt_IncludeRsqrt
 rsqrt_table_no_adr:

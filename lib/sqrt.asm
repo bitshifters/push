@@ -7,12 +7,19 @@
 .equ LibSqrt_Step,      4
 .equ LibSqrt_Entries,   (LibSqrt_MaxValue/LibSqrt_Step)
 
+.equ _SQRT_VERIFY,      (_DEBUG && 0)
+
 ; Assumptions:
 ;  SQRT and RSQRT tables available for values [0-65535]
 ;  Number of entries is 1024. (10-bits)
 
 sqrt_table_p:
     .long sqrt_table_no_adr
+
+.if _SQRT_VERIFY
+sqrt_table_from_file_p:
+    .long sqrt_table_from_file_no_adr
+.endif
 
 ; Compute R0=sqrt (R1)
 ; Where R1 [0.0, 256.0)
@@ -49,7 +56,7 @@ sqrt_init:
 
     ; First entry hard-coded as 1.0
     mov r0, #MATHS_CONST_1
-    str r9, [r9], #4
+    str r0, [r9], #4
 
     mov r0, #LibSqrt_MinValue
 .1:
@@ -58,6 +65,10 @@ sqrt_init:
     add r0, r0, #LibSqrt_Step
     cmp r0, #LibSqrt_MaxValue
     blt .1
+
+    .if _SQRT_VERIFY
+    bl sqrt_verify
+    .endif
 
     ldr pc, [sp], #4
 
@@ -97,6 +108,36 @@ sqrt_i32_to_fx16_16:
     cmp r1, r3
     addgt r3, r3, #1    ; if( r > q ) ++q;
     mov pc, lr          ; return q;
+
+.if _SQRT_VERIFY
+sqrt_verify:
+    ldr r9, sqrt_table_p
+    ldr r10, sqrt_table_from_file_p
+
+    mov r8, #0
+.1:
+    ldr r0, [r9, r8, lsl #2]
+    ldr r1, [r10, r8, lsl #2]
+
+    cmp r0, r1
+    beq .2
+    adr r0, err_sqrtnotequal
+    swi OS_GenerateError
+    .2:
+
+    add r8, r8, #1
+    cmp r8, #LibSqrt_Entries
+    blt .1
+
+    mov pc, lr
+
+    err_sqrtnotequal: ;The error block
+    .long 18
+	.byte "SQRT table mismatch"
+	.align 4
+	.long 0
+.endif
+
 .endif
 
 .if _DEBUG
