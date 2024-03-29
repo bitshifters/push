@@ -646,7 +646,7 @@ seq_init_greetz:
     write_fp particle_grid_collider_pos+0, -112.0   ;48.0-160.0
     write_fp particle_grid_collider_pos+4, 36       ;128.0-92.0
 
-    wait_patterns 0.40
+    wait_patterns 0.37
 
     ; Over the right.
     write_fp particle_grid_collider_pos+0, 114      ;274.0-160.0
@@ -658,7 +658,7 @@ seq_init_greetz:
     write_fp particle_grid_collider_pos+0, -112.0   ;48.0-160.0
     write_fp particle_grid_collider_pos+4, 36       ;128.0-92.0
 
-    wait_patterns 0.40
+    wait_patterns 0.37
 
     ; Over the right.
     write_fp particle_grid_collider_pos+0, 114      ;274.0-160.0
@@ -827,6 +827,7 @@ seq_test_fade_up_loop:
 ; Sequence specific data.
 ; ============================================================================
 
+.if 0
 math_emitter_config_1:
     math_const 50.0/80                                                  ; emission rate=80 particles per second fixed.
     math_func  0.0,    100.0,  math_sin,  0.0,   1.0/(MATHS_2PI*60.0)   ; emitter.pos.x = 100.0 * math.sin(f/60)
@@ -846,6 +847,7 @@ math_emitter_config_2:
     math_const 512                                                      ; emitter.life
     math_func  0.0,    1.0,    math_and15, 0.0,  1.0                    ; emitter.colour = (emitter.colour + 1) & 15
     math_const 8.0                                                      ; emitter.radius = 8.0
+.endif
 
 math_emitter_config_3:  ; attached to the_ball.
     math_const 50.0/20                                                  ; emission rate=80 particles per second fixed.
@@ -867,6 +869,7 @@ math_emitter_config_4:
     math_const 14                                                       ; emitter.colour
     math_const 8.0                                                      ; emitter.radius = 8.0
 
+.if 0
 math_emitter_config_5:
     math_const 50.0/50                                                  ; emission rate=50 particles per second fixed.
     math_func  -160.0,  320.0,    math_rand,  0.0,  0.0                 ; emitter.pos.x = 160.0 * math.random()
@@ -876,6 +879,7 @@ math_emitter_config_5:
     math_const 512                                                      ; emitter.life
     math_const 14                                                       ; emitter.colour
     math_const 8.0                                                      ; emitter.radius = 8.0
+.endif
 
 math_emitter_config_6:
     math_const 50.0/120                                                 ; emission rate=120 particles per second fixed.
@@ -961,6 +965,7 @@ seq_palette_red_magenta_ramp:
     .long 0x005070d0                    ; 14 = 1110 = oranges
     .long 0x00f0f0f0                    ; 15 = 1111 = white
 
+.if 0
 seq_palette_black_on_white:
     .long 0x00f0f0f0                    ; 00 = 0000 = black
     .long 0x00000000                    ; 01 = 0001 =
@@ -978,6 +983,7 @@ seq_palette_black_on_white:
     .long 0x00c0c0c0                    ; 13 = 1101 =
     .long 0x00d0d0d0                    ; 14 = 1110 = oranges
     .long 0x00e0e0e0                    ; 15 = 1111 = white
+.endif
 
 seq_palette_blue_cyan_ramp:
     .long 0x00000000                    ; 00 = 0000 = black
@@ -1002,15 +1008,16 @@ seq_palette_all_black:
     .long 0x00000000
     .endr
 
+.if 0
 seq_palette_all_white:
     .rept 16
     .long 0x00ffffff
     .endr
+.endif
 
 seq_palette_lerped:
     .skip 15*4
     .long 0x00ffffff
-
 
 ; ============================================================================
 ; Sequence specific bss.
@@ -1037,6 +1044,7 @@ the_env_floor_plane:
 the_env_left_plane:
     .skip EnvPlane_SIZE
 
+.if 0
 the_env_left_slope:
     .skip EnvPlane_SIZE
 
@@ -1045,5 +1053,6 @@ the_env_right_plane:
 
 the_env_right_slope:
     .skip EnvPlane_SIZE
+.endif
 
 ; ============================================================================

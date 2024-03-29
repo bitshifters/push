@@ -42,7 +42,6 @@ deploy: $(FOLDER)
 $(FOLDER): build ./build/archie-verse.bin ./build/!run.txt ./build/icon.bin
 	$(RM_RF) $(FOLDER)
 	$(MKDIR_P) $(FOLDER)
-	$(COPY) .\folder\*.* "$(FOLDER)\*.*"
 	$(COPY) .\build\!run.txt "$(FOLDER)\!Run,feb"
 	$(COPY) .\build\icon.bin "$(FOLDER)\!Sprites,ff9"
 	$(COPY) .\build\archie-verse.bin "$(FOLDER)\!RunImage,ff8"
@@ -62,7 +61,6 @@ compress: shrink
 shrink: build ./build/!run.txt ./build/icon.bin ./build/loader.bin
 	$(RM_RF) $(FOLDER)
 	$(MKDIR_P) $(FOLDER)
-	$(COPY) .\folder\*.* "$(FOLDER)\*.*"
 	$(COPY) .\build\!run.txt "$(FOLDER)\!Run,feb"
 	$(COPY) .\build\icon.bin "$(FOLDER)\!Sprites,ff9"
 	$(COPY) .\build\loader.bin "$(FOLDER)\!RunImage,ff8"

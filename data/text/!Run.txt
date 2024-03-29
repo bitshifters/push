@@ -1,21 +1,2 @@
-| Setup for Mikro Reise Three Dee demo.
-|
-Set RISCOS$version 3.5
-RMEnsure UtilityModule 3.5 Set RISCOS$version 3.1
-If "<RISCOS$version>"<>"3.1" Then Error This will only run on Archimedes computers, not RiscPC or later.
-|
-Set Demo$Dir <Obey$Dir>
-|
-RMLoad <Demo$Dir>.MemAlloc
-FONTSIZE 32K
-SPRITESIZE 0K
-RMASIZE 0K
-SCREENSIZE 80K
-RMKILL MemAlloc 
-|
-|RMLOAD <Demo$Dir>.QTM149c { > null: }
-|
 wimpslot -min 1400K
-<Demo$Dir>.!RunImage
-|
-|RMKILL QTMTracker
+<Obey$Dir>.!RunImage

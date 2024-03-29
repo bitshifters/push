@@ -98,6 +98,7 @@ credits_pal_no_adr:
 ; Sprite data.
 ; ============================================================================
 
+.if 0
 ; src/particles.asm
 ; TODO: Fully masked sprites not tinted masks. Interleave data?
 additive_block_sprite:
@@ -112,6 +113,7 @@ additive_block_sprite:
 
 block_sprites_no_adr:
     .incbin "build/block-sprites.bin"
+.endif
 
 ; ============================================================================
 ; Text.
@@ -184,9 +186,9 @@ QtmEmbedded_Base:
 .p2align 2
 music_mod_no_adr:
 .if _LOG_SAMPLES
-.incbin "data/music/particles_12.002"
+.incbin "data/music/particles_15.002"
 .else
-.incbin "data/music/particles_12.mod"
+.incbin "data/music/particles_15.mod"
 .endif
 .endif
 

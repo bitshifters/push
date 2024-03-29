@@ -84,6 +84,7 @@ circle_20:
 	.byte 20,20,20,20,20,20,20,20,20,19,19,19,18,18,17,17
 	.byte 16,15,14,13,12,11,9,7,4
 
+.if LibCircles_MaxRadius > 20
 circle_21:
 	.byte 4,7,9,11,12,14,15,16,16,17,18,18,19,19,20,20
 	.byte 20,21,21,21,21,21,21,21,21,21,20,20,20,19,19,18
@@ -4740,6 +4741,7 @@ circle_255:
 	.byte 120,119,117,115,113,111,109,106,104,102,100,97,95,92,90,87
 	.byte 84,81,78,75,72,68,65,61,57,52,47,42,35,27,15
 .endif
+.endif
 
 	.p2align 2
 
@@ -4765,6 +4767,7 @@ circle_lookup:
 	.long circle_18
 	.long circle_19
 	.long circle_20
+.if LibCircles_MaxRadius > 20
 	.long circle_21
 	.long circle_22
 	.long circle_23
@@ -5001,6 +5004,7 @@ circle_lookup:
 	.long circle_253
 	.long circle_254
 	.long circle_255
+.endif
 .endif
 
 ; ============================================================================

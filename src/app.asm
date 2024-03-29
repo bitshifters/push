@@ -118,6 +118,9 @@ music_mod_p:
 	.long music_mod_no_adr		; 14
 .endif
 
+music_sample_speed:
+    .long 0
+
 ; R12=top of RAM used.
 app_init_audio:
 .if AppConfig_DynamicSampleSpeed
@@ -129,6 +132,7 @@ app_init_audio:
 .else
     mov r0, #AudioConfig_SampleSpeed_Default
 .endif
+    str r0, music_sample_speed      ; to query on real hw because I paranoid.
 
 	; Setup QTM for our needs.
 	QTMSWI QTM_SetSampleSpeed

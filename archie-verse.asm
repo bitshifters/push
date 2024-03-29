@@ -13,7 +13,7 @@
 
 .equ _DEBUG_RASTERS,            (_DEBUG && 1)
 .equ _DEBUG_SHOW,               (_DEBUG && 1)
-.equ _CHECK_FRAME_DROP,         (!_DEBUG && 1)
+.equ _CHECK_FRAME_DROP,         (!_DEBUG && 0)
 .equ _SYNC_EDITOR,              (_DEBUG && 1)   ; sync driven by external editor.
 
 .equ DebugDefault_PlayPause,    1		; play
