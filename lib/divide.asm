@@ -26,13 +26,7 @@
 ; Table is (1<<p+s) / x<<s = 1<<14 / x>>2
 
 
-.equ LibDivide_Reciprocal_t, 16           ; Table entries = 1<<t
-.equ LibDivide_Reciprocal_m, 9            ; Max value = 1<<m
-.equ LibDivide_Reciprocal_s, LibDivide_Reciprocal_t-LibDivide_Reciprocal_m    ; Table is (1<<16+s)/(x<<s)
-
-.equ LibDivide_ReciprocalTableSize, 1<<LibDivide_Reciprocal_t
-
-.if LibDivide_UseReciprocalTable
+.if LibDivide_UseRecipTable
 reciprocal_table_p:
     .long reciprocal_table_no_adr
 .endif
@@ -51,8 +45,8 @@ divide:
     cmp r1, #0
     rsbmi r1, r1, #0            ; make positive  
 
-    .if LibDivide_UseReciprocalTable
-    mov r1, r1, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (b<<s)
+    .if LibDivide_UseRecipTable
+    mov r1, r1, asr #16-LibDivide_Reciprocal_s    ; [15.7]    (b<<s)
 
     .if _DEBUG
     cmp r1,#0                   ; Test for division by zero
@@ -76,9 +70,9 @@ divide:
 ;   bic r1, r1, #0xff0000       ; [10.6]    (b<<6)
     ldr r1, [r9, r1, lsl #2]    ; [0.16]    (1<<16+s)/(b<<s) = (1<<16)/b
 
-    mov r0, r0, asr #16-LibDivide_Reciprocal_s    ; [16.6]    (a<<s)
-    mul r9, r0, r1                      ; [10.22]   (a<<s)*(1<<16)/b = (a<<16+s)/b
-    mov r9, r9, asr #LibDivide_Reciprocal_s       ; [10.16]   (a<<16)/b = (a/b)<<16
+    mov r0, r0, asr #16-LibDivide_Reciprocal_s    ; [9.7]    (a<<s)
+    mul r9, r0, r1                      ; [9.23]   (a<<s)*(1<<16)/b = (a<<16+s)/b
+    mov r9, r9, asr #LibDivide_Reciprocal_s       ; [9.16]   (a<<16)/b = (a/b)<<16
     .else
 
     ; Limited precision.
@@ -134,7 +128,7 @@ divide:
 	.align 4
 	.long 0
 
-.if LibDivide_UseReciprocalTable
+.if LibDivide_UseRecipTable
 ; Trashes: r0-r2, r8-r9, r12
 MakeReciprocal:
     ldr r12, reciprocal_table_p

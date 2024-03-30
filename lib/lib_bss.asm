@@ -4,6 +4,15 @@
 
 .p2align 6
 
+; ============================================================================
+
+.if _DEBUG
+debug_font_mode9_no_adr:
+    .skip Debug_MaxGlyphs * 4*8
+.endif
+
+; ============================================================================
+
 .if LibConfig_IncludePolygon
 polygon_span_table_no_adr:
     .skip Screen_Height * 4     ; per scanline.
@@ -11,9 +20,40 @@ polygon_span_table_no_adr:
 
 ; ============================================================================
 
-.if LibDivide_UseReciprocalTable
+.if LibDivide_UseRecipTable
 reciprocal_table_no_adr:
-	.skip LibDivide_ReciprocalTableSize*4
+	.skip LibDivide_Reciprocal_TableSize*4
+.endif
+
+; ============================================================================
+
+.if LibSqrt_MakeSqrtTable
+sqrt_table_no_adr:
+    .skip LibSqrt_Entries*4
+.endif
+
+; ============================================================================
+
+.if LibSine_MakeSinusTable
+sinus_table_no_adr:
+    .skip LibSine_TableSize*4
+.endif
+
+; ============================================================================
+
+math_var_buffer_no_adr:
+    .skip MathVar_SIZE * MathVars_MAX
+math_var_buffer_end_no_adr:
+
+; ============================================================================
+
+.if LibConfig_IncludeCircles
+r_CircleBuffer_no_adr:
+	.skip	(LibCircles_MaxCircles)*(LibCircles_DataWords+1)*4
+r_circleBufEnd_no_adr:
+
+r_CircleBufPtrs_no_adr:
+	.skip	(Screen_Height)*4
 .endif
 
 ; ============================================================================

@@ -8,6 +8,8 @@
 ; MACROS
 ; ============================================================================
 
+; NOTE: This macro only works if rDst==rBase!!!
+; TODO: Proper MLA_BY_CONST rDst, rBase, const
 .macro CALC_SCANLINE_ADDR rDst, rBase, rY
 .set val, Screen_Stride
 .if val&256
@@ -52,42 +54,41 @@
 
 lib_init:
     str lr, [sp, #-4]!
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .if LibSine_MakeSinusTable
     bl MakeSinus
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
     .endif
-    .if LibDivide_UseReciprocalTable
+    .endif
+    .if LibDivide_UseRecipTable
     bl MakeReciprocal
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
+    .endif
+    .if LibSqrt_MakeSqrtTable
+    bl sqrt_init
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
+    .endif
+    .if LibConfig_IncludeCircles
+    bl ClearCircleBuf
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .endif
     .if LibConfig_IncludeSpanGen
     bl gen_code
+    .if LibConfig_ShowInitProgress
+    swi OS_WriteI+'.'
+    .endif
     .endif
     ; Keep this last so R12 returns top of RAM.
     ldr pc, [sp], #4
-
-; ============================================================================
-
-; TODO: Proper debug library with fast plot to screen.
-; TODO: Extend Arculator to do fast debug logging to host file.
-
-.if _DEBUG
-; R0=fp value.
-debug_write_fp:
-    stmfd sp!, {r1, r2}
-	adr r1, debug_string
-	mov r2, #16
-	swi OS_ConvertHex8
-	adr r0, debug_string
-	swi OS_WriteO
-    mov r0, #32
-    swi OS_WriteC
-    ldmfd sp!, {r1, r2}
-    mov pc, lr
-
-.ifndef debug_string
-debug_string:
-    .skip 16
-.endif
-.endif
 
 ; ============================================================================
 
@@ -115,16 +116,25 @@ debug_string:
 .if LibConfig_IncludeSqrt
 .include "lib/sqrt.asm"
 .endif
+.if LibConfig_IncludeCircles
+.include "lib/circles.asm"
+.endif
 .if LibConfig_IncludeSpanGen
 .if Screen_Mode==0
 .include "lib/mode0.asm"
 .endif
-.if Screen_Mode==13
+.if Screen_Mode==13 || Screen_Mode==12
 .include "lib/mode13.asm"
 .endif
 .if Screen_Mode==9
 .include "lib/span_gen.asm"
 .endif
+.endif
+.if LibConfig_IncludeSprites
+.include "lib/sprite_utils.asm"
+.endif
+.if LibConfig_IncludeMathVar
+.include "lib/math-var.asm"
 .endif
 
 ; ============================================================================

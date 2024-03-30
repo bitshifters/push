@@ -298,3 +298,109 @@ unit_matrix_multiply_vector:
 
     mov pc, lr
 .endif
+
+; ============================================================================
+
+.if 0
+object_transform:
+    MATRIX33_IDENTITY
+
+normal_transform:           ; Rotation only.
+    MATRIX33_IDENTITY
+
+temp_matrix_1:
+    MATRIX33_IDENTITY
+
+temp_matrix_2:
+    MATRIX33_IDENTITY
+
+temp_vector_1:
+    VECTOR3_ZERO
+
+temp_vector_2:
+    VECTOR3_ZERO
+
+transform_3d_scene:
+    str lr, [sp, #-4]!
+
+    ; Create rotation matrix as object transform.
+    adr r2, temp_matrix_1
+    ldr r0, object_rot + 0
+    bl matrix_make_rotate_x     ; T1=rot_x
+
+    adr r2, object_transform
+    ldr r0, object_rot + 4
+    bl matrix_make_rotate_y     ; OT=rot_y
+
+    adr r0, temp_matrix_1
+    adr r1, object_transform
+    adr r2, temp_matrix_2
+    bl matrix_multiply          ; T2=T1.OT
+
+    adr r2, temp_matrix_1
+    ldr r0, object_rot + 8
+    bl matrix_make_rotate_z     ; T1=rot_z
+
+    adr r0, temp_matrix_2
+    adr r1, temp_matrix_1
+    adr r2, normal_transform    ; NT=T2.T1  <== rotation only.
+    bl matrix_multiply
+
+    ldr r0, object_scale
+    adr r2, temp_matrix_2
+    bl matrix_make_scale        ; T2=scale
+
+    adr r0, temp_matrix_2
+    adr r1, normal_transform
+    adr r2, object_transform    ; OT=T2.NT
+    bl matrix_multiply
+
+    ; Subtract camera position from object position.
+    adr r12, camera_pos
+    ldmia r12, {r3-r5}
+
+    adr r11, object_pos
+    ldmia r11, {r6-r8}
+
+    sub r6, r6, r3
+    sub r7, r7, r4
+    sub r8, r8, r5
+
+    ; Camera relative object position.
+    adr r11, object_pos_camera_relative
+    stmia r11, {r6-r8}
+
+    ; Transform vertices in scene.
+    adr r0, object_transform
+    adr r1, object_verts
+    adr r2, transformed_verts
+    mov r10, #object_num_verts
+    .1:
+    ; R0=ptr to matrix, R1=vector A, R2=vector B
+    bl matrix_multiply_vector
+
+    ldmia r2, {r3-r5}
+    ; Add camera relative object position to transform vertex.
+    ldmia r11, {r6-r8}
+    add r3, r3, r6
+    add r4, r4, r7
+    add r5, r5, r8
+    stmia r2!, {r3-r5}
+    
+    add r1, r1, #VECTOR3_SIZE
+    subs r10, r10, #1
+    bne .1
+
+    ; Transform normals.
+    adr r0, normal_transform
+    adr r1, object_face_normals
+    adr r2, transformed_normals
+    mov r10, #object_num_faces
+    .2:
+    ; R0=ptr to matrix, R1=vector A, R2=vector B
+    bl matrix_multiply_vector
+    ; TODO: Array version of this function.
+    add r1, r1, #VECTOR3_SIZE
+    add r2, r2, #VECTOR3_SIZE
+    subs r10, r10, #1
+    bne .2

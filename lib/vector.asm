@@ -4,9 +4,6 @@
 
 .equ LibVector_IncludeAddSub, 0
 
-; TODO: Add batch vector direct rotate code from arc-django-2. 
-; TODO: make_vector?
-
 .if LibVector_IncludeAddSub
 ; Vector add.
 ; Parameters:
@@ -132,7 +129,7 @@ vector_lerp:
     mov pc, lr
 
 
-.if LibConfig_IncludeSqrt           ; these functions rely on SQRT.
+.if LibConfig_IncludeSqrt && 0           ; these functions rely on SQRT.
 ; Length of vector.
 ; Parameters:
 ;  R1=ptr to vector A.
@@ -180,20 +177,6 @@ vector_recip_length:
     mov r1, r0
     bl rsqrt                ; trashes R9
     ldr pc, [sp], #4
-.endif
-
-.if _DEBUG
-; R0=vector ptr.
-debug_write_vector:
-    stmfd sp!, {r0, r3, lr}
-    mov r3, r0
-    ldr r0, [r3, #0]
-    bl debug_write_fp
-    ldr r0, [r3, #4]
-    bl debug_write_fp
-    ldr r0, [r3, #8]
-    bl debug_write_fp
-    ldmfd sp!, {r0, r3, pc}
 .endif
 
 .if 0               ; Feels like too early optimisation.

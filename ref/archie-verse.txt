@@ -44,13 +44,14 @@ TODO:
 	6. 3D effect 2
 	7. Credits
 	8. Ending
-- Need to be able to set tick calls and order.
+- Need to be able to set tick calls and order. - DONE
     - E.g. bg fx to logo, different logo motion.
-- Need to be able to set draw calls and order.
+- Need to be able to set draw calls and order. - DONE
     - Slots or list? => Layers up to 8 FX - Django uses 5 (columns, logo, cube, scroller, menu)
     - Script sets callback in layer.
     - Then transitions can be a top layer and/or interact with other layers.
-    - Need to be able to send events to fx and/or set values for vars. => Rocket?
+
+- Need to be able to send events to fx and/or set values for vars. => Rocket?
       Alternative is a bytecode script with waits etc.
       Previous learnings:
         - Using WAITs is pain.
@@ -93,8 +94,15 @@ TODO:
 
 - Could even just have a key press to switch between the scenes at this point?
     - Bookmarks? Key to move to next? tbd.
+        => Chequered Past skip to next pattern was invaluable.
 	- Integrate Rocket later => need to decide which version/finish integration.
 	- Perhaps this depends if Rhino is onboard with doing the editing?
 - Need placeholder gfx.
 	- RISCOS font plot?
 - Improve build using Tom's Python scripts and makefile-foo.
+- Add debug keys: - DONE
+    - Play/pause
+    - Step frame
+    - Step pattern
+    - Restart
+- Move set_layer_fns to Lua script when needed (as tracks)

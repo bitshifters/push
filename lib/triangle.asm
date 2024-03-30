@@ -1,7 +1,11 @@
 ; ============================================================================
 ; Triangle routines.
-; Not using a span buffer.
+; Not using a span buffer. Uses bottom flat, top flat algorithm.
 ; ============================================================================
+
+.equ LibTriangle_IncludeQuadPlot, 1
+.equ LibTriangle_IncludeBatchPlot, 0
+.equ LibTriangle_IncludeNicksCode, 0
 
 triangle_colour:
     .long 0
@@ -9,8 +13,12 @@ triangle_colour:
 triangle_screen_addr:
     .long 0
 
+triangle_reciprocal_table_p:
+    .long reciprocal_table_no_adr
+
 ; ============================================================================
 
+.if LibTriangle_IncludeBatchPlot
 ; Plot a batch of triangles.
 ; Parameters:
 ;  R0=number of tris
@@ -34,6 +42,7 @@ triangle_plot_batch:
     bne .1
 
     ldr pc, [sp], #4
+.endif
 
 ; Plot a triangle to the screen using flat bottom/flat top approach.
 ; Parameters:
@@ -42,7 +51,6 @@ triangle_plot_batch:
 ;  R2=ptr to array containining v1, v2, v3
 ; Trashes: everything :)
 triangle_plot:
-    str lr, [sp, #-4]!
 
     ; Turn colour index into colour word.
     orr r0, r0, r0, lsl #4
@@ -54,10 +62,13 @@ triangle_plot:
     str r1, triangle_screen_addr
 
     ; Read unsorted 2D vertices
+    ldmia r2, {r3-r8}
     ; (r3,r4) = (v1x,v1y)
     ; (r5,r6) = (v2x,v2y)
     ; (r7,r8) = (v3x,v3y)
-    ldmia r2, {r3-r8}
+
+triangle_plot_ex:
+    str lr, [sp, #-4]!
 
     ; Sort by Y.
     cmp r4, r6              ; v1y > v2y
@@ -100,12 +111,12 @@ triangle_plot_bottom_flat:
     sub r12, r7, r3         ; v3x - v1x
 
     ; Calculate slope (v2x-v1x)/(v2y-v1y):
-    adr r14, triangle_recip_table
-    ldr r0, [r14, r9, lsl #2]   ; 1/(v2y-v1y)
+    ldr r14, triangle_reciprocal_table_p
+    ldr r0, [r14, r9, lsl #2+LibDivide_Reciprocal_s]   ; 1/(v2y-v1y)
     mul r7, r0, r11            ; slope_xs=(v2x-v1x)/(v2y-v1y)   [16.16]
 
     ; Calculate slope (v3x-v1x)/(v3y-v1y):
-    ldr r1, [r14, r10, lsl #2]  ; 1/(v3y-v1y)
+    ldr r1, [r14, r10, lsl #2+LibDivide_Reciprocal_s]  ; 1/(v3y-v1y)
     mul r8, r1, r12            ; slope_xe=(v3x-v1x)/(v3y-v1y)   [16.16]
 
     ; Determine xs, xe.
@@ -232,12 +243,12 @@ triangle_plot_top_flat:
     mov r1, r8
 
     ; Calculate slope (v3x-v2x)/(v3y-v2y):
-    adr r14, triangle_recip_table
-    ldr r7, [r14, r9, lsl #2]   ; 1/(v3y-v2y)
+    ldr r14, triangle_reciprocal_table_p
+    ldr r7, [r14, r9, lsl #2+LibDivide_Reciprocal_s]   ; 1/(v3y-v2y)
     mul r7, r11, r7             ; slope_xs=(v3x-v2x)/(v3y-v2y)   [16.16]
 
     ; Calculate slope (v3x-v1x)/(v3y-v1y):
-    ldr r8, [r14, r10, lsl #2]  ; 1/(v3y-v1y)
+    ldr r8, [r14, r10, lsl #2+LibDivide_Reciprocal_s]  ; 1/(v3y-v1y)
     mul r8, r12, r8             ; slope_xe=(v3x-v1x)/(v3y-v1y)   [16.16]
 
     ; Ensure that slope1 < slope2 so that xs < xe.
@@ -348,6 +359,8 @@ triangle_plot_top_flat:
 triangle_sorted_verts:
     .skip 3*4*2
 
+.if LibTriangle_IncludeQuadPlot
+.if LibTriangle_IncludeBatchPlot
 ; Plot a batch of quads.
 ; Parameters:
 ;  R0=number of quads
@@ -371,7 +384,74 @@ triangle_plot_quad_batch:
     bne .1
 
     ldr pc, [sp], #4
+.endif
 
+; Plot a quad [with same call signature as polygon module.]
+; Parameters:
+;  R12=screen addr
+;  R2=ptr to projected vertex array (x,y) in screen coords [16.0]
+;  R3=4x vertex indices for quad
+;  R4=colour index
+triangle_plot_quad_indexed:
+    str lr, [sp, #-4]!
+
+    ; Turn colour index into colour word.
+    orr r4, r4, r4, lsl #4
+    orr r4, r4, r4, lsl #8
+    orr r4, r4, r4, lsl #16
+    str r4, triangle_colour
+
+    ; Stash screen address for now.
+    str r12, triangle_screen_addr
+
+    ; v1, v2, v3
+    mov r1, r3
+    and r0, r1, #0x0ff           ; index 1
+    add r9, r2, r0, lsl #3      ; projected_verts + index*8
+    ldmia r9, {r3, r4}          ; v1x, v1y
+
+    mov r0, r1, lsr #8
+    and r0, r0, #0x0ff           ; index 2
+    add r9, r2, r0, lsl #3      ; projected_verts + index*8
+    ldmia r9, {r5, r6}          ; v2x, v2y
+
+    mov r0, r1, lsr #16
+    and r0, r0, #0x0ff           ; index 3
+    add r9, r2, r0, lsl #3      ; projected_verts + index*8
+    ldmia r9, {r7, r8}          ; v3x, v3y
+
+    stmfd sp!, {r1, r2}
+
+    ; (r3,r4) = (v1x,v1y)
+    ; (r5,r6) = (v2x,v2y)
+    ; (r7,r8) = (v3x,v3y)
+    bl triangle_plot_ex
+
+    ldmfd sp!, {r1, r2}
+
+    ; v3, v4, v0
+    mov r0, r1, lsr #16
+    and r0, r0, #0x0ff           ; index 3
+    add r9, r2, r0, lsl #3      ; projected_verts + index*8
+    ldmia r9, {r3, r4}          ; v1x, v1y
+
+    mov r0, r1, lsr #24
+    and r0, r0, #0x0ff           ; index 4
+    add r9, r2, r0, lsl #3      ; projected_verts + index*8
+    ldmia r9, {r5, r6}          ; v2x, v2y
+
+    and r0, r1, #0x0ff           ; index 0
+    add r9, r2, r0, lsl #3      ; projected_verts + index*8
+    ldmia r9, {r7, r8}          ; v3x, v3y
+
+    ; (r3,r4) = (v1x,v1y)
+    ; (r5,r6) = (v2x,v2y)
+    ; (r7,r8) = (v3x,v3y)
+    bl triangle_plot_ex
+
+    ldr pc, [sp], #4
+
+.if 0
 ; Plot a quad to the screen using two triangles.
 ;  R0=colour index
 ;  R1=screen addr
@@ -405,7 +485,11 @@ triangle_plot_quad:
     .long 0
 .1:
     .skip 3*4*2
+.endif
+.endif
 
+.if LibTriangle_IncludeNicksCode
+.if LibTriangle_IncludeBatchPlot
 ; Plot a batch of tris.
 ; Parameters:
 ; R0 = number of tris
@@ -433,6 +517,8 @@ nick_plot_quad_batch:
     bne .1
 
     ldr pc, [sp], #4
+.endif
+
 ; Plot a quad to the screen using two triangles.
 ;  R0=ptr to array containining v1, v2, v3, v4
 ;  R1=colour word
@@ -467,6 +553,7 @@ triangle_plot_quad_nick:
 .2:
     .skip 3*4*2
 
+.if LibTriangle_IncludeBatchPlot
 ; Plot a batch of tris.
 ; Parameters:
 ; R0 = number of tris
@@ -494,6 +581,7 @@ nick_plot_tri_batch:
     bne .1
 
     ldr pc, [sp], #4
+.endif
 
 ; ============================================================================
 ; Nik's MODE 13 triangle plotting routine. :)
@@ -702,9 +790,7 @@ Scanline_Y2_End:
         LDMFD sp!,{r0-r1,r4-r12,r14} ; Restore registers before returning
         MOV pc,lr
 
-; ============================================================================
-
-; TODO: Move to .data segment.
+; TODO: Move to .data segment or use existing reciprocal table.
 triangle_recip_table:
     .long 0
     .set num, 1
@@ -712,5 +798,6 @@ triangle_recip_table:
     .long PRECISION_MULTIPLIER / num
     .set num, num+1
     .endr
+.endif
 
 ; ============================================================================

@@ -1,25 +1,2 @@
-| Setup for Chipo Django 1 Musicdisk.
-|
-Set RISCOS$version 3.5
-RMEnsure UtilityModule 3.5 Set RISCOS$version 3.1
-If "<RISCOS$version>"<>"3.1" Then Error This will only run on Archimedes computers, not RiscPC or later.
-|
-Set Demo$Dir <Obey$Dir>
-|
-RMLoad <Demo$Dir>.MemAlloc
-FONTSIZE 0K
-SPRITESIZE 0K
-RMASIZE 0K
-SCREENSIZE 80K
-RMKILL MemAlloc 
-|
-RMLOAD <Demo$Dir>.QTM149c { > null: }
-RMLOAD <Demo$Dir>.MMode96
-RMLOAD <Demo$Dir>.MMode97
-|
-wimpslot -min 1200K
-<Demo$Dir>.!RunImage
-|
-RMKILL QTMTracker
-RMKILL Mode96
-RMKILL Mode97
+wimpslot -min 1400K
+<Obey$Dir>.!RunImage

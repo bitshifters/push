@@ -1,0 +1,838 @@
+Particle demo
+~~~
+
+1) Strip back Mikroreise to simpler framework:
+    - Remove unused FX, code, data etc. - DONE
+    - Tidy up code and refactor. - DONE
+
+2) Add Luapod back to control particle & emitter vars.
+    - Register var with Lua/Rocket track. - DONE
+    - Rethink emitter context: - IN PROGRESS
+        - Vec3 position
+        - Vec3 direction (or use Vec2 pitch/yaw?)
+        - Colour - MAKE THIS FOLLOW POS?
+        - Size - use circle plot! <= MODE 9 not MODE 13 => DONE
+    - 2D particles only?
+    - Register the emitter and drive from Lua. - DONE
+
+3) Rendering investigations.
+    - Plot as preshifted 8x8 sprites => 320 tinted.
+    - Don't need to tint at run-time, just pre-tint sprites. => needs mask tho.
+    - Have a sprite (sheet) index instead of tint value etc. - DONE-ISH
+    - Animation frames! - DONE-ISH
+    - Try additive plotting of single colour sprites... - DONE
+    - Plotting with Z perspective.
+
+4) Improvements to particle & emitter system
+    - Emitter iteration function?
+        - Do we need to emit more than one particle per frame? - SUPPORTED
+        - Called after each particle is spawned? - DONE
+    
+    - Particle update function? => WAIT FOR RHINO CONCEPTS IN BLENDER?
+        - Called for each particle tick to update size/colour etc.?
+        - Should be fixed per emitter, otherwise too expensive.
+        - Most likely will have to be baked into code.
+        - Additional forces (wind etc.?)
+
+5) Particle collision :)
+    - Use circle plotting for smaller number of larger objects. - DONE
+    - Sort by Y value, determine min/max Y values. - DONE
+    - Resolve collisions in a double loop; for each particle: - DONE
+        - Find all collision candidates with min/max y.
+        - Calculate distance between particles and test radius.
+        - Calculate collision axis.
+        - Push particles apart with a damping factor.
+        - Calculate collision forces with a damping factor.
+
+6) Make a demo!
+    - Prototype FX until Christmas or so.
+    - Pick a theme for the demo (perhaps all particles and save 3D?)
+    - Aim for 64K demo at Revision? If not, NOVA.
+        - Good compression on the exe ~8K for all particle prototypes so far.
+        - QTM RModule comes down to <12K as a last resort! - DONE
+        - Chiptune MOD from 32K down to ~6K.
+    - Get Steve to cut down QTM (strip out SWIs etc.) - IN PROGRESS!
+
+
+MISSING framework features:
+~~~
+- Add arbitrary tick/task functions (with self-remove?) e.g. screen fades. - DONE.
+- Background task functions that are preempted by rendering. e.g. decompress. => WHEN NEEDED.
+- Sort out ye olde palette code.  => WHEN NEEDED.
+    - Direct VIDC write fns for palette changes.
+    - Palette pending to sync palette changes on vsync.
+- Fast debug print to screen. - DONE
+- Steve's suggestion of reprogramming the pointer sprite for debug?!
+- Debug lines? (Will be slow but useful.)
+    - List of 2D lines to plot.
+    - Helper fn. to plot debug lines in 3D.
+- URGENT ==> Remove dependency on Lua for runtime. <==
+- Deal with frame count vs vsync count discrepancy.
+    - What do we want to script in? Frames (shown) or seconds?
+    - If timed exactly to music then needs to be in vsyncs/seconds.
+    - Move to fixed point seconds anyway as music patterns are not whole vsyncs?
+        Can't actually represent 1/50 in [0.16] = 1310.72 -- Doh!
+        But would only lose 0.04s across 3 minutes so probably OK...
+        If we cared about losing a frame or two across the demo then
+        just correct the absolute time every 4000 frames or such, just
+        before the error > 1/50.
+
+
+TODO Particles ==> Pending concept?
+~~~
+- Lua export to tables or whatever runtime solution. - FOR NOW (MATH EMITTER)
+- Sprite sheets for animated particles. - STARTED
+- Plot particles in 3D. ==> stick with 2D for now.
+- Select sprite from sheet when plotting in 3D for depth.
+- Specific particle FX if Dave hasn't given us some: (Use Processing?)
+    - Smoke ==> no gravity, low +ve y vel, random x vel.
+    - Vortex ==> tangential accel.
+    - Repulsion ==> gravitational fields are f(r^2) IIRC. - DONE
+        if len < radius then f=M / |d|^2
+        YES: F = G * m1 * m2 / |p2-p1|^2
+             But constrain the distance to [min,max] value first.
+        Because of fixed point arthimetic, large numbers (squares) don't play nice.
+        Will need to think about how to handle the precision here.
+        This is where I could do with prototyping in C...
+    - Circular collider:
+         d  = particle_pos - object_centre
+        |d| = sqrt(dx*dx + dy*dy)
+         D  = d / |d|                normalised direction vector.
+        if len > radius then f=0
+    - TODO: Reduce duplicated code.
+    - Hook's Spring Law:
+        fa = - [ks.(dist-r) + kd.(va-vb).norm_dir].norm_dir
+      For two particles with velocity va, vb, position pa, pb dir=pa-pb, dist=|dir|, norm_dir = dir/dist
+      ks = spring constant, kd = spring damping
+      r = rest length.
+      Don't need this for returning a particle to it's origin, just f=-k.dist
+
+- Some math_emitter functions might want to be f(t) not f(i)?
+    E.g. perhaps the position stays the same but the direction & colour
+         are updated for multiple particles per tick.
+
+
+TODO Balls ==> Pending concept?
+~~~
+- Add buoyancy?
+    - Just increasing drag plus an upwards force related to density.
+        F = p V g
+        Where p = density of fluid (kg/m^3) (water=1000kg/m^3=1g/cm^3)
+              V = [submerged] volume of the object (sphere = 4/3 pi r^3)
+              g = acceleration due to gravity
+- Add lifetime to balls then pop?
+    - Send pop force to nearby / touching balls.
+    - Produce particles.
+    - Make smaller balls?
+- Plot as sprites or fixed circle draw fns.
+- Plot as ellipses (separate radii for X&Y) and animate wobble?
+
+
+TODO 3D ==> Another demo for another day.
+~~~
+- Python script to convert OBJs to runtime binary format.
+- Renderqueue for drawing more complex 3D objects with sorted faces.
+- Add multiple lights to the scene.
+    - Time for MODE 13?!?!
+    - Reprogram 16 colour palette if <16 faces?
+- Render multiple objects in the scene.
+- Screen clipping.
+- Object outline => copying Sarah's idea, so not yet!
+    - All faces have an edge list.
+    - Count how many times each edge is used when plotting faces.
+    - For any edge that has a count of 1, draw this edge as a black line.
+- More interesting platonic shapes for reference and perf testing.
+    - I think these were on Zarchos's A3000?!?!
+- Morphing.
+
+
+- Simple soft-body system?
+    N (<10) particles that are interconnected and apply force to each other?
+    As per https://paulbourke.net/miscellaneous/particle/ and particlelib.c
+    Perhaps better as a 3D object (with glenz rendering?)
+- Or do this in 2D only and render as...?
+
+
+TODO Font
+~~~
+- Investigate RISCOS font library.
+    - Three fonts always available? - YEP
+    - Wrapper to plot words and copy out as sprites. - DONE
+    - Use VDU type codes for position & size etc.?
+- Implement a minimal !Draw file renderer? - DONE
+    - See RISCOS PRMs pp.4-457 for file format specification.
+    - Just need to implement FontTable and TextObject objects.
+    - The rest can be skipped over.
+    - Main complexity will be converting coordinates.
+    - Could easily be reused for size constrained intro, greets, credits etc.
+    - Could be extended for Path Objects and Transformed Text Objects etc.
+
+
+Timing on ARM2.
+~~~
+- Tinted circles (radius 2-14 pixels) ~= 50
+- Tinted 8x8 sprites (radius ~3.5) ~= 350
+- Tinted pixels (radius 0) ~= 600
+- Additive 8x8 sprites (radius ~3.5) ~= 170
+- Full ball collision (radius 4-24) ~= 20
+- Spring grid as pixels ~= 256
+
+
+LUA vs runtime
+~~~
+Examples:
+    emitter.pos.x = 100.0 * math.sin(fram / 60)
+    emitter.pos.y = 128.0 + 60.0 * math.cos(f/80)
+    emitter.colour = (emitter.colour + 1) & 15
+    emitter.radius = 8.0 + 6 * math.sin(f/10)
+    emitter.dir.x = 2.0 * math.sin(f/100)
+    emitter.dir.y = 1.0 + 5.0 * math.random() --0.0 * math.cos(f/100)
+
+Table?
+    -- f/60 cycles at 60*2*PI~=377 frames.
+    -- f/80 cycles at 80*2*PI~=502 frames.
+    -- f/10 cycles at 10*2*PI~=63 frames.
+    -- f/100 cycles at 100*2*PI~=628 frames.
+    -- What precision do we need for each track? (Easier if full word.)
+    -- We have a large, high precision SINUS table in RAM.
+    -- Could calculate tracks using a fairly standard formula here.
+    -- v = a + b * f(c + d * i)
+    -- Where a, b, c are constants, f = sin, cos, rand, etc.
+    -- And i=frame or i=vsync or i+=1 per emission.
+    -- colour = i & 15
+    -- Kinda want to write it in some Rose like code and have it JIT'd!?!
+    -- Depends how all-in we want to go with sophisticated particle systems.
+
+To consider:
+ This all kind of begs for some sort of simple (Rose-like?) scripting
+ language that can perform a set of maths operations on structures in an optimal way.
+ Ideally this would resolve to a bytecode (for size) and then be JIT'd
+ to machine code at init (for speed).
+ Define a struct, operate on elements in a struct that are either ints
+ or fixed_point, call a limited set of functions with various params,
+ define your own functions that take parameters etc.
+==>  Is this just C?!?!?
+
+
+https://archi.medes.live/#preset=a3000&disc=https://bitshifters.github.io/content/wip/verse-particles,ddc&autoboot=desktop%20filer_run%20hostfs::hostfs.$.!Verse&soundfilter=2
+https://archi.medes.live/#preset=a3000&disc=https://bitshifters.github.io/content/wip/verse-balls,ddc&autoboot=desktop%20filer_run%20hostfs::hostfs.$.!Verse&soundfilter=2
+
+
+2024
+~~~
+
+Dave's thought:
+"So the ideas I have for particles mostly revolve around them having a relationship to some other key object (the character in a story, I suppose)"
+
+- Perhaps make the ball our key character that connects everything together?
+- This stops it being a random set of effects strung together.
+- Instead the ball is always on screen and the demo is its journey.
+    - Ball is (almost) always the same colour and size?
+    - Other balls always have a different colour.
+- In an ideal world the ball would have some sort of 'character' imbued from it's motion.
+  (Think 'Thomas Was Alone'...) Although this is very hard to do well!
+- Scene transitions can be triggered by the ball.
+    - Exit one side <scene changes> enter same side or a different one.
+
+Potential sequence w/ ball as character.
+
+1. Progress bar can be an expanding circle that fills the screen.
+   When precalc is complete it pops back to its default size to begin.
+
+2. Introduce our character, the ball.
+    - What's the setting? Empty screen or is there a floor/walls etc.?
+    - Ball bounces (ideally collisions are sync'd to beats)
+    - Throw ball at wall(s).
+    - Ball rolls off screen.
+
+3. Ball as the emitter (having fun)
+    - Ball moves in nice lissajous patterns emitting fun particles.
+    - Ball spins in a circle to create a vortex.
+    - Etc.
+    - Q. Does the ball pick up the emitter cf. the fire?
+    - Q. What's the background?
+
+4. Ball on fire (!)
+    - Enter a screen with a small fire effect.
+    - Ball rolls over the effect and becomes the emitter.
+    - Ball moves in more erratic motions with fire/smoke effect.
+
+4. Rain
+    - Enter a screen with rain particles falling from above.
+    - Rain particles collide with the ball and put the fire out.
+    - Ball moves around the rain leaving nice gap underneath.
+
+5. Jar
+    - Ball falls into a jar.
+    - Other balls fall in (but they're a different colour).
+    - Balls of the same size that collide do the pop thing.
+    - Eventually the bottom falls out of the jar everything leaves.
+
+6. Greets
+    - Just text names with the balls falling down on them from the jar above?
+    - Q. How are collisions done?
+
+7. Credits
+    - Name assembles as spring constrained particles.
+    - Ball appears (falling from above?) and repulses them.
+    - Ball moves around to mess up the name
+    -  and the particles reassemble with a new name each time.
+
+8. Group name / logo?
+    - Static Torment logo with ball bouncing in place of the 'o'?
+    - Static Bitshifters logo will ball bouncing on the i?
+    - Q. is this at the end or could be at the beginning?
+
+9. End
+    - Ball comes to a stop.
+    - Ball expands then contracts to a point.
+
+
+Global:
+    - Need a nice colour scheme
+        - Bright and fun or dark & moody? :D
+    - Show a particle counter in the bottom right throughout?
+    - Any text intermissions to explain or let the visuals speak?
+    - Assume no 3D effects in this one, i.e. no vectorballs?
+
+
+Ball
+~~~
+- Single instance (?) special particle (until we need the multi-ball collision).
+- Position, velocity, accumulate force.
+- Use script to set up the world (collisions etc.)
+    - Add plane, add line?
+- Use script to move the ball
+    - Set position (kinematic)
+    - Set velocity
+    - Set constant force (gravity or wind etc.)
+    - Send impulse force
+    - Coefficient of restitution?
+- Q? Would this be better / quicker to script in Lua?
+
+Environment
+~~~
+- How complex should the environment for the ball be?
+    - Let's start with infinite planes...
+- How configurable?
+    - 
+- How accurate should the collision resolution be?
+- How to render the environment?
+- Do particles interact with the environment?
+
+Circle/plane collision.
+~~~
+Plane defined as a point p and normal n.
+Calc distance from circle centre c, radius r to plane
+
+d = (c-p).n or c.n - pd
+Where pd = |p.n|
+
+TODO: Need helper to create a plane from a point and angle.
+      Create planes from sequence script.
+
+if d >= r then no collision.
+if d < r and d > -r then collision with plane boundary.
+if d < 0 then centre is inside the plane.
+
+mv' = mvt - mvn = (1-f).mvt - e.mvn
+
+where vt=velocity tangential to the wall=v-vn, vn=velocity component normal to the wall=(v.n)n
+and f=friction parameter [0,1] and e=elasticity [0,1]
+
+Ideally should find the first collision in time and resolve in turn.
+Here I think resolving in turn or one per frame is probably OK..?
+
+v'= vt-vn where vt=v-vn and vn=v.n
+v'= (v-vn)-vn = v-2vn
+
+
+TODO
+~~~
+- Move all configuration to sequence script. - DONE
+- Emitter setup => adding / removing emitters.
+- Environment setup
+    - Adding / removing planes - DONE
+    - Constant force (gravity, wind) - DONE
+    - Seperate forces for The Ball and Particles (e.g. ball bounces but fire rises) - DONE
+- Suport multiple emitters?
+    - All emitters add to the same particle system.
+      Can't mix particle rendering types at the moment.
+    - Would have to link particle system to emitter?
+- Control over The Ball
+    - Send impulse force - DONE
+    - Set velocity - DONE
+    - Support multiple balls?
+        - If so, support ball collisions?
+
+- Particle collisions against The Environment? (Expensive)
+- Reinstate hot reload of sequence script for faster iteration.
+- Remember Lua live link for particle system iteration!
+
+- System to attach math functions to any variable? - DONE
+    - E.g. could set this up to make the ball colour or radius change over time.
+    - Could this be used for colour fades etc. as well?
+    - Move the ball in a pattern. Interesting...
+    - Use this to attach the emitter to the ball as well.
+        emitter.x = get(ball.x) etc.
+    - Order of evaluation will matter here... should really just use C!!!
+
+math_var
+~~~
+- next pointer.
+- address of var to write
+- local iteration count
+- math_func v=a + b * f(c + d*i)
+- function can be RAM[addr]
+- Hard to make equations with multiple variables.
+    e.g. x=radius*sin(i)
+    where radius=f(i)
+- Options:
+    1. Change math_vars to require func block to be supplied, then other funcs can point into other blocks.
+        - Worried this might become a bit opaque.
+        - Would have to duplicate the dependent vars.
+    2. Find some way of specifying whether a,b,c,d are FP values or addresses.
+        - Can't think of an easy way to do this. No bits free!
+    3. Make a math_func2 where v=a + b*f1(c1+d1*i)*f2(c2+d2*i)
+        Or v=f1(i)+f2(i)*f3(i) polynomial...
+    4. Hacky version, multiple evaluation functions that interpret the params differently. - DONE
+        eval2: v = a + RAM[b] * f(c + d * i)
+        This allows dependent variables more explicitly.
+
+
+Dave's storyboards!
+~~~
+Particle grid is 24x17 = 408 particles.
+Mine is currently 16x16 = 256 particles.
+Mine are super springy! His are much calmer and more damped.
+Mine the gravity field affects all paticles on the screen, Dave's are localised to about 2x ball radius.
+Mine have a much larger 'blast radius'.
+==> could reduce CPU overhead by doing bounding-box check against particles before
+    doing the gravity calculation.
+
+Q. What screen resolution do we want to use? - DEFAULT FOR NOW
+    5:4 (320x256) 4:3 (320x240) 16:9 (320x180) or Amiga overscan (320x288)
+
+Q. What particle equations are being used?
+    Get hold of the Blender scene. - DONE
+
+Q. What's the coordinate system?
+    If everything is going to be based around the centre of the screen then
+    having (0,0) in the centre will be a lot easier.
+
+Blender node graph aka the 'Dave equation' :)
+~~~
+dot_pos
+object_pos
+
+delta_vec = object_pos - dot_pos
+dist = |delta_vec|
+clamp_dist = clamp(dist, 0.0, 0.45, -1.21, 0.0) ; 0.45 is the radius, -1.21 is the push factor.
+offset_vec = delta_vec * clamp_dist * 0.610     ; the 0.610 doesn't seem to have an effect in Blender?
+dot_desired_pos = dot_pos + offset_vec
+new_dot_pos = dot_orig_pos * (1.0-factor) + dot_desired_pos * factor
+
+n = o * (1-f) + d * f
+  = o - o * f + d * f
+  = o + f * (d - o)
+
+
+Where factor = 0.95 to gently return to origin (move 5% back to origin per frame).
+factor = 1.0 ==> points stay where they are left.
+factor = 0.0 ==> points stay at orig_pos.
+
+Ideas to prototype
+~~~
+- Multiple balls in the particle grid.
+    - Snooker effect - stationary ball is struck by a ball arriving from offscreen.
+    - Model some energy transfer / friction?
+    - How to identify which ball to control in script?
+
+- Particle grid rendered as sprites? - DONE
+    - How many is feasible? ~250
+    - Or as handcoded 2x2 fat pixels ~340
+    - As single pixels this is ~430
+
+- Particle grid rotation? - DONE
+    - This is likely expensive? - MINSKY ROTATION FTW!
+
+- Return to free particles! - DAVE SEEMS LESS FUSSED, MAYBE KEEP FOR NOVA?
+    - Link circle collider to math_vars as per initial parts.
+    - Fire effect?
+    - Possible to use plane colliders with free particles?!
+
+- Particles in grid become free (fall under gravity).
+    - Drop, explode, etc.
+    - THINK SLOOOOOOW! (What would Dave do? ;)
+
+- Use the Dave equation for ball as collider with free particles.
+    - E.g. Fire / smoke effect, ball goes through them.
+    - Dynamics equation becomes desired pos.
+
+- Reconcile multiple balls w/ script control.
+
+
+Direction from Dave:
+~~~
+- Changing colour based on distance from orig point, close to the orb. - DONE
+    - Try green to white. Ramp. - DONE
+    - Can we do this without yet another sqrt? - NO :)
+    - Another option as 4x4 sprite for a glow. (Or 3x3 and hand code?)
+
+- If two balls they could affect different particle systems.
+    - Different colours for the balls / particles.
+    - Wouldn't necessarily have to collide.
+    - What happens to the colours when they overlap? Hmmm.
+
+- Not grid based. <== NEXT
+    - Spiral. - DONE
+    - Grid lines (like Geometry Wars.) - DONE
+    - Concentric circles.
+    - Concentric squares.
+    - Cylindrical view - draw horizontal line for each y=sin(a)
+    - Word outlines - use OBJs from Mikroreise? => Dave will make them!
+        - TESTED!
+        - These are large 520 verts x 8 bytes = 4160 bytes
+          and don't seem to compress super-well with Shrinkler.
+          Did Dave use a rand function to fill the shapes? YES!
+        - Perhaps use RISCOS outline font and either fill the shape
+          with random points (rejection sample) or scan across each
+          scanline and find the start & end points of lines.
+        - Create an outline in image space by sampling pixels and marking
+          where they change, biasing to non-zero pixels.
+        - Need to reduce the outline horizontal and vertical runs.
+          Try: where a run is >1 keep every Nth pixel. - DONE
+          Looks 'OK' but a bit uniform and quite faffy.
+    - Word with random filled points - DONE
+        - Looks better? But not that many points available ~520.
+          
+    - What if all the particles formed a solid circle?
+        - At ~360 max particles, can have a 18*18 box, which is 36*36 pixels.
+        - This is larger than the The Orb currently...
+        - This doesn't work very well with Minsky rotation.
+        - Turns out it's not so interesting... oh well!
+          (Doesn't 'explode' just gets 'stretched' like elastic.)
+
+- Particle to move of their own accord.
+    - Use small angle rotation formula for speed? - DONE
+    - Particles move slowly in a constant direction.
+    - Move apart from centre by adding a small fraction of X,Y. - DONE
+    - Possible to use the velocity vector? Or self-mod into code for speed?
+    - We get particle grid morphing for free!! - DONE
+
+- Ball motions?
+    - Lissajous
+    - Around an attractor (in the centre)
+
+- Ball collisions?
+    - Edges of the grid whilst it is rotating (i.e. rotate the planes)
+
+- Possibly size of sprites? Stick with pixels for now.
+    - Try fat pixels! - DONE
+
+- Colours
+    - Orb colour pulse
+    - Grid colours?
+    - Dave asked for particles in 2 colours with separate ramp of 7 colours for each.
+    - Need palette lerping to blend between palettes over time.
+    - Implement math_lerp fn.
+    - Implement rgb_lerp fn but decide on RGB format => VIDC or OSWORD? - DONE
+    - Might need to implement colour updates on vsync (again). - DONE
+
+- How to start? <== NEXT
+    - Orb grows to size.
+        - Should just be a math fn attached to ball radius? - TODO
+    - Eminates the particles that form the grid. Free particles for a while then lerp.
+    - Free particles becoming grid particles?
+        - Either copy free particle list to particle grid array at hand over. - DONE
+        - Or create an emitter that generates into particle grid array (no life). - DONE
+        - What to do about overloaded velocity / distance field? - DONE
+        - Dynamic motion with some drag to bring particles to a stop? - DONE
+        - Then morph to target as needed? - DONE
+
+MODE 13?
+~~~
+- Pixel plotting is faster than MODE 9!
+- But the CLS time dominates this as have to clear 80K. :(((
+- Conclusion that this would only be viable if using a widescreen mode,
+    so 320x180, which is ~56K.
+    ==> Could be interesting for a future MODE 13 demo?
+        Perhaps a free particle system demo for NOVA or Deadline?
+
+For now the decision is:
+- MODE 9 (16 colours)
+- Full screen (320x256)
+- Fat pixels (2x2)
+
+From Dave:
+Just thinking of other effects we can do. Like black hole (particles
+getting suck in, maybe for the final scene) or a white hole (the
+reverse, possibly for the opening scene).
+Also maybe something like rain, where they cascade down and then if
+they reach the bottom, a new particle can spawn at the top. 
+^--- DO THIS NEXT!! - DONE
+
+Pondering
+~~~
+- Iterating on particle parameters is super slow - go back to Lua??
+- Always Be Lerping? Perhaps the ball is always lerping to a desired
+  position, rather than driving the actual position. This would make
+  it easier to transition between different ball motions...
+- Merge the two particle systems somehow...
+  The particles are always lerping to their desired position, what if
+  the dynamics system only updates the desired pos?
+  Still need independent velocity...
+- Ability to update linked math_vars without having to unlink first. - DONE
+
+Colour and palettes
+~~~
+VIDC register writes: VIDC_ColN | 0xbgr
+Current palette format for OSWORD: 0x00BbGgRr
+
+Need to be able to lerp a single colour, i.e. the ball, from col A to col B.
+
+col[i]=col_A + blend * (col_B - col_A)
+Where blend is a FP word.
+Drive blend with math_var.
+Macro to lerp over frames or could drive from radius etc.
+
+colour_make_lerp rgb_addr, col_A, col_B, blend_addr - DONE
+colour_kill_lerp rgb_addr
+
+Colours for this frame need to be set at vsync to avoid tearing. - DONE
+Need buffer of 16 VIDC writes for each bank. - DONE
+Write VIDC commands on vsync for pending bank. - DONE
+
+Probably easiest to keep OSWORD format for blending - write bytes.
+
+Moar TODO
+~~~
+- Add _RELEASE or _FINAL or _UNUSED define to remove unused code.
+    - Max circle size?
+    - Max line fill length?
+    - Remove vertex shapes.
+- Display something when setting up tables etc. - DONE JUST ...
+- Dynamic sample speed! Adjust count thresholds! REMEMBER _SMALL_EXE! - DONE
+- Dots on screen edges. - DONE
+- Reenable hot reload of script.
+- Fix step forward by pattern for editing. - DONE
+- Test 1bpp image compression. - DONE
+- 1bpp image conversion and expand 1bpp to 4bpp at runtime. - DONE
+- Replace use of MemAlloc module with OS_ChangeDynamicArea
+    - Sprite, Font, RMA - see page 1-377 in RICOS PRMs - NOT NEEDED?
+    - WimpSlot comes from the Window Manager module?
+    => Have to *wimpslot 1200k ahead of running the demo on command line.
+
+
+14/3 Brain dump from Dave
+~~~
+Love:
+- the transitions from one particle state to the other.
+- the variations in particles, all the way from the mess of random-looking ones to the more delicate red spiral (love the way the orb parts the spiral strains on that one)
+- the particle generator dot is ace
+
+My general thoughts are, given that you've already devised a nice way of transition the particles, we should just concentrate on the following:
+- any scenes that build up from nothing should have the previous scene transition to nothing so there's no blanking
+- it's OK (good, even) to jump-cut from one particle scene to the next so long as the ball stays in motion on the same path. Maybe we can use jump cuts for when the music is at its fullest.
+- Is there a cool way to get back and forth from the generator dot to the main orb? Like maybe it could scale down and when it scales back up it becomes the regular repeller orb? Maybe switch back and forth between the two (that is if it's not possible to have both one and the other on screen at the same time)
+- If we are to pulse the orb in colour, I think it should do as we did in Chequered Past and go to the brightest colour in an instant on the beat and then fade back to the darkest colour.
+- Scene swapping should happen on a beat. That could be every 2 patterns / 1 pattern / half / quarter etc.
+- White background is too jarring I think. Maybe we could try something other than black, like a dark version of the particles maybe instead, but black is good too.
+- Spirals / circles / lines / rain formations work well. I think the lined grid is the least interesting.
+- Text formation is quite cool - a bit difficult to read atm (maybe a brightness issue). Maybe we could have a dot spit out the particles and the the orb wipes them away and they fade out before we have more text.
+
+Thinking if we're having greets, we need to delineate between our names / groups (i.e. credits) and greeted people. Could we have a section with generated text not as particles but as solid graphics that pulse in time to the beat, just one pulse per greet, perhaps? Could that be done at the same time as random particles elsewhere on screen?
+
+But in general, the heavy lifting of the demo is done purely by the particles moving in relation to the orb and each other, which is quite mesmerising.
+It's just about tweaking for style / structure now.
+
+I'm working on updating the tune now. Think I might stick with larger patterns for more flexibility if I need it. Sorry for the brain dump!
+
+Other comments from Dave in our chat.
+- Solid group names will be move readable (wanted filled vector but we'll settle for bitmaps).
+- Perhaps bitmap graphics like the Revision logo?
+- Look at scaling the orb and the repulsion radius - but not to the beat, probably too intense.
+- Perhaps scale up the radius on the chord that grows in volume.
+- Dave's emphasis is on a really interesting (non-chippy) tune.
+- We have all the elements.
+- I think unless we're doing jump cuts with the orb still in motion, I think the orb should disappear or scale down/up to/from nothing.
+
+House tune
+~~~
+Patterns, each one is 3.84s long!
+Assume there's already a field of particles on screen?
+- Perhaps these dots are drawn during the init stage like a progress bar?
+
+0 | 1 = bare bass - orb grows, but doesn't move.
+
+1-4 | 2,3 = bass and untz - orb moves around 2x 2 pats
+
+5-8 | 6,7 = simple melody - 2x 2 pats
+    - new motion - perhaps straight lines here.
+    - morph to a new shape for second round.
+    - perhaps change the orb size and influence
+
+9-12 | 8,9 = more complex melody - 2x 2 pats
+    - rain effect?
+
+13-16 | 10,11,12 = volume chords - 2x 2 pats
+    - fire spiral
+
+17 | 13 = base bass segue
+    - not sure yet!
+
+18-21 | 14,15 = anthemic (most intense) - 2x 2 pats
+    - particle emitter?
+
+All needs speeding up, more dynamic!
+
+Tempo=122
+Speed=3
+
+Tick (ms) = 2500/bpm = 2500/122 = 20.4918 ms
+3x ticks per row = 61.4754 ms
+64 rows per pattern = 3,934.42 ms = 3.934s
+Or 196.72 vsyncs per pattern.
+Or 3.074 vsyncs per row. :s
+=> Dave moved back to default tempo 125.
+
+
+Liquid tune
+~~~
+Tempo=120
+Speed=4
+5.333s per pattern
+4.1667 vsyncs per row
+266.667 vsyncs per pattern
+
+
+| Pat | Desc.                    | Effect?
+| 0   | Intro motif w/ reverb    | 
+| 1   | Intro motif w/ reverb    |
+| 2   | Intro highlights         |
+| 3   | Intro to percusion       |
+| 4   | Low bass heavy kick      |
+| 6   | Low bass second pat      |
+| 5   | High bass heavy kick     |
+| 7   | High bass second pat     |
+| 8   | Rolling snare w/ hilite  |
+| 9   | Rolling snare second pat |
+| 10  | Main melody              |
+| 11  | Main melody second pat   |
+
+Effects
+~~~
+
+Procedural shapes: grid + spiral + lines (+ concentric circles?)
+From images: Revision logo?
+Text: Bitshifters (+ Torment + Kieran + Rhino)
+Generation: rain, emitter
+Motion: spiral + straight lines + under gravity (+ sine wave?)
+Palettes: red/fire + green/white + blue/cyan + red/seq_palette_red_magenta_ramp
+The Orb: radius + colour + influence + 
+
+36 patterns * 5.333s = 192s (3m 12s)
+Assuming 4 patterns per effect min = 9 effects max.
+
+1. Intro - grid
+2. A bit more intro - grid
+3. Wow effect - rain?
+4. Another wow effect - fire spiral?
+5. Greets - group names + emitter mostly
+6. Bigger wow - wind tunnel
+7. Biggest wow effect - todo
+8. Credits - names + morph
+9. Revision logo?
+
+Ideas to try:
+- Sideways 'rain' (starfield) with ball under gravity. - NICE!
+- Dave likes the morphs - which look the best not random? - MAYBE?
+- Concentric circles with diagonal sine motion
+    - Concentric circles harder than they look!!
+- Ease-in ease-out of ball, not constant velocity
+- Play with the ball size and influence
+- Worry about more palettes later.
+- Diagonals? - TRIED.
+- Morph between different spirals. - MEH?
+- Morph between grid and concentric circles. - KINDA?
+
+MONDAY: Sequence w/ credits & greets
+TUESDAY: Colours
+WEDNESDAY: Ball size variation
+THURSDAY: Polish and record
+
+For greets - could have particle spray with a repsulsion field over the top
+of the word (no orb) so it is more readable. Have the credits appear in different
+places on the screen and move the opening.
+
+For credits - could have our names move behind with the group logo as particles on top?
+
+Need a demo name! Something about fluid or flow?
+
+Plot text:
+- Y pos from var - drive with maths_var etc.
+- Use math_var to iterate math_var for colour per row.
+
+Colours blends to add:
+- Green cyan blue
+- 
+
+Tune v10
+~~~
+4 pats intro
+4 pats w/ kick
+4 pats w/ percusion
+10 pats intense
+4 pats breathe
+11 pats intense
+(doesn't finish yet)
+
+Dave notes
+~~~
+- Transition more smoothly.
+- Orb spiral - end by shrinking the orb to no size.
+- Credits - don't necessarily need code/music - just say the names or just in corner of the screen.
+- Greets - straight columns of names, all the same size.
+- Generator small to large orb.
+- Fire spiral small to large <= COLOUR BUG.
+- Can we make the rectangular grid a circle shape? LOWEST PRI.
+- Reason to switch to a smaller orb - put this after the credits or have the previous scene end on a smaller scene.
+- "Released at Revision 2024".
+- Swap bitshifters and torment for our names. Fill the screen!
+- Demo name, keep it short to also fill the screen. FLUIDIC, STIR, MATTER, DOT, SPECK, FLUID, FLOW, FLUX, REPEL, REPULSE, FIELD
+
+Init speed for dynamic sample setting.
+A3000=0x186 - 0x1aa
+A3020=0x111 - 0x102
+
+Circle data: line count=radius*2+1 each entry is -X start from centre.
+Use circle_12 or circle_13.
+
+TODO FINAL
+~~~
+- Orb spiral end transition. - DONE
+- Fire spiral start transition. - DONE
+- Update prod name. - DONE
+- Replace group names with our names. - DONE
+- Add credits list screen. - DONE
+- Add released at Revision? - DONE
+- Replace rectangular grid with circular one. - Radius ~13.
+- Fade credits screen up. - DONE
+- Morph kieran in. - DONE
+- Red additive palette bug only with small exe?! - DONE
+    - Palette data looks OK? Happens with SMALL_EXE define...
+    => Error in LibSqrt_MakeSqrtTable...!!! - FIXED
+- Remove serif from small fonts. - DONE
+- Enlarge ball size again from small one? - DONE
+- Improve palettes:
+    - Make orange less muddy.
+    - Brighten blue
+    - Brighten red yellow
+    - Change kieran to blue - DONE
+    - Change rhino to green - DONE
+    - Change Revision to red - DONE
+
+48,92
+274,168
+
+FOR NEXT TIME: DON'T ALLOW DEPENDENCIES ON THINGS THAT ARE MADE AFTER FIRST SCRIPT TICK!

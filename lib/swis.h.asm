@@ -67,16 +67,41 @@
 ; Found in RISCOS PRMs pp 1-156.
 ; Used by RasterMan and OS_Event Event_KeyPressed (11)
 .equ RMKey_ArrowUp, 0x59
+.equ RMKey_ArrowLeft, 0x62
 .equ RMKey_ArrowDown, 0x63
+.equ RMKey_ArrowRight, 0x64
 .equ RMKey_Return, 0x47
 .equ RMKey_Space, 0x5f
 .equ RMKey_LeftClick, 0x70
 .equ RMKey_RightClick, 0x72
+.equ RMKey_PageUp, 0x21
+.equ RMKey_PageDown, 0x36
 .equ RMKey_A, 0x3c
+.equ RMKey_B, 0x52
+.equ RMKey_C, 0x50
+.equ RMKey_D, 0x3e
 .equ RMKey_E, 0x29
 .equ RMKey_F, 0x3f
+.equ RMKey_G, 0x40
+.equ RMKey_H, 0x41
+.equ RMKey_I, 0x2e
+.equ RMKey_J, 0x42
+.equ RMKey_K, 0x43
+.equ RMKey_L, 0x44
+.equ RMKey_M, 0x54
+.equ RMKey_N, 0x53
+.equ RMKey_O, 0x2f
+.equ RMKey_P, 0x30
+.equ RMKey_Q, 0x27
 .equ RMKey_R, 0x2a
 .equ RMKey_S, 0x3d
+.equ RMKey_T, 0x2b
+.equ RMKey_U, 0x2d
+.equ RMKey_V, 0x51
+.equ RMKey_W, 0x28
+.equ RMKey_X, 0x4f
+.equ RMKey_Y, 0x2c
+.equ RMKey_Z, 0x4e
 .equ RMKey_1, 0x11
 .equ RMKey_2, 0x12
 .equ RMKey_3, 0x13
@@ -86,7 +111,7 @@
 .equ RMKey_7, 0x17
 .equ RMKey_8, 0x18
 .equ RMKey_9, 0x19
-.equ RMKey_0, 0x10
+.equ RMKey_0, 0x1a
 
 .equ DynArea_Screen, 2
 
@@ -101,6 +126,16 @@
 .equ Event_VSync, 4
 .equ Event_KeyPressed, 11
 
+.equ Font_FindFont, 0x40081
+.equ Font_LoseFont, 0x40082
+.equ Font_Paint, 0x40086
+.equ Font_ConverttoOS, 0x40088
+.equ Font_SetFont, 0x4008a
+.equ Font_SetColours, 0x40092
+.equ Font_SetPalette, 0x40093
+.equ Font_ScanString, 0x400a1
+
+.equ QTM_SwiBase, 0x47E40
 .equ QTM_Load, 0x47E40
 .equ QTM_Start, 0x47E41
 .equ QTM_Stop, 0x47E42
@@ -178,4 +213,6 @@
 .equ ASCII_LessThan, 60
 .equ ASCII_MoreThan, 62
 
+.equ VDU_TextColour, 17
+.equ VDU_Home, 30
 .equ VDU_SetPos, 31

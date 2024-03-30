@@ -1,6 +1,7 @@
 ; ============================================================================
 ; Polygon routines.
 ; Uses a span buffer.
+; Currently plots quads by default but could plot arbitrary polys.
 ; ============================================================================
 
 .equ LibPolygon_IncludeTriPlot, 0
@@ -596,7 +597,7 @@ polygon_plot_spans:
 spanerror: ;The error block
 .long 18
 .byte "Span width too long!"
-.align 4
+.p2align 2
 .long 0
 .endif
 

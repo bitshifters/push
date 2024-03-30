@@ -1,86 +1,35 @@
 ; ============================================================================
 ; Archie-Verse: a Acorn Archimedes demo/trackmo framework.
-;	1. <Group> presents <demo> at <party>
-;	2. 2D effect 1
-;	3. 3D effect 1
-;	4. Greets
-;	5. 2D effect 2
-;	6. 3D effect 2
-;	7. Credits
-;	8. Ending
 ; ============================================================================
 
-.equ _DEBUG, 0
-.equ _DEBUG_RASTERS, (_DEBUG && 1)
-.equ _DEBUG_SHOW, (_DEBUG && 1)
-.equ _CHECK_FRAME_DROP, (!_DEBUG && 1)
+; ============================================================================
+; Defines for a specific build.
+; ============================================================================
 
-.equ Sample_Speed_SlowCPU, 48		; ideally get this down for ARM2
-.equ Sample_Speed_FastCPU, 16		; ideally 16us for ARM250+
+.equ _DEBUG,                    0
+.equ _SMALL_EXE,                1               ; TODO: Configure from Makefile?
+.equ _LOG_SAMPLES,              1
+; TODO: DON'T FORGET TO REMOVE UNUSED CODE!!!! OR ADD A DEFINE FOR THIS????
 
-.equ Screen_Banks, 3
-.equ Vdu_Mode, 97					; MODE 9 widescreen (320x180)
-									; or 96 for MODE 13 widescreen (320x180)
-.equ Screen_Mode, 9
-.equ Screen_Width, 320
-.equ Screen_Height, 180
-.equ Mode_Height, 180
-.equ Screen_PixelsPerByte, 2
-.equ Screen_Stride, Screen_Width/Screen_PixelsPerByte
-.equ Screen_Bytes, Screen_Stride*Screen_Height
-.equ Mode_Bytes, Screen_Stride*Mode_Height
+.equ _DEBUG_RASTERS,            (_DEBUG && 1)
+.equ _DEBUG_SHOW,               (_DEBUG && 1)
+.equ _CHECK_FRAME_DROP,         (!_DEBUG && 0)
+.equ _SYNC_EDITOR,              (_DEBUG && 1)   ; sync driven by external editor.
 
+.equ DebugDefault_PlayPause,    1		; play
+.equ DebugDefault_ShowRasters,  0
+.equ DebugDefault_ShowVars,     1		; slow
+
+; ============================================================================
+; Includes.
+; ============================================================================
+
+.include "src/app_config.h.asm"
 .include "lib/swis.h.asm"
 .include "lib/lib_config.h.asm"
-
-; ============================================================================
-; Macros.
-; ============================================================================
-
-.macro RND seed, bit, temp
-    TST    \bit, \bit, LSR #1                       ; top bit into Carry
-    MOVS   \temp, \seed, RRX                        ; 33 bit rotate right
-    ADC    \bit, \bit, \bit                         ; carry into lsb of R1
-    EOR    \temp, \temp, \seed, LSL #12             ; (involved!)
-    EOR    \seed, \temp, \temp, LSR #20             ; (similarly involved!)
-.endm
-
-.macro SET_BORDER rgb
-	.if _DEBUG_RASTERS
-	mov r4, #\rgb
-	bl palette_set_border
-	.endif
-.endm
-
-; ============================================================================
-; App defines
-; ============================================================================
-
-.equ VU_Bars_Effect, 1					; 'fake' bars
-.equ VU_Bars_Gravity, 1					; lines per vsync
-
-.equ AutoPlay_Default, 1
-.equ Stereo_Positions, 1		; Amiga (full) stereo positions.
-
-.equ KeyBit_Space, 0
-.equ KeyBit_Return, 1
-.equ KeyBit_ArrowUp, 2
-.equ KeyBit_ArrowDown, 3
-.equ KeyBit_A, 4
-.equ KeyBit_LeftClick, 5
-.equ KeyBit_1, 6
-.equ KeyBit_2, 7
-.equ KeyBit_3, 8
-.equ KeyBit_4, 9
-.equ KeyBit_5, 10
-.equ KeyBit_E, 11
-.equ KeyBit_F, 12
-.equ KeyBit_R, 13
-.equ KeyBit_S, 14
-.equ KeyBit_RightClick, 16
-
-; TODO: Remove Timer1 split if not necessary.
-.equ RasterSplitLine, 56+90			; 56 lines from vsync to screen start
+.include "lib/maths.h.asm"
+.include "lib/macros.h.asm"
+.include "lib/debug.h.asm"
 
 ; ============================================================================
 ; Code Start
@@ -100,86 +49,6 @@ stack_p:
 ; ============================================================================
 
 main:
-	; Set screen MODE & disable cursor
-	adr r0, vdu_screen_disable_cursor
-	mov r1, #12
-	swi OS_WriteN
-
-	; Set screen size for number of buffers
-	MOV r0, #DynArea_Screen
-	SWI OS_ReadDynamicArea
-	MOV r0, #DynArea_Screen
-	MOV r2, #Mode_Bytes * Screen_Banks
-	SUBS r1, r2, r1
-	SWI OS_ChangeDynamicArea
-	MOV r0, #DynArea_Screen
-	SWI OS_ReadDynamicArea
-	CMP r1, r2
-	ADRCC r0, error_noscreenmem
-	SWICC OS_GenerateError
-
-	; Clear all screen buffers
-	mov r1, #1
-.1:
-	str r1, write_bank
-
-	; CLS bank N
-	mov r0, #OSByte_WriteVDUBank
-	swi OS_Byte
-	SWI OS_WriteI + 12		; cls
-
-	add r1, r1, #1
-	cmp r1, #Screen_Banks
-	ble .1
-
-	; Seed RND.
-	swi OS_ReadMonotonicTime
-	str r0, rnd_seed
-
-	; Install our own IRQ handler - thanks Steve! :)
-	bl install_irq_handler
-
-	; EARLY INIT / LOAD STUFF HERE!
-	bl lib_init
-	; R12=top of RAM used.
-	bl init_3d_scene
-	bl scroller_init
-	bl logo_init
-
-	; Count how long the init takes as a very rough estimate of CPU speed.
-	ldr r1, vsync_count
-	cmp r1, #80		; ARM3~=20, ARM250~=70, ARM2~=108
-	movge r0, #Sample_Speed_SlowCPU
-	movlt r0, #Sample_Speed_FastCPU
-
-	; Setup QTM for our needs.
-	swi QTM_SetSampleSpeed
-
-	mov r0, #VU_Bars_Effect
-	mov r1, #VU_Bars_Gravity
-	swi QTM_VUBarControl
-
-	mov r0, #0
-	mov r1, #Stereo_Positions
-	swi QTM_Stereo
-
-	; Load the music.
-	mov r0, #-1					; load from address and copy to RMA.
-	adr r1, music_table
-	ldr r1, [r1, #0]
-	swi QTM_Load
-
-	; LATE INITALISATION HERE!
-	bl get_next_bank_for_writing
-
-	; Set palette (shows screen).
-	adrl r2, logo_pal_block
-	bl palette_set_block
-
-	; Bootstrap the main sequence.
-	adr r0, seq_main_program
-	bl script_add_program
-
 	; Claim the Event vector.
 	MOV r0, #EventV
 	ADR r1, event_handler
@@ -191,23 +60,129 @@ main:
 	ADR r1, error_handler
 	MOV r2, #0
 	SWI OS_Claim
+    ; TODO: Do we need this outside of _DEBUG?
 
-	; Play music!
-	swi QTM_Start
+	; Install our own IRQ handler - thanks Steve! :)
+    .if AppConfig_InstallIrqHandler
+	bl install_irq_handler
+    .else
+	mov r0, #OSByte_EventEnable
+	mov r1, #Event_VSync
+	SWI OS_Byte
+    .endif
+
+	; Library initialisation.
+	bl lib_init
+	; Returns R12=top of RAM used.
+
+    ; Allocate and clear screen buffers etc.
+    bl app_init_video
+
+    ; Initialise the music player etc.
+	; Param R12=top of RAM used.
+    bl app_init_audio
+
+    ; EARLY INIT - LOAD STUFF HERE!
+
+	; Bootstrap the main sequence.
+    ; Does one tick of the script!
+    bl sequence_init
+
+	; LATE INITALISATION HERE!
+    bl mark_write_bank_as_pending_display
+	bl get_next_bank_for_writing
+
+    ; Can now write to the screen for final init.
+    ldr r12, screen_addr
+    bl app_late_init
 
 	; Enable key pressed event.
 	mov r0, #OSByte_EventEnable
 	mov r1, #Event_KeyPressed
 	SWI OS_Byte
 
+	; Play music!
+	QTMSWI QTM_Start
+
+    ; Reset vsync count.
+    ldr r0, vsync_count
+    str r0, last_vsync
+
 main_loop:
+
+	; ========================================================================
+	; PREPARE
+	; ========================================================================
+
+    bl app_pre_tick_frame
+
+    .if _DEBUG
+    bl debug_do_key_callbacks
+
+    ldrb r0, debug_restart_flag
+    cmp r0, #0
+    blne debug_restart_sequence
+
+	ldrb r0, debug_main_loop_pause
+	cmp r0, #0
+	bne .3
+
+	ldrb r0, debug_main_loop_step
+	cmp r0, #0
+	beq main_loop_skip_tick
+	.3:
+	.endif
+
+    .if AppConfig_UseSyncTracks
+    bl sync_update_vars
+    .endif
 
 	; ========================================================================
 	; TICK
 	; ========================================================================
 
 	bl script_tick_all
+    .if LibConfig_IncludeMathVar
+    ; Tick after script as this is where vars will be added/removed.
+    bl math_var_tick                ; TODO: Here or app_tick or lib_tick?
+    ; Tick before layers as this is where the vars will be used.
+    .endif
 	bl fx_tick_layers
+
+    ; Update frame counter.
+    ldr r0, frame_counter
+    ldr r1, max_frames
+    add r0, r0, #1
+    cmp r0, r1
+    .if SeqConfig_EnableLoop
+    movge r0, #0
+    str r0, frame_counter
+    blge sequence_init
+    .else
+    str r0, frame_counter
+    bge exit
+    .endif
+
+    .if AppConfig_UseSyncTracks
+    ldr r0, frame_counter       ; TODO: frames vs syncs.
+    bl sync_set_time
+    .endif
+
+    .if _DEBUG
+    mov r0, #-1
+    mov r1, #-1
+    QTMSWI QTM_Pos         ; read position.
+
+    strb r1, music_pos+0
+    strb r0, music_pos+1
+    .endif
+
+main_loop_skip_tick:
+
+    .if _DEBUG
+    mov r0, #0
+    strb r0, debug_main_loop_step
+    .endif
 
 	; ========================================================================
 	; VSYNC
@@ -216,14 +191,19 @@ main_loop:
 	; This will block if there isn't a bank available to write to.
 	bl get_next_bank_for_writing
 
-	; Useful to determine frame rate for debug.
-	.if _DEBUG || _CHECK_FRAME_DROP
+	; Useful to determine frame rate for debug or frame-rate independent animation.
 	ldr r1, last_vsync
 	ldr r2, vsync_count
 	sub r0, r2, r1
 	str r2, last_vsync
 	str r0, vsync_delta
-	.endif
+
+    .if _DEBUG
+    ldr r1, vsyncs_missed
+    sub r0, r0, #1
+    add r1, r1, r0
+    str r1, vsyncs_missed
+    .endif
 
 	; R0 = vsync delta since last frame.
 	.if _CHECK_FRAME_DROP
@@ -241,30 +221,36 @@ main_loop:
 	; DRAW
 	; ========================================================================
 
+    ; TODO: app_pre_draw_frame if needed.
 	bl fx_draw_layers
 
 	; show debug
-	.if _DEBUG_SHOW
-	bl debug_write_vsync_count
+	.if _DEBUG
+    ldr r12, screen_addr
+    bl debug_plot_vars
 	.endif
 
 	; Swap screens!
 	bl mark_write_bank_as_pending_display
 
-	; exit if Escape is pressed
-	swi OS_ReadEscapeState
-	bcs exit
-
 	; repeat!
-	b main_loop
+	swi OS_ReadEscapeState
+	bcc main_loop                   ; exit if Escape is pressed
 
 exit:
 	; Disable music
 	mov r0, #0
-	swi QTM_Clear
+	QTMSWI QTM_Clear
 
 	; Remove our IRQ handler
+    .if AppConfig_InstallIrqHandler
 	bl uninstall_irq_handler
+    .else
+	; Disable vsync event
+	mov r0, #OSByte_EventDisable
+	mov r1, #Event_VSync
+	swi OS_Byte
+    .endif
 
 	; Disable key press event
 	mov r0, #OSByte_EventDisable
@@ -297,6 +283,13 @@ exit:
 	mov r1, #1
 	swi OS_Byte
 
+.if AppConfig_UseQtmEmbedded
+    adr lr, .1
+    ldr pc, QtmEmbedded_Exit
+    .1:
+.endif
+
+    ; Goodbye.
 	SWI OS_Exit
 
 ; ============================================================================
@@ -304,115 +297,73 @@ exit:
 ; ============================================================================
 
 .if _DEBUG
-debug_print_r0:
-	stmfd sp!, {r0-r2}
-	adr r1, debug_string
-	mov r2, #10
-	swi OS_ConvertHex4	; or OS_ConvertHex8
-	adr r0, debug_string
-	swi OS_WriteO
-	ldmfd sp!, {r0-r2}
-	mov pc, lr
+debug_toggle_main_loop_pause:
+	ldrb r0, debug_main_loop_pause
+	eor r0, r0, #1
+	strb r0, debug_main_loop_pause
 
-debug_write_vsync_count:
-	str lr, [sp, #-4]!
-	mov r0, #30	; home cursor
-	swi OS_WriteC
-	mov r0, #17	; set text colour
-	swi OS_WriteC
-	mov r0, #15
-	swi OS_WriteC
+    ; Toggle music.
+    cmp r0, #0
+.if AppConfig_UseQtmEmbedded
+stmfd sp!, {r11,lr}
+    moveq r11, #QTM_Pause-QTM_SwiBase			    ; pause
+    movne r11, #QTM_Start-QTM_SwiBase             ; play
+    mov lr, pc
+    ldr pc, QtmEmbedded_Swi
+    ldmfd sp!, {r11,lr}
+.else
+    swieq QTM_Pause			    ; pause
+    swine QTM_Start             ; play
+.endif
 
-    ; display current tracker position
-	.if 0
+    .if AppConfig_UseSyncTracks
+    b sync_set_is_playing
+    .else
+    mov pc, lr
+    .endif
+
+debug_restart_sequence:
+    ; Start music again.
+    mov r0, #0
+    strb r0, debug_restart_flag
+    mov r1, #0
+	QTMSWI QTM_Pos
+
+    ; Start script again.
+    b sequence_init
+
+debug_skip_to_next_pattern:
     mov r0, #-1
     mov r1, #-1
-    swi QTM_Pos
+    QTMSWI QTM_Pos         ; read position.
 
-	mov r3, r1
-	adr r1, debug_string
-	mov r2, #8
-	swi OS_ConvertHex2
-	adr r0, debug_string
-	swi OS_WriteO
+    add r0, r0, #1
+    cmp r0, #SeqConfig_MaxPatterns
+    movge pc, lr
 
-	mov r0, r3
-	adr r1, debug_string
-	mov r2, #8
-	swi OS_ConvertHex2
-	adr r0, debug_string
-	swi OS_WriteO
+    bl sequence_jump_to_pattern
 
-	swi OS_WriteI+32
-	ldr r0, keyboard_pressed_mask
-	adr r1, debug_string
-	mov r2, #8
-	swi OS_ConvertHex4
-	adr r0, debug_string
-	swi OS_WriteO
-.endif
-
-.if 1
-	; display frame count / frame rate etc.
-	ldr r0, vsync_count
-	adr r1, debug_string
-	mov r2, #8
-	swi OS_ConvertHex4
-	adr r0, debug_string
-	swi OS_WriteO
-
-	swi OS_WriteI+32
-	ldr r0, vsync_delta
-	adr r1, debug_string
-	mov r2, #8
-	swi OS_ConvertHex4
-	adr r0, debug_string
-	swi OS_WriteO
-.endif
-	ldr pc, [sp], #4
-
-debug_string:
-	.skip 16
+    mov r1, #0
+    QTMSWI QTM_Pos         ; set position.
+    mov pc, lr
 .endif
 
 ; ============================================================================
 ; System stuff.
 ; ============================================================================
 
-error_noscreenmem:
-	.long 0
-	.byte "Cannot allocate screen memory!"
-	.p2align 2
-	.long 0
-
-get_screen_addr:
-	str lr, [sp, #-4]!
-	adrl r0, screen_addr_input
-	adrl r1, screen_addr
-	swi OS_ReadVduVariables
-	ldr pc, [sp], #4
-	
 screen_addr_input:
 	.long VD_ScreenStart, -1
 
-displayed_bank:
-	.long 0				; VIDC sreen bank being displayed
-
-write_bank:
-	.long 0				; VIDC screen bank being written to
-
-pending_bank:
-	.long 0				; VIDC screen to be displayed next
-
-vsync_count:
-	.long 0				; current vsync count from start of exe.
-
-.if _DEBUG || _CHECK_FRAME_DROP
 last_vsync:
 	.long 0
 
 vsync_delta:
 	.long 0
+
+.if _DEBUG
+vsyncs_missed:
+    .long 0
 .endif
 
 .if _CHECK_FRAME_DROP
@@ -423,97 +374,45 @@ last_last_dropped_frame:
 	.long 0
 .endif
 
-keyboard_pressed_mask:
-	.long 0
+frame_counter:
+    .long 0
+
+max_frames:
+    .long SeqConfig_MaxFrames
+
+.if _DEBUG
+music_pos:
+    .long 0
+.endif
 
 ; R0=event number
 event_handler:
+    .if _DEBUG
 	cmp r0, #Event_KeyPressed
-	movne pc, lr
-
 	; R1=0 key up or 1 key down
 	; R2=internal key number (RMKey_*)
+    beq debug_handle_keypress
+    .endif
 
-	str r0, [sp, #-4]!
+    .if !AppConfig_InstallIrqHandler
+	cmp r0, #Event_VSync
+	bne event_handler_return
 
-	ldr r0, keyboard_pressed_mask
-	cmp r1, #0
-	beq .2
+	STMDB sp!, {r0-r1,r11-r12,lr}
+    b app_vsync_code
+exitVs:
+	LDMIA sp!, {r0-r1,r11-r12,lr}
+    .endif
 
-	; Key down
-	cmp r2, #RMKey_Space
-	orreq r0, r0, #1<<KeyBit_Space
-	cmp r2, #RMKey_Return
-	orreq r0, r0, #1<<KeyBit_Return
-	cmp r2, #RMKey_ArrowUp
-	orreq r0, r0, #1<<KeyBit_ArrowUp
-	cmp r2, #RMKey_ArrowDown
-	orreq r0, r0, #1<<KeyBit_ArrowDown
-	cmp r2, #RMKey_A
-	orreq r0, r0, #1<<KeyBit_A
-	cmp r2, #RMKey_LeftClick
-	orreq r0, r0, #1<<KeyBit_LeftClick
-	cmp r2, #RMKey_1
-	orreq r0, r0, #1<<KeyBit_1
-	cmp r2, #RMKey_2
-	orreq r0, r0, #1<<KeyBit_2
-	cmp r2, #RMKey_3
-	orreq r0, r0, #1<<KeyBit_3
-	cmp r2, #RMKey_4
-	orreq r0, r0, #1<<KeyBit_4
-	cmp r2, #RMKey_5
-	orreq r0, r0, #1<<KeyBit_5
-	cmp r2, #RMKey_E
-	orreq r0, r0, #1<<KeyBit_E
-	cmp r2, #RMKey_F
-	orreq r0, r0, #1<<KeyBit_F
-	cmp r2, #RMKey_R
-	orreq r0, r0, #1<<KeyBit_R
-	cmp r2, #RMKey_S
-	orreq r0, r0, #1<<KeyBit_S
-	cmp r2, #RMKey_RightClick
-	orreq r0, r0, #1<<KeyBit_RightClick
-	b .3
-
-.2:
-	; Key up
-	cmp r2, #RMKey_Space
-	biceq r0, r0, #1<<KeyBit_Space
-	cmp r2, #RMKey_Return
-	biceq r0, r0, #1<<KeyBit_Return
-	cmp r2, #RMKey_ArrowUp
-	biceq r0, r0, #1<<KeyBit_ArrowUp
-	cmp r2, #RMKey_ArrowDown
-	biceq r0, r0, #1<<KeyBit_ArrowDown
-	cmp r2, #RMKey_A
-	biceq r0, r0, #1<<KeyBit_A
-	cmp r2, #RMKey_LeftClick
-	biceq r0, r0, #1<<KeyBit_LeftClick
-	cmp r2, #RMKey_1
-	biceq r0, r0, #1<<KeyBit_1
-	cmp r2, #RMKey_2
-	biceq r0, r0, #1<<KeyBit_2
-	cmp r2, #RMKey_3
-	biceq r0, r0, #1<<KeyBit_3
-	cmp r2, #RMKey_4
-	biceq r0, r0, #1<<KeyBit_4
-	cmp r2, #RMKey_5
-	biceq r0, r0, #1<<KeyBit_5
-	cmp r2, #RMKey_E
-	biceq r0, r0, #1<<KeyBit_E
-	cmp r2, #RMKey_F
-	biceq r0, r0, #1<<KeyBit_F
-	cmp r2, #RMKey_R
-	biceq r0, r0, #1<<KeyBit_R
-	cmp r2, #RMKey_S
-	biceq r0, r0, #1<<KeyBit_S
-	cmp r2, #RMKey_RightClick
-	biceq r0, r0, #1<<KeyBit_RightClick
-
-.3:
-	str r0, keyboard_pressed_mask
-	ldr r0, [sp], #4
+event_handler_return:
 	mov pc, lr
+
+    .if _DEBUG
+    b debug_handle_keypress
+    .else
+    mov pc, lr
+    .endif
+
 
 
 mark_write_bank_as_pending_display:
@@ -524,13 +423,47 @@ mark_write_bank_as_pending_display:
 	; At the moment we block but could also overwrite
 	; the pending buffer with the newer one to catch up.
 	; TODO: A proper fifo queue for display buffers.
-	.1:
+.1:
 	ldr r0, pending_bank
 	cmp r0, #0
 	bne .1
 	str r1, pending_bank
 
-	; Show panding bank at next vsync.
+    ; Convert palette buffer to VIDC writes here!
+    ldr r2, vidc_buffers_p
+    add r2, r2, r1, lsl #6              ; 64 bytes per bank
+
+    ldr r3, palette_array_p
+    cmp r3, #0
+    moveq r0, #-1                       ; no palette to set.
+    streq r0, [r2]
+    beq .2
+
+    ; TODO: Could think about a palette dirty flag.
+
+    mov r4, #0
+.3:
+    ldr r0, [r3], #4            ; 0x00BbGgRr
+
+    ; Convert from OSWORD to VIDC format.
+    mov r7, r0, lsr #20
+    and r7, r7, #0xf            ; 0xB
+    mov r6, r0, lsr #12
+    and r6, r6, #0xf            ; 0xG
+    mov r5, r0, lsr #4
+    and r5, r5, #0xf            ; 0xR
+
+    orr r0, r5, r6, lsl #4
+    orr r0, r0, r7, lsl #8      ; 0xBGR
+    orr r0, r0, r4, lsl #26     ; VIDC_ColN = N << 26
+    str r0, [r2], #4
+
+    add r4, r4, #1
+    cmp r4, #16
+    blt .3
+
+.2:
+	; Show pending bank at next vsync.
 	MOV r0, #OSByte_WriteDisplayBank
 	swi OS_Byte
 	mov pc, lr
@@ -539,7 +472,7 @@ get_next_bank_for_writing:
 	; Increment to next bank for writing
 	ldr r1, write_bank
 	add r1, r1, #1
-	cmp r1, #Screen_Banks
+	cmp r1, #VideoConfig_ScreenBanks
 	movgt r1, #1
 
 	; Block here if trying to write to displayed bank.
@@ -555,12 +488,21 @@ get_next_bank_for_writing:
 	swi OS_Byte
 
 	; Back buffer address for writing bank stored at screen_addr
-	b get_screen_addr
+	adrl r0, screen_addr_input
+	adrl r1, screen_addr
+	swi OS_ReadVduVariables
+    mov pc, lr
 
 error_handler:
 	STMDB sp!, {r0-r2, lr}
 
+    .if AppConfig_InstallIrqHandler
 	bl uninstall_irq_handler
+    .else
+	mov r0, #OSByte_EventDisable
+	mov r1, #Event_VSync
+	SWI OS_Byte
+    .endif
 
 	; Release event handler.
 	MOV r0, #OSByte_EventDisable
@@ -584,186 +526,68 @@ error_handler:
 	SWI OS_Byte
 
 	; Do these help?
-	swi QTM_Stop
+	QTMSWI QTM_Stop
 
 	LDMIA sp!, {r0-r2, lr}
 	MOVS pc, lr
 
 ; ============================================================================
-; Interrupt handling.
+; Core code modules
 ; ============================================================================
-
-oldirqhandler:
-	.long 0
-
-oldirqjumper:
-	.long 0
-
-vsyncstartdelay:
-	.long 127*RasterSplitLine  ;2000000/50.08
-
-install_irq_handler:
-	mov r1, #0x18					; IRQ vector.
-	
-	; Remember previous IRQ branch call.
-	ldr r0, [r1]					; old IRQ handler.
-	str r0, oldirqjumper
-
-	; Calculate old IRQ hanlder address from branch opcode.
-	bic r0, r0, #0xff000000
-	mov r0, r0, lsl #2
-	add r0, r0, #32
-	str r0, oldirqhandler
-
-	; Set Timer 1.
-	SWI		OS_EnterOS
-	MOV     R12,#0x3200000           ;IOC address
-
-	TEQP    PC,#0b11<<26 | 0b11  ;jam all interrupts!
-
-	LDR     R0,vsyncstartdelay
-	STRB    R0,[R12,#0x50]
-	MOV     R0,R0,LSR#8
-	STRB    R0,[R12,#0x54]           ;prepare timer 1 for waiting until screen start
-									;don't start timer1, done on next Vs...
-	TEQP    PC,#0
-	MOV     R0,R0
-
-	; Install our IRQ handler.
-	swi OS_IntOff
-	adr r0, irq_handler
-	sub r0, r0, #32
-	mov r0, r0, lsr #2
-	add r0, r0, #0xea000000			; B irq_handler.
-	str r0, [r1]
-	swi OS_IntOn
-
-	mov pc, lr
-
-uninstall_irq_handler:
-	mov r1, #0x18					; IRQ vector.
-	
-	; Restore previous IRQ branch call.
-	ldr r0, oldirqjumper
-	str r0, [r1]
-
-	mov pc, lr
-
-irq_handler:
-	STMFD   R13!,{R0-R1,R11-R12}
-	MOV     R12,#0x3200000           ;IOC address
-	LDRB    R0,[R12,#0x14+0]
-	TST     R0,#1<<6 | (1<<3)
-	BEQ     nottimer1orVs           ;not T1 or Vs, back to RISCOS
-
-	TEQP    PC,#0b11<<26 | 0b11
-	MOV     R0,R0
-
-	MOV     R11,#VIDC_Write
-	TST     R0,#1<<3
-	BNE     vsync                   ;...Vs higher priority than T1
-
-timer1:
-	mov r0, #0
-	str r0, vsync_bodge
-
-	; WRITE VIDC REGS HERE!
-
-	LDRB    R0,[R12,#0x18]
-	BIC     R0,R0,#1<<6
-	STRB    R0,[R12,#0x18]           ;stop T1 irq...
-
-exittimer1:
-	TEQP    PC,#0b10<<26 | 0b10
-	MOV     R0,R0
-	LDMFD   R13!,{R0-R1,R11-R12}
-	SUBS    PC,R14,#4
-
-vsync:
-	ldr r0, vsync_bodge
-	cmp r0, #0
-	beq .3
-	b exitVs
-.3:
-	mov r0, #1
-	str r0, vsync_bodge
-
-	; WRITE VIDC REGS HERE!
-
-	STRB    R0,[R12,#0x58]           ;T1 GO (latch already set up)
-	LDRB    R0,[R12,#0x18]
-	ORR     R0,R0,#1<<6
-	STRB    R0,[R12,#0x18]           ;enable T1 irq...
-	MOV     R0,#1<<6
-	STRB    R0,[R12,#0x14]           ;clear any pending T1 irq
-
-	; Update the vsync counter
-	LDR r0, vsync_count
-	ADD r0, r0, #1
-	STR r0, vsync_count
-
-	; Pending bank will now be displayed.
-	ldr r1, pending_bank
-	cmp r1, #0
-	.if _CHECK_FRAME_DROP
-	streq r0, last_dropped_frame
-	.endif
-	beq exitVs
-
-	str r1, displayed_bank
-
-	; Clear pending bank.
-	mov r0, #0
-	str r0, pending_bank
-
-exitVs:
-	TEQP    PC,#0b10<<26 | 0b10
-	MOV     R0,R0
-
-nottimer1orVs:
-	LDMFD   R13!,{R0-R1,R11-R12}
-	ldr pc, oldirqhandler
-
-vsync_bodge:
-	.long 0
-
-; ============================================================================
-; Additional code modules
-; ============================================================================
-
-rnd_seed:
-    .long 0x87654321
 
 screen_addr:
-	.long 0					; ptr to the current VIDC screen bank being written to.
+	.long 0			    ; ptr to the current VIDC screen bank being written to.
 
-.include "src/fx.asm"
-.include "src/script.asm"
+displayed_bank:
+	.long 0				; VIDC sreen bank being displayed
 
-.include "lib/palette.asm"
-.include "src/scroller.asm"
-.include "src/columns.asm"
-.include "src/logo.asm"
-.include "lib/lz4-decode.asm"
-.include "lib/lib_code.asm"
-.include "src/3d-scene.asm"
+write_bank:
+	.long 0				; VIDC screen bank being written to
 
-; ============================================================================
-; Data Segment
-; ============================================================================
+pending_bank:
+	.long 0				; VIDC screen to be displayed next
 
-; TODO: Hot-reload this one day?
-.include "src/sequence.asm"
+vsync_count:
+	.long 0				; current vsync count from start of exe.
 
-vdu_screen_disable_cursor:
-.byte 22, Vdu_Mode, 23,1,0,0,0,0,0,0,0,0
+palette_array_p:
+    .long 0             ; pointer to the palette array for this frame.
+
+vidc_buffers_p:
+    .long vidc_buffers_no_adr - 64
+
+.if _DEBUG
+debug_main_loop_pause:
+	.byte DebugDefault_PlayPause
+
+debug_main_loop_step:
+	.byte 0
+
+debug_show_info:
+	.byte DebugDefault_ShowVars
+
+debug_show_rasters:
+	.byte DebugDefault_ShowRasters
+
+debug_restart_flag:
+    .byte 0
+
 .p2align 2
+.endif
 
-music_table:
-	.long changing_waves_mod_no_adr		; 14
+; ============================================================================
+; Support library code modules used by the FX.
+; ============================================================================
 
-logo_pal_block:
-.incbin "data/logo-palette-hacked.bin"
+.include "lib/debug.asm"
+.include "lib/fx.asm"
+.include "lib/script.asm"
+.include "lib/sequence.asm"
+.if AppConfig_UseSyncTracks
+.include "src/sync.asm"
+.endif
+.include "src/app.asm"
+.include "lib/lib_code.asm"
 
 ; ============================================================================
 ; DATA Segment

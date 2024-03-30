@@ -83,12 +83,16 @@ def to_box_row_mask_pixels(boxed_row_flat_pixel, mask_rgba):
 
 def main(options):
     # Only support MODE 9 for now. MODE 13 coming later.
-    if options.mode != 9:
+    if options.mode != 9 and options.mode != 4:
         print>>sys.stderr,'FATAL: invalid mode: %d'%options.mode
         sys.exit(1)
 
-    pixels_per_byte=2
-    pack=arc.pack_4bpp
+    if options.mode == 4:
+        pixels_per_byte=8
+        pack=arc.pack_1bpp
+    else:
+        pixels_per_byte=2
+        pack=arc.pack_4bpp
 
     step_x=1
     step_y=1
@@ -135,9 +139,10 @@ def main(options):
             if palette[0] != [0, 0, 0, 255]:
                 palette.insert(0, [0, 0, 0, 255])
 
-            # Pad end of palette with white:
-            while len(palette) < 16:
-                palette.append([255, 255, 255, 255])
+            # Pad end of palette with white if MODE 9:
+            if options.mode == 9:
+                while len(palette) < 16:
+                    palette.append([255, 255, 255, 255])
 
     if options.loud:
         print(palette)

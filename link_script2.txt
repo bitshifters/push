@@ -1,0 +1,8 @@
+SECTIONS
+{
+. = 0x8000;
+.text (NOLOAD) : { *.o(seg8000) }
+.data (NOLOAD) : { *.o(.data) }
+.rodata : { *.o(.rodata) }
+.bss (NOLOAD) : { *.o(.bss) }
+}

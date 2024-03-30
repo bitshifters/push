@@ -2,30 +2,34 @@
 ; Maths definitions and macros.
 ; ============================================================================
 
-.equ PRECISION_BITS, 16
-.equ MULTIPLICATION_SHIFT, PRECISION_BITS/2
-.equ PRECISION_MULTIPLIER, 1<<PRECISION_BITS
+.equ PRECISION_BITS,        16
+.equ MULTIPLICATION_SHIFT,  PRECISION_BITS/2
+.equ PRECISION_MULTIPLIER,  1<<PRECISION_BITS
 
-.equ MATHS_CONST_0, 0
-.equ MATHS_CONST_QUARTER, 1<<(PRECISION_BITS-2)
-.equ MATHS_CONST_HALF, 1<<(PRECISION_BITS-1)
-.equ MATHS_CONST_1, (1<<PRECISION_BITS)
+.equ MATHS_CONST_0,         0
+.equ MATHS_CONST_QUARTER,   1<<(PRECISION_BITS-2)
+.equ MATHS_CONST_HALF,      1<<(PRECISION_BITS-1)
+.equ MATHS_CONST_1,         (1<<PRECISION_BITS)
 
-.equ VECTOR3_SIZE, 3*4
+.equ MATHS_PI,              3.1415926535
+.equ MATHS_2PI,             2.0*MATHS_PI
 
-.equ MATRIX_00, 0
-.equ MATRIX_01, 4
-.equ MATRIX_02, 8
+.equ VECTOR2_SIZE,          2*4
+.equ VECTOR3_SIZE,          3*4
 
-.equ MATRIX_10, 12
-.equ MATRIX_11, 16
-.equ MATRIX_12, 20
+.equ MATRIX_00,             0
+.equ MATRIX_01,             4
+.equ MATRIX_02,             8
 
-.equ MATRIX_20, 24
-.equ MATRIX_21, 28
-.equ MATRIX_22, 32
+.equ MATRIX_10,             12
+.equ MATRIX_11,             16
+.equ MATRIX_12,             20
 
-.equ MATRIX33_SIZE, 3*3*4
+.equ MATRIX_20,             24
+.equ MATRIX_21,             28
+.equ MATRIX_22,             32
+
+.equ MATRIX33_SIZE,         3*3*4
 
 ; ============================================================================
 ; General notes.
@@ -48,6 +52,11 @@
 
 .macro FLOAT_TO_FP value
     .long 1<<PRECISION_BITS * (\value)
+.endm
+
+.macro VECTOR2 x, y
+    FLOAT_TO_FP \x
+    FLOAT_TO_FP \y
 .endm
 
 .macro VECTOR3 x, y, z

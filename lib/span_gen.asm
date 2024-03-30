@@ -207,13 +207,13 @@ gen_one_word_end:
 
 .if LibSpanGen_MultiWord > 1
 gen_two_words:
-	stmia r10!, {r5, r9}
+	stmia r10!, {r5,r9}
 gen_two_words_end:
 .endif
 
 .if LibSpanGen_MultiWord > 2
 gen_four_words:
-	stmia r10!, {r2, r4, r5, r9}
+	stmia r10!, {r2,r4,r5,r9}
 gen_four_words_end:
 .endif
 
@@ -290,14 +290,10 @@ gen_code:
 
 	LDR r11, gen_code_pointers_p
 	LDR r12, gen_code_start_p
-        MOV r0, #0 ;first pixel offset - 0-7
+    MOV r0, #0 ;first pixel offset - 0-7
 	MOV r1, #1 ;length - 1-320
 
 gen_code_main_loop:
-	CMP r0, #0
-	BNE gen_code_dont_print 		; TODO: Wut?
-
-gen_code_dont_print:
 	ADD r12, r12, #0xc ;Align to 16 byte boundary
 	BIC r12, r12, #0xc
 	STR r12, [r11], #4
@@ -334,33 +330,32 @@ gen_code_no_offset_loop:
 	cmp r2, #32
 	blt .1
 	; four words = 32 pixels
-	adr r3, gen_four_words
-	ldr r4, [r3]
-	str r4, [r12], #4
+    adr r2, gen_four_words
+	adr r3, gen_four_words_end
 	add r5, r5, #32
-	B gen_code_no_offset_loop
+	b gen_code_main_loop_copy
 .1:
 .endif
 .if LibSpanGen_MultiWord > 1
 	cmp r2, #16
 	blt .2
 	; two words = 16 pixels
-	adr r3, gen_two_words
-	ldr r4, [r3]
-	str r4, [r12], #4
+    adr r2, gen_two_words
+	adr r3, gen_two_words_end
 	add r5, r5, #16
-	B gen_code_no_offset_loop
+	b gen_code_main_loop_copy
 .2:
 .endif
 
 	ADRL r2, gen_one_word
 	ADRL r3, gen_one_word_end
+	ADD r5, r5, #8
+
 gen_code_main_loop_copy:
 	LDR r4, [r2], #4
 	STR r4, [r12], #4
 	CMP r2, r3
 	BNE gen_code_main_loop_copy
-	ADD r5, r5, #8
 
 	B gen_code_no_offset_loop
 

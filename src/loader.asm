@@ -1,5 +1,7 @@
 ; ============================================================================
-; Generic loader to decompress main exe.
+; Shrinkler loader with embedded data.
+; Relocate all data to top of RAM.
+; Call Shrinkler and return to app start at 0x8000.
 ; ============================================================================
 
 .equ _DEBUG, 0
@@ -15,71 +17,72 @@
 .org 0x8000
 
 main:
-    ; Get compressed file size.
-    mov r0, #5
-	adr r1, filename
-    swi OS_File
-    cmp r0, #1
-    swine OS_Exit                   ; file not found.
-    ; R4=file length.
+    adr r0, message_text
+    swi OS_WriteO
 
-    ; Calculate load address.
-    ldr r2, endofram
-    add r4, r4, #3
-    bic r4, r4, #0b11               ; round up to 4 bytes
-    sub r2, r2, r4                  ; subtract file size
-    .if _USE_SHRINKLER
-    sub r2, r2, #STACK_SIZE + NUM_CONTEXTS*4    ; subtract working space
-    .else
-    sub r2, r2, #STACK_SIZE
-    .endif
-    mov r9, r2                      ; remember load address
-
-	; Load compressed file.
-	mov r0, #0xff
-	adr r1, filename
-    mov r3, #0
-	swi OS_File
+    ; NB. Could calculate this from end of free RAM SWI call.
+    ldr r8, reloc_to                ; reloc_to
 
     ; Relocate decoder.
-    ldr r12, endofram               ; dst
-    mov r8, r12
+    mov r9, r8                      ; dst
     adr r11, reloc_start            ; src
     adr r10, reloc_end              ; end
 .1:
     ldr r0, [r11], #4
-    str r0, [r12], #4
+    str r0, [r9], #4
     cmp r11, r10
     blt .1
 
+    ; Relocation offset.
+    adr r3, reloc_start
+    sub r3, r3, r8
+
     ; Call decompressor.
-    mov r0, r9                      ; source
+    adr r0, compressed_demo_start
+    sub r0, r0, r3                  ; source (reloc)
+
     mov r1, #0x8000                 ; destination
-    .if _USE_SHRINKLER
-    mov r2, #0                      ; no callback
-    sub r9, r8, #STACK_SIZE + NUM_CONTEXTS*4               ; context
-    .endif
+
+    adr r2, callback
+    sub r2, r2, r3                  ; callback fn (reloc)
+
+    mov r3, #0                      ; callback arg
+
+    ; R9 = end of reloc = shrinkler contexts
+
     mov sp, r8                      ; reset stack top
     mov lr, #0x8000                 ; return address
     mov pc, r8                      ; jump to reloc
 
-filename:
-	.byte "<Demo$Dir>.Demo",0
-	.p2align 2
+message_text:
+    .byte "Unshrinkling"
+    .byte 0
+.p2align 2
 
-endofram:
-    .long 0x8000 + _WIMPSLOT - (reloc_end - reloc_start) - 4
+reloc_to:
+    .long 0x8000 + _WIMPSLOT - (reloc_end - reloc_start) - (NUM_CONTEXTS*4) - 4
 
-.if _USE_SHRINKLER
 reloc_start:
 	b ShrinklerDecompress
 
+; R0=bytes written
+; R1=callback arg
+callback:
+    movs r1, r0, lsl #22            ; every 2k
+    swieq OS_WriteI+'.'
+    mov pc, lr
+
 .include "../lib/arc-shrinkler.asm"
-.else
-reloc_start:
-    ; b unlz4  <== code starts here anyway.
-.include "../lib/lz4-decode.asm"
-.endif
+
+.p2align 2
+compressed_demo_start:
+.incbin "../build/archie-verse.shri"
+.p2align 2
+compressed_demo_end:
+
+shrinkler_contexts:
+    ; .skip (NUM_CONTEXTS*4)
+
 reloc_end:
 
 ; ============================================================================
