@@ -21,9 +21,8 @@
 
 .equ SeqConfig_ProTracker_Tempo,        120         ; Default = 125.
 .equ SeqConfig_ProTracker_TicksPerRow,  4
-
 .equ SeqConfig_PatternLength_Rows,      64
-; TODO: Calculate dependent vars.
+
 .equ SeqConfig_PatternLength_Secs,      (2.5*SeqConfig_ProTracker_TicksPerRow*SeqConfig_PatternLength_Rows)/SeqConfig_ProTracker_Tempo
 .equ SeqConfig_PatternLength_Frames,    SeqConfig_PatternLength_Secs*50.0
 

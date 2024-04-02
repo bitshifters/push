@@ -85,7 +85,7 @@ seq_loop:
 
     write_addr palette_array_p, seq_palette_red_additive
 
-    ; TODO: Transition in.
+    ; Transition in.
 
     fork seq_init_fire_spiral
     wait_patterns 5.75
