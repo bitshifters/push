@@ -1,0 +1,9 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+*.mod binary
+*.002 binary
+*.png binary
+*.bin binary
+*.exe binary
+*.dll binary
+*,ffa binary

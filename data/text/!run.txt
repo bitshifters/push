@@ -1,0 +1,2 @@
+wimpslot -min 1400K
+<Obey$Dir>.!RunImage
